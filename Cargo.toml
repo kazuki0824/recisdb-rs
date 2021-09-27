@@ -1,0 +1,20 @@
+[package]
+name = "b25-sys"
+version = "0.1.0"
+authors = ["kazuki0824 <kazukuro0824@gmail.com>"]
+edition = "2018"
+build="build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# futures-io = "0.3.16"
+futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_copy"}
+byteorder=">=1.3.4"
+once_cell = "1.8.0"
+
+[build-dependencies]
+bindgen = ">=0.53.1"
+cc = ">=1.0.50"
+pkg-config=">=0.3.17"
+cmake="0.1.45"
