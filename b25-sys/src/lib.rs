@@ -1,5 +1,5 @@
 pub mod access_control;
-pub(crate) mod inner_decoder;
+mod inner_decoder;
 mod utils;
 
 use crate::access_control::{EcmKeyHolder, EmmChannel};
