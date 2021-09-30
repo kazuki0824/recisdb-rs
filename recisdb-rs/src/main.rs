@@ -2,10 +2,11 @@ use crate::tuner_base::{Tuned, UnTuned};
 use clap::App;
 use std::time::Duration;
 
-mod RecContext;
+use b25_sys::access_control::types::WorkingKey;
+
 mod channels;
 mod tuner_base;
-mod IBonDriver;
+
 
 use futures::executor::block_on;
 
@@ -28,6 +29,7 @@ fn main() {
         return;
     }
 
+    //set duration
     let rec_dur ={
         let time_sec_parsed = matches
             .value_of("time")
@@ -40,25 +42,36 @@ fn main() {
         }
     };
 
+    //open AsyncRead
+    let mut source = tuned.open();
     //ARIB-STD-B25 decode
-    let config = RecContext::RecConf {
-        infinite: rec_dur.is_none(),
-        no_card: matches.is_present("no-card"),
+    let r = {
+        //ecm
+        let key = {
+            let emm = matches.is_present("no-card");
+            match (matches.value_of("key0"),matches.value_of("key1")) {
+                (None, None) => None,
+                (Some(k0), Some(k1)) if emm => Some(WorkingKey{0: k0.parse().unwrap(), 1: k1.parse().unwrap() }),
+                _ => panic!("Specify both of the keys")
+            }
+        };
+        //TODO:get emm ids from clap
+        let ids = Vec::new(); //empty
+
+        StreamDecoder::new(source.as_mut(), key, ids)
     };
 
-    //init decoder
-    let context = RecContext::RecContext::new(tuned, config);
 
     let core_task = async {
         if let Some(filename) = matches.value_of("output") {
             let mut w = AllowStdIo::new(std::fs::File::create(filename).unwrap());
-            let (rw, h) = recording(context.decoder, &mut w);
+            let (rw, h) = recording(r, &mut w);
             config_timer_handler(rec_dur, h);
             rw.await
         } else {
             let out = std::io::stdout();
             let mut w = AllowStdIo::new(out.lock());
-            let (rw, abort_handle) = recording(context.decoder, &mut w);
+            let (rw, abort_handle) = recording(r, &mut w);
             config_timer_handler(rec_dur, abort_handle);
             rw.await
         }
@@ -77,12 +90,13 @@ fn main() {
 
 use futures::io::{AllowStdIo, AsyncRead, AsyncWrite, BufReader, CopyBuf};
 use futures::future::AbortHandle;
+use b25_sys::StreamDecoder;
 
 fn recording<R: AsyncRead, W: AsyncWrite + Unpin>(
     from: R,
     to: &mut W,
 ) -> (CopyBuf<'_, BufReader<R>, W>, AbortHandle) {
-    let r = futures::io::BufReader::with_capacity(RecContext::READ_BUF_SZ * 40, from);
+    let r = futures::io::BufReader::with_capacity(20000 * 40, from);
     futures::io::copy_buf(r, to)
 }
 
