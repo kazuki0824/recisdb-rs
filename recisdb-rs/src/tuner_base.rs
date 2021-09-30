@@ -1,8 +1,12 @@
 #![allow(unused_imports)]
 use crate::channels::Channel;
+use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 use std::error::Error;
 use futures::AsyncRead;
 
+mod error;
+#[cfg(target_os = "windows")]
+mod IBonDriver;
 #[cfg(target_os = "windows")]
 mod Win_Bon;
 #[cfg(target_os = "linux")]

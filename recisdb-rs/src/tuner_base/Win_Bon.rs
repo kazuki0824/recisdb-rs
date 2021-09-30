@@ -1,8 +1,8 @@
+use crate::channels::Channel;
+use crate::tuner_base::IBonDriver::BonDriver;
+use crate::tuner_base::error::BonDriverError;
 use std::error::Error;
 use std::ptr::NonNull;
-use crate::IBonDriver::{BonDriver, IBonDriver};
-use crate::channels::Channel;
-use crate::IBonDriver::error::BonDriverError;
 use futures::AsyncRead;
 
 impl super::UnTuned for super::Device {
