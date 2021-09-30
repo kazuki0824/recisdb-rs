@@ -14,12 +14,12 @@ args:
       long: key0
       takes_value: true
       value_name: "0x1234567812345678"
-      help: "Debug mode. Don't use PC/SC. This option can't be applied to paid programmes. Both key0, key1 are required."
+      help: "Debug mode. Don't use PC/SC. This option can't be applied to paid programmes. If you pass this, both key0, key1 are required."
   - key1:
       long: key1
       takes_value: true
       value_name: "0x1234567812345678"
-      help: "Debug mode. Don't use PC/SC. This option can't be applied to paid programmes. Both key0, key1 are required."
+      help: "Debug mode. Don't use PC/SC. This option can't be applied to paid programmes. If you pass this, both key0, key1 are required."
   - output:
       short: o
       long: output
