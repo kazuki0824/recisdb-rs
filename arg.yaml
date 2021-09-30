@@ -1,0 +1,36 @@
+name: recisdb
+version: "1.0.0"
+author: maleicacid
+about: "ISDB-T"
+args:
+  - device:
+      short: i
+      long: device
+      help: "Specify the path to the tuner device(required)"
+      required: true
+      takes_value: true
+      value_name: "PATH-TO-DEVICE"
+  - channel-name:
+      short: c
+      long: channel
+      help: "The channel to tune with(required)"
+      required: true
+      takes_value: true
+  - checksignal:
+      long: check
+      help: "Just show signal strength"
+  - no-card:
+      short: nc
+      long: no-card
+      help: "Don't use PC/SC. This option can't be applied to paid programmes."
+  - time:
+      short: t
+      long: time
+      help: "Recording length."
+      takes_value: true
+      value_name: sec
+  - output:
+      short: o
+      long: output
+      help: "Output location. If not specified, received data is redirected to stdout."
+      takes_value: true

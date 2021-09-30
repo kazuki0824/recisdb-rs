@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "b25-rs",
+  "b25-sys",
+  "recisdb-rs"
+]
