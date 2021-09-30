@@ -7,7 +7,7 @@ use futures::AsyncRead;
 
 impl super::UnTuned for super::Device {
     fn open(path: &str) -> Result<super::Device, Box<dyn Error>> {
-        let mut lib = unsafe { BonDriver::new
+        let lib = unsafe { BonDriver::new
             (path) }?;
         let mut interface = lib.CreateBonDriver();
         if unsafe {interface.0.as_mut().OpenTuner() == 1} {
