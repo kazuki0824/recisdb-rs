@@ -7,16 +7,29 @@ use std::ptr::NonNull;
 include!(concat!(env!("OUT_DIR"), "/arib25_binding.rs"));
 
 impl decoder {
-    pub(super) fn new(emm: bool) -> Option<NonNull<decoder>> {
+    pub(super) fn new(ecm: bool, mut emm_recv_ids: Vec<i64>) -> Option<NonNull<decoder>> {
         let option = decoder_options {
             round: 4,
             strip: 0,
             emm: 0,
         };
-        unsafe {
-            let ptr = b25_startup(option, emm as i32);
-            NonNull::new(ptr)
-        }
+        //TODO: emm_recv_ids は48ビットで切断
+        let ptr = unsafe {
+            if ecm || emm_recv_ids.len() > 1 {
+                b25_startup_with_debug(
+                    option,
+                    if ecm { 1 } else { 0 },
+                    B_CAS_ID {
+                        count: emm_recv_ids.len() as i32,
+                        data: emm_recv_ids.as_mut_ptr(),
+                    },
+                )
+            } else {
+                b25_startup(option)
+            }
+        };
+
+        NonNull::new(ptr)
     }
     pub(super) fn push(&mut self, data: &mut [u8]) -> Option<ARIB_STD_B25_BUFFER> {
         let input = ARIB_STD_B25_BUFFER {
