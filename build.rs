@@ -42,12 +42,6 @@ fn main() {
                 //cc.includes(b25.include_paths.as_slice());
             }
         }
-    } else {
-        //TODO:MSVC build
-        //+BonDriver
-        let mut cm = cmake::Config::new("./libarib25");
-        cm.generator("Visual Studio 16").very_verbose(true);
-        let res = cm.build();
     }
     cc.compile("b25_ffi");
 

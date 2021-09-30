@@ -12,6 +12,7 @@ build="build.rs"
 futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_copy"}
 byteorder=">=1.3.4"
 once_cell = "1.8.0"
+pin-project-lite = "0.2.7"
 
 [build-dependencies]
 bindgen = ">=0.53.1"

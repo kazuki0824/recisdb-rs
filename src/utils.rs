@@ -4,26 +4,18 @@ use std::io::Cursor;
 
 use byteorder::BigEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use crate::access_control::types::WorkingKey;
 
 mod cryptography00;
 
-#[derive(Copy, Clone)]
-pub struct WorkingKey(u64, u64);
 
-impl WorkingKey {
-    pub const DEFAULT: WorkingKey = WorkingKey {
-        0: 0x8d8206c62eb1410d,
-        1: 0x15f8c5bf840b6694,
-    };
-}
-
-pub struct BlockConversionSolver00 {
+pub(crate) struct BlockConversionSolver00 {
     key: ([u32; 4], [u32; 4]),
     iv: u64,
 }
 
 impl BlockConversionSolver00 {
-    pub fn new(k: WorkingKey, protocol: u8) -> Self {
+    pub(crate) fn new(k: WorkingKey, protocol: u8) -> Self {
         Self {
             key: (
                 cryptography00::key_schedule00(k.0, protocol),
@@ -32,7 +24,7 @@ impl BlockConversionSolver00 {
             iv: 0xfe27199919690911,
         }
     }
-    pub fn convert(&self, input: Vec<u8>, id: u8) -> Vec<u8> {
+    pub(crate) fn convert(&self, input: Vec<u8>, id: u8) -> Vec<u8> {
         let mut buf = vec![self.iv];
 
         //store u64
@@ -78,9 +70,16 @@ impl BlockConversionSolver00 {
     }
 }
 
+
+pub(crate) struct BlockConversionSolver40
+{
+
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::utils::{BlockConversionSolver00, WorkingKey};
+    use crate::utils::BlockConversionSolver00;
+    use crate::access_control::types::WorkingKey;
 
     #[test]
     fn cbc() {
