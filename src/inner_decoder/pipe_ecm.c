@@ -5,7 +5,6 @@
 #include "pipe_ecm.h"
 #include "b_cas_card_error_code.h"
 
-#include <stdio.h>
 #include <sys/types.h>
 #if _MSC_VER > 1920
 #define _MSVC_C

@@ -8,13 +8,13 @@ use std::path::PathBuf;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let out_path = PathBuf::from(&out_dir);
-    let include_dir = format!("{}/{}", out_dir, "include");
+
 
     let mut cc = cc::Build::new();
     let pc = pkg_config::Config::new();
     let bg = bindgen::Builder::default();
 
-    cc.include(&include_dir)
+    cc
         .flag("-Wno-unused-parameter")
         .file("src/inner_decoder/pipe_ecm.c")
         .file("src/inner_decoder/decoder.c");
@@ -25,8 +25,7 @@ fn main() {
         .header("src/inner_decoder/decoder.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .clang_arg(format!("-I{}", include_dir));
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     if pc.target_supported() && !(cfg!(target_os = "windows")) {
         if let Ok(pcsc) = pc.probe("libpcsclite") {
