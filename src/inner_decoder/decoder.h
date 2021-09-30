@@ -22,7 +22,7 @@ typedef struct {
     int emm;
 } decoder_options;
 
-decoder *b25_startup(const decoder_options opt, int no_card);
+decoder *b25_startup(const decoder_options opt);
 int b25_shutdown(decoder *dec);
 int b25_decode(decoder *dec,
                ARIB_STD_B25_BUFFER *sbuf,
@@ -32,5 +32,8 @@ int b25_finish(decoder *dec,
                ARIB_STD_B25_BUFFER *dbuf);
 
 ARIB_STD_B25_BUFFER process_data(decoder* dec, ARIB_STD_B25_BUFFER sbuf);
+
+decoder *
+b25_startup_with_debug(decoder_options opt, int proc_ecm, B_CAS_ID bCasId);
 
 #endif //RECISDB_RUST_DECODER_H

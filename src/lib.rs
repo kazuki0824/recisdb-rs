@@ -2,14 +2,14 @@ pub mod access_control;
 pub(crate) mod inner_decoder;
 mod utils;
 
-use pin_project_lite::pin_project;
 use crate::access_control::{EcmKeyHolder, EmmChannel};
+use crate::inner_decoder::decoder;
 use futures::AsyncRead;
+use pin_project_lite::pin_project;
 use std::cell::Cell;
 use std::pin::Pin;
 use std::ptr::NonNull;
 use std::sync::mpsc::{channel, Receiver};
-use crate::inner_decoder::decoder;
 
 use once_cell::sync::OnceCell;
 static mut CHANNEL: OnceCell<EmmChannel> = OnceCell::new();
@@ -40,9 +40,12 @@ pub fn receive_emm() -> Option<&'static Receiver<EmmBody>> {
 }
 
 impl<'a> StreamDecoder<'a> {
-    pub fn new(src: &'a mut (dyn AsyncRead + Unpin), key: Option<WorkingKey>) -> Self {
-        if let Some(pair) = key
-        {
+    pub fn new(
+        src: &'a mut (dyn AsyncRead + Unpin),
+        key: Option<WorkingKey>,
+        ids: Vec<i64>,
+    ) -> Self {
+        if let Some(pair) = key {
             unsafe {
                 KEYHOLDER.get_or_init(|| EcmKeyHolder {
                     key_pair: Cell::from(pair),
@@ -51,24 +54,21 @@ impl<'a> StreamDecoder<'a> {
             };
             Self {
                 src,
-                inner: decoder::new(true).unwrap(),
+                inner: decoder::new(true, ids).unwrap(),
                 buf: [0; 8000],
             }
-        }
-        else {
+        } else {
             Self {
                 src,
-                inner: decoder::new(false).unwrap(),
+                inner: decoder::new(false, ids).unwrap(),
                 buf: [0; 8000],
             }
         }
     }
 }
 
-
-
+use crate::access_control::types::{EmmBody, WorkingKey};
 use futures::task::{Context, Poll};
-use crate::access_control::types::{WorkingKey, EmmBody};
 
 impl AsyncRead for StreamDecoder<'_> {
     fn poll_read(
