@@ -9,24 +9,21 @@ impl super::UnTuned for super::Device {
     fn open(path: &str) -> Result<super::Device, Box<dyn Error>> {
         let lib = unsafe { BonDriver::new
             (path) }?;
-        let mut interface = lib.CreateBonDriver();
-        if unsafe {interface.0.as_mut().OpenTuner() == 1} {
-            Ok(super::Device {
-                bon_driver_path: path.to_string(),
-                dll_imported: lib,
-                kind: super::DeviceKind::WinBon,
-                interface
-            })
-        }
-        else {
-            Err(BonDriverError::OpenError.into())
-        }
+        let interface = lib.create();
+        
+        interface.OpenTuner()?;
+
+        Ok(super::Device {
+            bon_driver_path: path.to_string(),
+            dll_imported: lib,
+            kind: super::DeviceKind::WinBon,
+            interface
+        })
     }
     
-    fn tune(mut self, channel: Channel, offset_k_hz: i32) -> super::TunedDevice {
-        //TODO:
-        unsafe {self.interface.0.as_mut().SetChannel(channel.physical_ch_num)} ;
-        super::TunedDevice { d: self, channel }
+    fn tune(mut self, channel: Channel, offset_k_hz: i32) -> Result<super::TunedDevice, Box<dyn Error>> {
+        self.interface.SetChannel(channel.physical_ch_num)?;
+        Ok(super::TunedDevice { d: self, channel })
     }
 }
 

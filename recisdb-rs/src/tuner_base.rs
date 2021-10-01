@@ -19,7 +19,7 @@ pub enum DeviceKind {
 
 pub trait UnTuned {
     fn open(path: &str) -> Result<Device, Box<dyn Error>>;
-    fn tune(self, channel: Channel, offset_k_hz: i32) -> TunedDevice;
+    fn tune(self, channel: Channel, offset_k_hz: i32) -> Result<TunedDevice, Box<dyn Error>>;
 }
 pub trait Tuned {
     fn signal_quality(&self) -> f64;
@@ -28,6 +28,7 @@ pub trait Tuned {
 }
 
 
+//TODO: change opaque TunedDevice type to dyn Tuned and move them into linux / windows, and remove cfg and super::
 #[cfg(target_os = "linux")]
 pub struct Device {
     pub handle: std::os::unix::io::RawFd,

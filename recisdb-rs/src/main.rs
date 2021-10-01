@@ -21,7 +21,14 @@ fn main() {
     //tune
     let chan = matches.value_of("channel-name").unwrap();
     let frequency = channels::Channel::from_ch_str(chan);
-    let tuned = device.tune(frequency, 0);
+    let tuned = match device.tune(frequency, 0)
+    {
+        Ok(t) => t,
+        Err(e) => {
+             eprintln!("{}", e);
+             return;
+        }
+    };
 
     //check S/N rate
     if matches.is_present("checksignal") {
