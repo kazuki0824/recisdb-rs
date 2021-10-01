@@ -17,6 +17,7 @@ cpp_utils = "0.3.0"
 
 [build-dependencies]
 cc = ">=1.0.70"
+bindgen = ">=0.59.1"
 
 [package.metadata.deb]
 maintainer = "Michael Aaron Murphy <mmstickman@gmail.com>"

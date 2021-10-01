@@ -39,21 +39,21 @@ public:
 	typedef uint32_t DWORD;
 #endif
 
-	const BOOL OpenTuner();
-	void CloseTuner();
+	virtual const BOOL OpenTuner();
+	virtual void CloseTuner();
 
-	const BOOL SetChannel(const BYTE bCh);
-	const float GetSignalLevel();
+	virtual const BOOL SetChannel(const BYTE bCh);
+	virtual const float GetSignalLevel();
 
-	const DWORD WaitTsStream(const DWORD dwTimeOut = 0);
-	const DWORD GetReadyCount();
+	virtual const DWORD WaitTsStream(const DWORD dwTimeOut = 0);
+	virtual const DWORD GetReadyCount();
 
-	const BOOL GetTsStream(BYTE *pDst, DWORD *pdwSize, DWORD *pdwRemain);
-	const BOOL GetTsStream(BYTE **ppDst, DWORD *pdwSize, DWORD *pdwRemain);
+	virtual const BOOL GetTsStream(BYTE *pDst, DWORD *pdwSize, DWORD *pdwRemain);
+	virtual const BOOL GetTsStream(BYTE **ppDst, DWORD *pdwSize, DWORD *pdwRemain);
 
-	void PurgeTsStream();
+	virtual void PurgeTsStream();
 
-	virtual void Release() = 0;
+	virtual void Release();
 };
 
 /** IBonDriver2 インターフェース */
@@ -67,32 +67,32 @@ public:
 	typedef const CharType * LPCTSTR;
 #endif
 
-	LPCTSTR GetTunerName();
+	virtual LPCTSTR GetTunerName();
 
-	const BOOL IsTunerOpening();
+	virtual const BOOL IsTunerOpening();
 
-	const LPCTSTR EnumTuningSpace(const DWORD dwSpace);
-	const LPCTSTR EnumChannelName(const DWORD dwSpace, const DWORD dwChannel);
+	virtual const LPCTSTR EnumTuningSpace(const DWORD dwSpace);
+	virtual const LPCTSTR EnumChannelName(const DWORD dwSpace, const DWORD dwChannel);
 
-	const BOOL SetChannel(const DWORD dwSpace, const DWORD dwChannel);
+	virtual const BOOL SetChannel(const DWORD dwSpace, const DWORD dwChannel);
 
-	const DWORD GetCurSpace();
-	const DWORD GetCurChannel();
+	virtual const DWORD GetCurSpace();
+	virtual const DWORD GetCurChannel();
 
 // IBonDriver
-	void Release();
+	virtual void Release() override;
 };
 
 /** IBonDriver3 インターフェース */
 class IBonDriver3 : public IBonDriver2
 {
 public:
-	const DWORD GetTotalDeviceNum();
-	const DWORD GetActiveDeviceNum();
-	const BOOL SetLnbPower(const BOOL bEnable);
+	virtual const DWORD GetTotalDeviceNum();
+	virtual const DWORD GetActiveDeviceNum();
+	virtual const BOOL SetLnbPower(const BOOL bEnable);
 
 // IBonDriver
-	void Release();
+	virtual void Release() override;
 };
 
 extern "C" IBonDriver * CreateBonDriver();

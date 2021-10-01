@@ -21,10 +21,10 @@ impl super::UnTuned for super::Device {
             kind: super::DeviceKind::LinuxChardev, //TODO: Windows
         })
     }
-    fn tune(self, channel: Channel, offset_k_hz: i32) -> super::TunedDevice {
-        unsafe { set_ch(self.handle, &channel.to_freq(offset_k_hz)) }.unwrap();
+    fn tune(self, channel: Channel, offset_k_hz: i32) -> Result<TunedDevice, Box<dyn Error>> {
+        unsafe { set_ch(self.handle, &channel.to_freq(offset_k_hz))? };
 
-        super::TunedDevice { d: self, channel }
+        Ok(super::TunedDevice { d: self, channel })
     }
 }
 
