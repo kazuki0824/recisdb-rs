@@ -5,6 +5,8 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
+    println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let out_path = PathBuf::from(&out_dir);
     let bg = bindgen::builder()
