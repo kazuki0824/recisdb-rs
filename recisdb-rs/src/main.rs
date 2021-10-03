@@ -5,6 +5,9 @@ use futures::executor::block_on;
 use b25_sys::access_control::types::WorkingKey;
 use crate::tuner_base::Tuned;
 
+#[macro_use]
+extern crate cfg_if;
+
 mod channels;
 mod tuner_base;
 fn main() {
