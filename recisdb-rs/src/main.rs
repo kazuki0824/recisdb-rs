@@ -1,27 +1,24 @@
-use crate::tuner_base::{Tuned, UnTuned};
 use clap::App;
 use std::time::Duration;
+use futures::executor::block_on;
 
 use b25_sys::access_control::types::WorkingKey;
+use crate::tuner_base::Tuned;
 
 mod channels;
 mod tuner_base;
-
-
-use futures::executor::block_on;
-
 fn main() {
     let yaml = clap::load_yaml!("arg.yaml");
     let matches = App::from_yaml(yaml).get_matches();
 
     let device = matches.value_of("device").unwrap();
-    //open a device
-    let device = tuner_base::Device::open(device).unwrap();
 
     //tune
     let chan = matches.value_of("channel-name").unwrap();
     let frequency = channels::Channel::from_ch_str(chan);
-    let tuned = match device.tune(frequency, 0)
+
+    //open a device
+    let tuned = match tuner_base::tune(device, frequency)
     {
         Ok(t) => t,
         Err(e) => {

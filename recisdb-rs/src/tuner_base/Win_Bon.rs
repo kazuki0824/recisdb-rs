@@ -1,33 +1,33 @@
 use crate::channels::Channel;
-use crate::tuner_base::IBonDriver::BonDriver;
+use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 use crate::tuner_base::error::BonDriverError;
 use std::error::Error;
 use std::ptr::NonNull;
 use futures::AsyncRead;
+use crate::tuner_base::Tuned;
 
-impl super::UnTuned for super::Device {
-    fn open(path: &str) -> Result<super::Device, Box<dyn Error>> {
-        let lib = unsafe { BonDriver::new
-            (path) }?;
-        let interface = lib.create();
-        
-        interface.OpenTuner()?;
-
-        Ok(super::Device {
-            bon_driver_path: path.to_string(),
-            dll_imported: lib,
-            kind: super::DeviceKind::WinBon,
-            interface
-        })
-    }
-    
-    fn tune(mut self, channel: Channel, offset_k_hz: i32) -> Result<super::TunedDevice, Box<dyn Error>> {
-        self.interface.SetChannel(channel.physical_ch_num)?;
-        Ok(super::TunedDevice { d: self, channel })
-    }
+pub struct TunedDevice {
+    bon_driver_path: String,
+    dll_imported: BonDriver,
+    pub interface: IBon
 }
 
-impl super::Tuned for super::TunedDevice {
+impl TunedDevice {
+    pub(crate) fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>> {
+        let lib = unsafe { BonDriver::new(path) }?;
+        let interface = lib.create();
+
+        interface.OpenTuner()?;
+        interface.SetChannel(channel.physical_ch_num)?;
+
+        Ok(TunedDevice {
+            bon_driver_path: path.to_string(),
+            dll_imported: lib,
+            interface
+        })    }
+}
+
+impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
         todo!()
     }
