@@ -11,11 +11,6 @@ mod Win_Bon;
 #[cfg(target_os = "linux")]
 mod linux;
 
-pub enum DeviceKind {
-    LinuxChardev,
-    WinBon,
-}
-
 pub trait Tuned {
     fn signal_quality(&self) -> f64;
     fn set_lnb(&self) -> Result<i8, String>;
@@ -38,8 +33,3 @@ pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>>
         else { Err((EnvCompatFailure).into()) }
     }
 }
-
-
-//TODO: change opaque TunedDevice type to dyn Tuned and move them into linux / windows, and remove cfg and super::
-
-
