@@ -45,7 +45,7 @@ pub struct Device {
     bon_driver_path: String,
     dll_imported: BonDriver,
     pub kind: DeviceKind,
-    pub interface: IBon
+    pub interface: IBon<10000>
 }
 #[cfg(target_os = "windows")]
 pub struct TunedDevice {
