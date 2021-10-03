@@ -5,7 +5,7 @@ use std::ptr::NonNull;
 use cpp_utils::{DynamicCast, Ptr, MutPtr};
 
 impl BonDriver {
-    pub fn create(&self) -> IBon {
+    pub fn create<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
         let IBon1 = unsafe {
             let ptr = self.CreateBonDriver();
             NonNull::new(ptr).unwrap()
@@ -24,7 +24,8 @@ impl BonDriver {
         IBon{
             0: IBon1,
             1: IBon2,
-            2: IBon3
+            2: IBon3,
+            3: [0;BUF_SZ]
         }
     }
 }
@@ -57,8 +58,8 @@ impl DynamicCast<IBonDriver3> for IBonDriver2
     }
 }
 
-pub struct IBon(pub(crate) NonNull<IBonDriver>, Option<NonNull<IBonDriver2>>, Option<NonNull<IBonDriver3>>);
-impl Drop for IBon
+pub struct IBon<const SZ: usize>(pub(crate) NonNull<IBonDriver>, Option<NonNull<IBonDriver2>>, Option<NonNull<IBonDriver3>>, [u8;SZ]);
+impl Drop for IBon<_>
 {
     fn drop(&mut self) {
         self.2 = None;
@@ -68,12 +69,11 @@ impl Drop for IBon
 }
 
 type E = crate::tuner_base::error::BonDriverError;
-impl IBon
+impl IBon<_>
 {
     //automatically select which version to use, like https://github.com/DBCTRADO/LibISDB/blob/519f918b9f142b77278acdb71f7d567da121be14/LibISDB/Windows/Base/BonDriver.cpp#L175
     pub(crate) fn OpenTuner(&self) -> Result<(), E>
     {
-        
         unsafe {
             let vt = self.0.as_ref().vtable_ as *mut _;
             if IBonDriver_OpenTuner(vt) != 0 { Ok(()) }

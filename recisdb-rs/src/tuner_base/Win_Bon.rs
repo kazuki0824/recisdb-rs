@@ -9,7 +9,7 @@ use crate::tuner_base::Tuned;
 pub struct TunedDevice {
     bon_driver_path: String,
     dll_imported: BonDriver,
-    pub interface: IBon
+    pub interface: IBon<10000>
 }
 
 impl TunedDevice {
@@ -24,7 +24,8 @@ impl TunedDevice {
             bon_driver_path: path.to_string(),
             dll_imported: lib,
             interface
-        })    }
+        })
+    }
 }
 
 impl super::Tuned for TunedDevice {
