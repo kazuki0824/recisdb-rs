@@ -4,6 +4,7 @@ use std::os::unix::io::FromRawFd;
 use futures::AsyncRead;
 use futures::io::AllowStdIo;
 use crate::channels::{Channel, ChannelType, Freq};
+use crate::tuner_base::Tuned;
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(lnb_dis, 0x8d, 0x03);
 nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, u8);
@@ -11,27 +12,27 @@ nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
-
-impl super::UnTuned for super::Device {
-    fn open(path: &str) -> Result<super::Device, Box<dyn Error>> {
-        //open a device
+pub struct TunedDevice {
+    handle: std::os::unix::io::RawFd,
+    channel: Channel
+}
+impl TunedDevice
+{
+    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<impl Tuned, Box<dyn Error>>
+    {
         let handle = fcntl::open(path, fcntl::OFlag::O_RDONLY, sys::stat::Mode::empty())?;
-        Ok(super::Device {
+        unsafe { set_ch(handle, &channel.to_freq(offset_k_hz))? };
+        Ok(Self {
             handle,
-            kind: super::DeviceKind::LinuxChardev, //TODO: Windows
+            channel
         })
-    }
-    fn tune(self, channel: Channel, offset_k_hz: i32) -> Result<TunedDevice, Box<dyn Error>> {
-        unsafe { set_ch(self.handle, &channel.to_freq(offset_k_hz))? };
-
-        Ok(super::TunedDevice { d: self, channel })
     }
 }
 
-impl super::Tuned for super::TunedDevice {
+impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
         let raw: u8 = 0;
-        let errno = unsafe { ptx_get_cnr(self.d.handle, raw as *mut u8) }.unwrap();
+        let errno = unsafe { ptx_get_cnr(self.handle, raw as *mut u8) }.unwrap();
 
         match self.channel.ch_type  {
             ChannelType::Terrestrial =>{
@@ -52,7 +53,7 @@ impl super::Tuned for super::TunedDevice {
     }
 
     fn open(&self) -> Box<dyn AsyncRead + Unpin> {
-        let raw = unsafe { std::fs::File::from_raw_fd(self.d.handle) };
+        let raw = unsafe { std::fs::File::from_raw_fd(self.handle) };
         Box::new(AllowStdIo::new(raw))
     }
 }

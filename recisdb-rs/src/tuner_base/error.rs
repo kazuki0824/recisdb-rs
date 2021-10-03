@@ -1,6 +1,25 @@
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
+pub enum GeneralError{
+    EnvCompatFailure
+}
+
+impl Display for GeneralError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        type E = GeneralError;
+        match *self {
+            E::EnvCompatFailure=>write!(f, "Compatibility isn't satisfied."),
+        }
+    }
+}
+
+impl std::error::Error for GeneralError
+{
+
+}
+
+#[derive(Debug, Clone)]
 pub enum BonDriverError{
     OpenError,
     TuneError
