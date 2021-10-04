@@ -2,6 +2,7 @@
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 use std::ptr::NonNull;
+use std::time::Duration;
 use cpp_utils::{DynamicCast, Ptr, MutPtr};
 
 impl BonDriver {
@@ -59,7 +60,7 @@ impl DynamicCast<IBonDriver3> for IBonDriver2
 }
 
 pub struct IBon<const SZ: usize>(pub(crate) NonNull<IBonDriver>, Option<NonNull<IBonDriver2>>, Option<NonNull<IBonDriver3>>, [u8;SZ]);
-impl Drop for IBon<_>
+impl<const SZ: usize> Drop for IBon<SZ>
 {
     fn drop(&mut self) {
         self.2 = None;
@@ -69,7 +70,7 @@ impl Drop for IBon<_>
 }
 
 type E = crate::tuner_base::error::BonDriverError;
-impl IBon<_>
+impl<const SZ: usize> IBon<SZ>
 {
     //automatically select which version to use, like https://github.com/DBCTRADO/LibISDB/blob/519f918b9f142b77278acdb71f7d567da121be14/LibISDB/Windows/Base/BonDriver.cpp#L175
     pub(crate) fn OpenTuner(&self) -> Result<(), E>
@@ -94,5 +95,33 @@ impl IBon<_>
             if IBonDriver_SetChannel(vt, ch) != 0 { Ok(())}
             else { Err(E::TuneError)}
         }
+    }
+    pub(crate) fn SetChannelBySpace(&self, space: u8, ch: u8) -> Result<(), E>
+    {
+        todo!()
+    }
+    pub(crate) fn WaitTsStream(&self, timeout: Duration) -> bool
+    {
+        unsafe {
+            let vt = self.0.as_ref().vtable_ as *mut _;
+            IBonDriver_WaitTsStream(vt, timeout.as_millis() as u32) != 0
+        }
+    }
+    pub(crate) fn GetTsStream(&self) -> Result<(Vec<u8>, usize), E>
+    {
+        let (size, remaining) =
+            unsafe {
+                let mut size = 0 as u32;
+                let mut remaining = 0 as u32;
+
+                let vt = self.0.as_ref().vtable_ as *mut _;
+                if IBonDriver_GetTsStream(vt, self.3.as_ptr() as *mut _, &mut size as *mut u32, &mut remaining as *mut u32) != 0
+                {
+                    Ok((size as usize, remaining as usize))
+                }
+                else { Err(E::GetTsError) }
+            }?;
+        let received = self.3[0..size].to_vec();
+        Ok((received, remaining))
     }
 }
