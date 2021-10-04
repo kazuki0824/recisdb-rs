@@ -14,7 +14,7 @@ mod linux;
 pub trait Tuned {
     fn signal_quality(&self) -> f64;
     fn set_lnb(&self) -> Result<i8, String>;
-    fn open(&self) -> Box<dyn AsyncRead + Unpin>;
+    fn open(self) -> Box<dyn AsyncRead + Unpin>;
 }
 
 pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>>

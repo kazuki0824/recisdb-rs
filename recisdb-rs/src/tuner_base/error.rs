@@ -24,7 +24,8 @@ impl std::error::Error for GeneralError
 #[derive(Debug, Clone)]
 pub enum BonDriverError{
     OpenError,
-    TuneError
+    TuneError,
+    GetTsError
 }
 
 impl Display for BonDriverError {
@@ -32,7 +33,8 @@ impl Display for BonDriverError {
         type E = BonDriverError;
         match *self {
             E::OpenError=>write!(f, "OpenTuner failed"),
-            E::TuneError=>write!(f, "Unable to tune with the specified channel")
+            E::TuneError=>write!(f, "Unable to tune with the specified channel"),
+            E::GetTsError=>write!(f, "Error occurred while reading TS stream")
         }
     }
 }
