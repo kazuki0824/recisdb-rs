@@ -11,27 +11,27 @@ use crate::tuner_base::error::BonDriverError;
 use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 
 pub struct TunedDevice {
-    bon_driver_path: String,
     dll_imported: ManuallyDrop<BonDriver>,
     pub interface: ManuallyDrop<IBon<10000>>
 }
 
 impl TunedDevice {
     pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
-        let dll_imported = unsafe { 
+        let dll_imported = unsafe {
             let lib = BonDriver::new(path)?;
             ManuallyDrop::new(lib)
         };
+        eprintln!("[BonDriver]{} is loaded", path);
         let interface = {
             let i_bon =  dll_imported.create();
             ManuallyDrop::new(i_bon)
         };
+        eprintln!("[BonDriver] Interface generated.");
 
         interface.OpenTuner()?;
         interface.SetChannel(channel.physical_ch_num)?;
 
         Ok(TunedDevice {
-            bon_driver_path: path.to_string(),
             dll_imported,
             interface
         })
@@ -47,7 +47,7 @@ impl super::Tuned for TunedDevice {
         todo!()
     }
 
-    fn open(self) -> Box<dyn AsyncRead + Unpin> {
+    fn open_stream(self) -> Box<dyn AsyncRead + Unpin> {
         use futures::stream::poll_fn;
         use futures::TryStreamExt;
         use futures::task::Poll;
@@ -59,7 +59,11 @@ impl super::Tuned for TunedDevice {
                     Ok((buf, remaining)) => {
                         Poll::Ready(Some(Ok(buf)))
                     },
-                    Err(e) => Poll::Ready(None) //TODO:Poll::Ready(Some(Err(e.into())))
+                    Err(e) => {
+                        //TODO:Convert Error into io::Error?
+                        //Poll::Ready(Some(Err(e.into())))
+                        Poll::Ready(None)
+                    }
                 }
             }
             else {
