@@ -4,7 +4,6 @@ use std::os::unix::io::FromRawFd;
 use futures::AsyncRead;
 use futures::io::AllowStdIo;
 use crate::channels::{Channel, ChannelType, Freq};
-use crate::tuner_base::Tuned;
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(lnb_dis, 0x8d, 0x03);
 nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, u8);
@@ -18,7 +17,7 @@ pub struct TunedDevice {
 }
 impl TunedDevice
 {
-    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<impl Tuned, Box<dyn Error>>
+    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<Self, Box<dyn Error>>
     {
         let handle = fcntl::open(path, fcntl::OFlag::O_RDONLY, sys::stat::Mode::empty())?;
         unsafe { set_ch(handle, &channel.to_freq(offset_k_hz))? };
