@@ -1,0 +1,101 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'b25-rs'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=b25-rs",
+                    "--package=b25-rs"
+                ],
+                "filter": {
+                    "name": "b25-rs",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'b25-rs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=b25-rs",
+                    "--package=b25-rs"
+                ],
+                "filter": {
+                    "name": "b25-rs",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'b25-sys'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=b25-sys"
+                ],
+                "filter": {
+                    "name": "b25-sys",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'recisdb-rust'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=recisdb-rust",
+                    "--package=recisdb-rust"
+                ],
+                "filter": {
+                    "name": "recisdb-rust",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'recisdb-rust'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=recisdb-rust",
+                    "--package=recisdb-rust"
+                ],
+                "filter": {
+                    "name": "recisdb-rust",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
