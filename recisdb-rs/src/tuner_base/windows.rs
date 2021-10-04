@@ -1,12 +1,14 @@
-use crate::channels::Channel;
-use crate::tuner_base::IBonDriver::{BonDriver, IBon};
-use crate::tuner_base::error::BonDriverError;
 use std::error::Error;
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::time::Duration;
+
 use futures::AsyncRead;
 use futures::future::poll_fn;
+
+use crate::channels::Channel;
+use crate::tuner_base::error::BonDriverError;
+use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 
 pub struct TunedDevice {
     bon_driver_path: String,

@@ -1,8 +1,8 @@
 #![allow(non_upper_case_globals, non_camel_case_types, non_snake_case)]
 
-mod error;
-
 use std::ptr::NonNull;
+
+mod error;
 
 include!(concat!(env!("OUT_DIR"), "/arib25_binding.rs"));
 

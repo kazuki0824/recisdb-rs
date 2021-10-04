@@ -1,12 +1,18 @@
-use clap::App;
-use std::time::Duration;
-use futures::executor::block_on;
-
-use b25_sys::access_control::types::WorkingKey;
-use crate::tuner_base::Tuned;
-
 #[macro_use]
 extern crate cfg_if;
+
+use std::time::Duration;
+
+use clap::App;
+use futures::executor::block_on;
+use futures::future::AbortHandle;
+use futures::io::{AllowStdIo, AsyncRead, AsyncWrite, BufReader, CopyBuf};
+
+use b25_sys::access_control::types::WorkingKey;
+use b25_sys::StreamDecoder;
+
+use crate::tuner_base::Tuned;
+
 
 mod channels;
 mod tuner_base;
@@ -94,10 +100,6 @@ fn main() {
     }
     eprintln!("Finished");
 }
-
-use futures::io::{AllowStdIo, AsyncRead, AsyncWrite, BufReader, CopyBuf};
-use futures::future::AbortHandle;
-use b25_sys::StreamDecoder;
 
 fn recording<R: AsyncRead, W: AsyncWrite + Unpin>(
     from: R,

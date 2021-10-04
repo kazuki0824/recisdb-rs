@@ -1,8 +1,10 @@
-use crate::access_control::types::{EmmBody, EmmDecryptedBody, EmmReceivingKeyPair, WorkingKey};
-use crate::utils::BlockConversionSolver40;
-use byteorder::{BigEndian, ByteOrder};
 use std::cell::Cell;
 use std::sync::mpsc::{Receiver, Sender};
+
+use byteorder::{BigEndian, ByteOrder};
+
+use crate::access_control::types::{EmmBody, EmmDecryptedBody, EmmReceivingKeyPair, WorkingKey};
+use crate::utils::BlockConversionSolver40;
 
 mod ffi;
 pub mod types;

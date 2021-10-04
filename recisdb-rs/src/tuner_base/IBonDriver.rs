@@ -1,9 +1,11 @@
 #![allow(non_snake_case, non_camel_case_types, unused_allocation, dead_code)]
-include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 use std::ptr::NonNull;
 use std::time::Duration;
-use cpp_utils::{DynamicCast, Ptr, MutPtr};
+
+use cpp_utils::{DynamicCast, MutPtr, Ptr};
+
+include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 impl BonDriver {
     pub fn create<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
