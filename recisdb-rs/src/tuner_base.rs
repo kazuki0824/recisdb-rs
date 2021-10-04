@@ -8,6 +8,7 @@ use crate::channels::Channel;
 
 mod IBonDriver;
 mod error;
+#[cfg(target_os = "linux")]
 mod linux;
 mod windows;
 
