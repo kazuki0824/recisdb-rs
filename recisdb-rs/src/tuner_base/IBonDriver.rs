@@ -9,7 +9,7 @@ use cpp_utils::{DynamicCast, MutPtr, Ptr};
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 impl BonDriver {
-    pub fn create<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
+    pub fn create_interface<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
         let IBon1 = unsafe {
             let ptr = self.CreateBonDriver();
             NonNull::new(ptr).unwrap()
@@ -36,35 +36,35 @@ impl BonDriver {
 
 extern "C" {
     pub fn interface_check_2(i: *mut IBonDriver) -> *mut IBonDriver2;
-}
-extern "C" {
     pub fn interface_check_3(i: *mut IBonDriver2) -> *mut IBonDriver3;
+    pub fn interface_check_2_const(i: *const IBonDriver) -> *const IBonDriver2;
+    pub fn interface_check_3_const(i: *const IBonDriver2) -> *const IBonDriver3;
 }
 
 impl DynamicCast<IBonDriver2> for IBonDriver {
     unsafe fn dynamic_cast(ptr: Ptr<Self>) -> Ptr<IBonDriver2> {
-        Ptr::from_raw(interface_check_2(ptr.as_raw_ptr() as *mut _))
+        Ptr::from_raw(interface_check_2_const(ptr.as_raw_ptr()))
     }
 
     unsafe fn dynamic_cast_mut(ptr: MutPtr<Self>) -> MutPtr<IBonDriver2> {
-        MutPtr::from_raw(interface_check_2(ptr.as_mut_raw_ptr()) as *mut IBonDriver2)
+        MutPtr::from_raw(interface_check_2(ptr.as_mut_raw_ptr()))
     }
 }
 impl DynamicCast<IBonDriver3> for IBonDriver2 {
     unsafe fn dynamic_cast(ptr: Ptr<Self>) -> Ptr<IBonDriver3> {
-        Ptr::from_raw(interface_check_3(ptr.as_raw_ptr() as *mut _))
+        Ptr::from_raw(interface_check_3_const(ptr.as_raw_ptr()))
     }
 
     unsafe fn dynamic_cast_mut(ptr: MutPtr<Self>) -> MutPtr<IBonDriver3> {
-        MutPtr::from_raw(interface_check_3(ptr.as_mut_raw_ptr()) as *mut IBonDriver3)
+        MutPtr::from_raw(interface_check_3(ptr.as_mut_raw_ptr()))
     }
 }
 
 pub struct IBon<const SZ: usize>(
     [u8; SZ],
     pub(crate) NonNull<IBonDriver>,
-    Option<NonNull<IBonDriver2>>,
-    Option<NonNull<IBonDriver3>>,
+    pub(crate) Option<NonNull<IBonDriver2>>,
+    pub(crate) Option<NonNull<IBonDriver3>>,
 );
 impl<const SZ: usize> Drop for IBon<SZ> {
     fn drop(&mut self) {

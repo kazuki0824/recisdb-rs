@@ -23,10 +23,18 @@ impl TunedDevice {
         };
         eprintln!("[BonDriver]{} is loaded", path);
         let interface = {
-            let i_bon = dll_imported.create();
+            let i_bon = dll_imported.create_interface();
+            let ver = if i_bon.2.is_none() {
+                1
+            } else if i_bon.3.is_none() {
+                2
+            } else {
+                3
+            };
+            eprintln!("[BonDriver] An interface is generated. The version is {}", ver);
+
             ManuallyDrop::new(i_bon)
         };
-        eprintln!("[BonDriver] Interface generated.");
 
         interface.OpenTuner()?;
         interface.SetChannel(channel.physical_ch_num)?;
