@@ -15,7 +15,7 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
-    pub(crate) fn tune(path: &str, channel: Channel) -> Result<impl super::Tuned, Box<dyn Error>> {
+    pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
         let dll_imported = unsafe { 
             let lib = BonDriver::new(path)?;
             ManuallyDrop::new(lib)
