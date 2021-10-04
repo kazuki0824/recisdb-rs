@@ -1,4 +1,4 @@
 [submodule "b25-sys/externals/libarib25"]
 	path = b25-sys/externals/libarib25
-	url = git@github.com:kazuki0824/libarib25.git
-	branch = fix-windows-installation-target
+	url = git@github.com:stz2012/libarib25.git
+	branch = master
