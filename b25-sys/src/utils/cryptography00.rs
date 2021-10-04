@@ -5,7 +5,7 @@ fn parity(x: u32) -> u32 {
     y ^= y >> 4;
     y ^= y >> 2;
     y ^= y >> 1;
-    return y & 1;
+    y & 1
 }
 
 fn round_function_00(x: u32, key: u32, flavor: u8) -> u32 {
@@ -36,15 +36,15 @@ fn round_function_00(x: u32, key: u32, flavor: u8) -> u32 {
     let x = (x & 0x00ffff00) | (x >> 24) | (x << 24);
     let x = x ^ ((x << 24) | (x >> 8)) ^ ((x << 25) | (x >> 7));
 
-    return x;
+    x
 }
 
 pub fn key_schedule00(key: u64, protocol: u8) -> [u32; 4] {
-    let mut kext: [u32; 4] = [0, 0, 0, 0];
-    kext[0] = (key >> 32) as u32;
-    kext[1] = key as u32;
-    kext[2] = 0x08090a0b;
-    kext[3] = 0x0c0d0e0f;
+    let mut extended_key: [u32; 4] = [0, 0, 0, 0];
+    extended_key[0] = (key >> 32) as u32;
+    extended_key[1] = key as u32;
+    extended_key[2] = 0x08090a0b;
+    extended_key[3] = 0x0c0d0e0f;
 
     let mut chain: u32 = if (protocol & 0x0c) != 0 {
         0x84e5c4e7
@@ -52,10 +52,10 @@ pub fn key_schedule00(key: u64, protocol: u8) -> [u32; 4] {
         0x6aa32b6f
     };
     for i in 0..8 {
-        chain = round_function_00(kext[i & 3], chain, 0);
-        kext[i & 3] = chain;
+        chain = round_function_00(extended_key[i & 3], chain, 0);
+        extended_key[i & 3] = chain;
     }
-    return kext;
+    extended_key
 }
 
 pub fn crypto_block00(cipher: u64, extended_key: [u32; 4], encrypt: bool) -> u64 {
@@ -87,7 +87,7 @@ pub fn crypto_block00(cipher: u64, extended_key: [u32; 4], encrypt: bool) -> u64
         }
     }
 
-    return ((right as u64) << 32) | (left as u64);
+    ((right as u64) << 32) | (left as u64)
 }
 
 #[cfg(test)]

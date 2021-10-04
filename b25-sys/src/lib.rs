@@ -54,7 +54,7 @@ impl<'a> StreamDecoder<'a> {
                 KEYHOLDER.get_or_init(|| EcmKeyHolder {
                     key_pair: Cell::from(pair),
                 });
-                CHANNEL.get_or_init(|| channel())
+                CHANNEL.get_or_init(channel)
             };
             Self {
                 src,
@@ -80,7 +80,7 @@ impl AsyncRead for StreamDecoder<'_> {
         let this = self.project();
         match this.src.poll_read(cx, &mut this.buf[0..]) {
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
-            Poll::Ready(Ok(n)) if n <= 0 => Poll::Ready(Ok(0)),
+            Poll::Ready(Ok(n)) if n == 0 => Poll::Ready(Ok(0)),
             Poll::Ready(Ok(n)) => unsafe {
                 let recv = &mut this.buf[0..n];
                 let dec = this.inner.as_mut();

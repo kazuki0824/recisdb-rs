@@ -42,11 +42,11 @@ fn main() {
             }
         }
     } else {
-        //TODO:MSVC build
         //+BonDriver
         let mut cm = cmake::Config::new("./externals/libarib25");
         cm.generator("Visual Studio 16").very_verbose(true);
-        let res = cm.build();
+        let _res = cm.build();
+        //TODO: add files into install target -> panic!("{}", res.into_os_string().into_string().unwrap());
     }
 
     //start ffi compilation

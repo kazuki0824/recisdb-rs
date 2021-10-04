@@ -38,15 +38,15 @@ pub fn key_schedule40(key: u64) -> [u32; 16] {
     let mut left: u32 = (key >> 32) as u32;
     let mut right: u32 = (key & 0xffffffff) as u32;
 
-    let mut key_extended: [u32; 16] = [0; 16];
-    for i in 0..16 {
+    let mut extended_key: [u32; 16] = [0; 16];
+    for item in &mut extended_key {
         let s: u32 = select_sbox(right);
         let s = 0x00ffff00 & (s ^ left) | (0xff0000ff & ((s & 0xff0000ff) + (left & 0xff0000ff)));
         left = right;
         right = (s >> 8) | (s << 24);
-        key_extended[i] = s;
+        *item = s;
     }
-    key_extended
+    extended_key
 }
 
 fn round_function_40(x: u32, key: u32) -> u32 {

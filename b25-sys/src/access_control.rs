@@ -21,7 +21,7 @@ impl EmmVerifier {
         Self {
             inner_extended: keys
                 .into_iter()
-                .map(|k| BlockConversionSolver40::new(k))
+                .map(BlockConversionSolver40::new)
                 .collect(),
         }
     }
@@ -42,7 +42,7 @@ impl EmmVerifier {
                 }
             }
         }
-        return None;
+        None
     }
 }
 
