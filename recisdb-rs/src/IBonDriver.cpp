@@ -21,4 +21,47 @@ extern "C" {
     {
         return dynamic_cast<const IBonDriver3*>(i);
     }
+    const BOOL OpenTuner(IBonDriver * b)
+    {
+        return b->OpenTuner();
+    }
+	void CloseTuner(IBonDriver * b)
+    {
+        b->CloseTuner();
+    }
+
+	const BOOL SetChannel(IBonDriver * b, const BYTE bCh)
+    {
+        return b->SetChannel(bCh);
+    }
+	const float GetSignalLevel(IBonDriver * b)
+    {
+        return b->GetSignalLevel();
+    }
+
+	const DWORD WaitTsStream(IBonDriver * b, const DWORD dwTimeOut = 0)
+    {
+        return b->WaitTsStream(dwTimeOut);
+    }
+	const DWORD GetReadyCount();
+
+	const BOOL GetTsStream(IBonDriver * b, BYTE *pDst, DWORD *pdwSize, DWORD *pdwRemain)
+    {
+        return b->GetTsStream(pDst, pdwSize, pdwRemain);
+    }
+	const BOOL GetTsStream(IBonDriver * b, BYTE **ppDst, DWORD *pdwSize, DWORD *pdwRemain)
+    {
+        return b->GetTsStream(ppDst, pdwSize, pdwRemain);
+    }
+
+	void PurgeTsStream(IBonDriver * b)
+    {
+        b->PurgeTsStream();
+    }
+
+	void Release(IBonDriver * b)
+    {
+        b->Release();
+    }
 }
+
