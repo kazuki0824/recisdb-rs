@@ -26,10 +26,10 @@ impl BonDriver {
         };
 
         IBon{
-            0: IBon1,
-            1: IBon2,
-            2: IBon3,
-            3: [0;BUF_SZ]
+            1: IBon1,
+            2: IBon2,
+            3: IBon3,
+            0: [0;BUF_SZ]
         }
     }
 }
@@ -62,12 +62,12 @@ impl DynamicCast<IBonDriver3> for IBonDriver2
     }
 }
 
-pub struct IBon<const SZ: usize>(pub(crate) NonNull<IBonDriver>, Option<NonNull<IBonDriver2>>, Option<NonNull<IBonDriver3>>, [u8;SZ]);
+pub struct IBon<const SZ: usize>([u8;SZ], pub(crate) NonNull<IBonDriver>, Option<NonNull<IBonDriver2>>, Option<NonNull<IBonDriver3>>);
 impl<const SZ: usize> Drop for IBon<SZ>
 {
     fn drop(&mut self) {
+        self.3 = None;
         self.2 = None;
-        self.1 = None;
         self.Release();
     }
 }
@@ -79,7 +79,7 @@ impl<const SZ: usize> IBon<SZ>
     pub(crate) fn OpenTuner(&self) -> Result<(), E>
     {
         unsafe {
-            let vt = self.0.as_ref().vtable_ as *mut _;
+            let vt = self.1.as_ref().vtable_ as *mut _;
             if IBonDriver_OpenTuner(vt) != 0 { Ok(()) }
             else { Err(E::OpenError) }
         }
@@ -87,14 +87,14 @@ impl<const SZ: usize> IBon<SZ>
     pub(crate) fn Release(&self)
     {
         unsafe {
-            let vt = self.0.as_ref().vtable_ as *mut _;
+            let vt = self.1.as_ref().vtable_ as *mut _;
             IBonDriver_Release(vt)
         }
     }
     pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), E>
     {
         unsafe {
-            let vt = self.0.as_ref().vtable_ as *mut _;
+            let vt = self.1.as_ref().vtable_ as *mut _;
             if IBonDriver_SetChannel(vt, ch) != 0 { Ok(())}
             else { Err(E::TuneError)}
         }
@@ -106,7 +106,7 @@ impl<const SZ: usize> IBon<SZ>
     pub(crate) fn WaitTsStream(&self, timeout: Duration) -> bool
     {
         unsafe {
-            let vt = self.0.as_ref().vtable_ as *mut _;
+            let vt = self.1.as_ref().vtable_ as *mut _;
             IBonDriver_WaitTsStream(vt, timeout.as_millis() as u32) != 0
         }
     }
@@ -117,14 +117,14 @@ impl<const SZ: usize> IBon<SZ>
                 let mut size = 0_u32;
                 let mut remaining = 0_u32;
 
-                let vt = self.0.as_ref().vtable_ as *mut _;
-                if IBonDriver_GetTsStream(vt, self.3.as_ptr() as *mut _, &mut size as *mut u32, &mut remaining as *mut u32) != 0
+                let vt = self.1.as_ref().vtable_ as *mut _;
+                if IBonDriver_GetTsStream(vt, self.0.as_ptr() as *mut _, &mut size as *mut u32, &mut remaining as *mut u32) != 0
                 {
                     Ok((size as usize, remaining as usize))
                 }
                 else { Err(E::GetTsError) }
             }?;
-        let received = self.3[0..size].to_vec();
+        let received = self.0[0..size].to_vec(); //Copying is necessary in order to avoid simultaneous access caused by next call
         Ok((received, remaining))
     }
 }

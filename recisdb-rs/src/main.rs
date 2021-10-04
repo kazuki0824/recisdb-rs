@@ -56,7 +56,7 @@ fn main() {
     };
 
     //open AsyncRead
-    let mut source = tuned.open();
+    let mut source = tuned.open_stream();
     //ARIB-STD-B25 decode
     let r = {
         //ecm

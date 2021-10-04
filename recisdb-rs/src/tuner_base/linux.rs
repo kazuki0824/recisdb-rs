@@ -54,7 +54,7 @@ impl super::Tuned for TunedDevice {
         todo!()
     }
 
-    fn open(self) -> Box<dyn AsyncRead + Unpin> {
+    fn open_stream(self) -> Box<dyn AsyncRead + Unpin> {
         let raw = unsafe { std::fs::File::from_raw_fd(self.handle) };
         Box::new(AllowStdIo::new(raw))
     }
