@@ -29,15 +29,13 @@
 
 #include <stdint.h>
 
+typedef int BOOL;
+typedef uint8_t BYTE;
+typedef uint32_t DWORD;
 /** IBonDriver インターフェース */
 class IBonDriver
 {
 public:
-#ifndef LIBISDB_WINDOWS
-	typedef int BOOL;
-	typedef uint8_t BYTE;
-	typedef uint32_t DWORD;
-#endif
 
 	virtual const BOOL OpenTuner();
 	virtual void CloseTuner();

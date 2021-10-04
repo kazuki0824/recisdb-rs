@@ -17,11 +17,12 @@ pub struct TunedDevice {
 
 impl TunedDevice {
     pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
+        let path_canonicalized = std::fs::canonicalize(path)?;
         let dll_imported = unsafe {
             let lib = BonDriver::new(path)?;
             ManuallyDrop::new(lib)
         };
-        eprintln!("[BonDriver]{} is loaded", path);
+        eprintln!("[BonDriver]{:?} is loaded", path_canonicalized);
         let interface = {
             let i_bon = dll_imported.create_interface();
             let ver = if i_bon.2.is_none() {
@@ -31,7 +32,7 @@ impl TunedDevice {
             } else {
                 3
             };
-            eprintln!("[BonDriver] An interface is generated. The version is {}", ver);
+            eprintln!("[BonDriver] An interface is generated. The version is {}.", ver);
 
             ManuallyDrop::new(i_bon)
         };
