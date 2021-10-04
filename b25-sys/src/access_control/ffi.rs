@@ -1,8 +1,10 @@
+use std::io::Cursor;
+
+use byteorder::{BigEndian, ReadBytesExt};
+
+use crate::{CHANNEL, KEYHOLDER};
 use crate::access_control::EmmBody;
 use crate::utils::BlockConversionSolver00;
-use crate::{CHANNEL, KEYHOLDER};
-use byteorder::{BigEndian, ReadBytesExt};
-use std::io::Cursor;
 
 #[no_mangle]
 pub extern "C" fn post_scramble_key(src: *const u8, len: usize, dst: *mut u8) {

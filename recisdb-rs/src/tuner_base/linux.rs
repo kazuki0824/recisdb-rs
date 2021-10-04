@@ -1,9 +1,12 @@
-use nix::{fcntl, sys};
 use std::error::Error;
 use std::os::unix::io::FromRawFd;
+
 use futures::AsyncRead;
 use futures::io::AllowStdIo;
+use nix::{fcntl, sys};
+
 use crate::channels::{Channel, ChannelType, Freq};
+
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(lnb_dis, 0x8d, 0x03);
 nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, u8);

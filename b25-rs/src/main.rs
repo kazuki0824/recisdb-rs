@@ -1,12 +1,14 @@
 use std::fs::File;
 use std::io::{stdin, stdout};
-use b25_sys::StreamDecoder;
-use futures::io::{AllowStdIo, CopyBuf, BufReader};
-use futures::{AsyncRead, AsyncWrite};
-use futures::future::AbortHandle;
-use b25_sys::access_control::types::WorkingKey;
 use std::thread::JoinHandle;
+
+use futures::{AsyncRead, AsyncWrite};
 use futures::executor::block_on;
+use futures::future::AbortHandle;
+use futures::io::{AllowStdIo, BufReader, CopyBuf};
+
+use b25_sys::access_control::types::WorkingKey;
+use b25_sys::StreamDecoder;
 
 fn main() {
     println!("Hello, world!");

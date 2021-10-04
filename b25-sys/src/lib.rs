@@ -1,17 +1,21 @@
-pub mod access_control;
-mod inner_decoder;
-mod utils;
-
-use crate::access_control::{EcmKeyHolder, EmmChannel};
-use crate::inner_decoder::decoder;
-use futures::AsyncRead;
-use pin_project_lite::pin_project;
 use std::cell::Cell;
 use std::pin::Pin;
 use std::ptr::NonNull;
 use std::sync::mpsc::{channel, Receiver};
 
+use futures::AsyncRead;
+use futures::task::{Context, Poll};
 use once_cell::sync::OnceCell;
+use pin_project_lite::pin_project;
+
+use crate::access_control::{EcmKeyHolder, EmmChannel};
+use crate::access_control::types::{EmmBody, WorkingKey};
+use crate::inner_decoder::decoder;
+
+pub mod access_control;
+mod inner_decoder;
+mod utils;
+
 static mut CHANNEL: OnceCell<EmmChannel> = OnceCell::new();
 static mut KEYHOLDER: OnceCell<EcmKeyHolder> = OnceCell::new();
 
@@ -66,9 +70,6 @@ impl<'a> StreamDecoder<'a> {
         }
     }
 }
-
-use crate::access_control::types::{EmmBody, WorkingKey};
-use futures::task::{Context, Poll};
 
 impl AsyncRead for StreamDecoder<'_> {
     fn poll_read(

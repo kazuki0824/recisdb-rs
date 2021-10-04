@@ -1,7 +1,10 @@
 #![allow(unused_imports)]
-use crate::channels::Channel;
+
 use std::error::Error;
+
 use futures::AsyncRead;
+
+use crate::channels::Channel;
 
 mod error;
 mod IBonDriver;
