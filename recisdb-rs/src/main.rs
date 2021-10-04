@@ -13,7 +13,6 @@ use b25_sys::StreamDecoder;
 
 use crate::tuner_base::Tuned;
 
-
 mod channels;
 mod tuner_base;
 fn main() {
@@ -27,12 +26,11 @@ fn main() {
     let frequency = channels::Channel::from_ch_str(chan);
 
     //open a device
-    let tuned = match tuner_base::tune(device, frequency)
-    {
+    let tuned = match tuner_base::tune(device, frequency) {
         Ok(t) => t,
         Err(e) => {
-             eprintln!("{}", e);
-             return;
+            eprintln!("{}", e);
+            return;
         }
     };
 
@@ -43,7 +41,7 @@ fn main() {
     }
 
     //set duration
-    let rec_dur ={
+    let rec_dur = {
         let time_sec_parsed = matches
             .value_of("time")
             .and_then(|v| v.trim().parse::<f64>().ok());
@@ -62,10 +60,13 @@ fn main() {
         //ecm
         let key = {
             let emm = matches.is_present("no-card");
-            match (matches.value_of("key0"),matches.value_of("key1")) {
+            match (matches.value_of("key0"), matches.value_of("key1")) {
                 (None, None) => None,
-                (Some(k0), Some(k1)) if emm => Some(WorkingKey{0: k0.parse().unwrap(), 1: k1.parse().unwrap() }),
-                _ => panic!("Specify both of the keys")
+                (Some(k0), Some(k1)) if emm => Some(WorkingKey {
+                    0: k0.parse().unwrap(),
+                    1: k1.parse().unwrap(),
+                }),
+                _ => panic!("Specify both of the keys"),
             }
         };
         //TODO:get emm ids from clap
@@ -73,7 +74,6 @@ fn main() {
 
         StreamDecoder::new(source.as_mut(), key, ids)
     };
-
 
     let core_task = async {
         if let Some(filename) = matches.value_of("output") {
@@ -109,8 +109,7 @@ fn recording<R: AsyncRead, W: AsyncWrite + Unpin>(
     futures::io::copy_buf(r, to)
 }
 
-fn config_timer_handler(duration: Option<Duration>, abort_handle: AbortHandle)
-{
+fn config_timer_handler(duration: Option<Duration>, abort_handle: AbortHandle) {
     //configure timer
     if let Some(record_duration) = duration {
         let h = abort_handle.clone();

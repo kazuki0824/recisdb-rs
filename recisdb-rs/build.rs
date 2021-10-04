@@ -17,8 +17,7 @@ fn main() {
         .dynamic_library_name("BonDriver")
         .dynamic_link_require_all(true)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
-        
-    
+
     let bindings = bg
         // Finish the builder and generate the bindings.
         .generate()
@@ -31,10 +30,7 @@ fn main() {
         .expect("Couldn't write bindings");
 
     let mut cc = cc::Build::new();
-    cc
-        .file("src/IBonDriver.cpp")
-        .cpp(true)
-        .warnings(false);
+    cc.file("src/IBonDriver.cpp").cpp(true).warnings(false);
 
     cc.compile("BonDriver_dynamic_cast_ffi");
 }

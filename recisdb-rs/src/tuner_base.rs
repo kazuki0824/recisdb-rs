@@ -6,10 +6,10 @@ use futures::AsyncRead;
 
 use crate::channels::Channel;
 
-mod error;
 mod IBonDriver;
-mod windows;
+mod error;
 mod linux;
+mod windows;
 
 pub trait Tuned {
     fn signal_quality(&self) -> f64;
@@ -17,8 +17,7 @@ pub trait Tuned {
     fn open_stream(self) -> Box<dyn AsyncRead + Unpin>;
 }
 
-pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>>
-{
+pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>> {
     use crate::tuner_base::error::GeneralError::EnvCompatFailure;
     cfg_if! {
         if #[cfg(target_os = "linux")]
