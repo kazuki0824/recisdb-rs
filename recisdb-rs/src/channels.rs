@@ -9,7 +9,7 @@ pub struct Freq {
 #[derive(Clone, Copy)]
 pub enum ChannelType {
     Terrestrial,
-    CATV,
+    Catv,
     BS,
     CS,
     Undefined,
@@ -35,7 +35,7 @@ impl Channel {
             let ch_type = if first_letter == 'T' {
                 ChannelType::Terrestrial
             } else {
-                ChannelType::CATV
+                ChannelType::Catv
             };
             let physical_ch_num = m.as_str().parse().unwrap();
 
@@ -87,13 +87,13 @@ impl Channel {
     pub fn to_freq(&self, freq_offset: i32) -> Freq {
         let ch_num = self.physical_ch_num;
         let ioctl_channel = match self.ch_type {
-            ChannelType::Terrestrial if (ch_num >= 13) && (ch_num <= 52) => ch_num + 50,
-            ChannelType::CATV if (ch_num >= 23) && (ch_num <= 63) => ch_num - 1,
-            ChannelType::CATV if (ch_num >= 13) && (ch_num <= 22) => ch_num - 10,
-            ChannelType::CS if (ch_num >= 2) && (ch_num <= 24) && (ch_num % 2 == 0) => {
+            ChannelType::Terrestrial if (13..=52).contains(&ch_num) => ch_num + 50,
+            ChannelType::Catv if (23..=63).contains(&ch_num) => ch_num - 1,
+            ChannelType::Catv if (13..=22).contains(&ch_num) => ch_num - 10,
+            ChannelType::CS if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => {
                 ch_num / 2 + 11
             }
-            ChannelType::BS if (ch_num >= 1) && (ch_num <= 23) && (ch_num % 2 == 1) => ch_num / 2,
+            ChannelType::BS if (1..=23).contains(&ch_num) && (ch_num % 2 == 1) => ch_num / 2,
             ChannelType::Undefined => unimplemented!(),
             _ => panic!("Invalid channel."),
         };

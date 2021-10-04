@@ -4,6 +4,7 @@ use std::ptr::NonNull;
 
 mod error;
 
+#[allow(clippy::all)]
 include!(concat!(env!("OUT_DIR"), "/arib25_binding.rs"));
 
 impl decoder {

@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use cpp_utils::{DynamicCast, MutPtr, Ptr};
 
+#[allow(clippy::all)]
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 impl BonDriver {
@@ -113,8 +114,8 @@ impl<const SZ: usize> IBon<SZ>
     {
         let (size, remaining) =
             unsafe {
-                let mut size = 0 as u32;
-                let mut remaining = 0 as u32;
+                let mut size = 0_u32;
+                let mut remaining = 0_u32;
 
                 let vt = self.0.as_ref().vtable_ as *mut _;
                 if IBonDriver_GetTsStream(vt, self.3.as_ptr() as *mut _, &mut size as *mut u32, &mut remaining as *mut u32) != 0
