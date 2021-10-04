@@ -19,10 +19,7 @@ pub struct EmmVerifier {
 impl EmmVerifier {
     pub fn new(keys: Vec<EmmReceivingKeyPair>) -> Self {
         Self {
-            inner_extended: keys
-                .into_iter()
-                .map(BlockConversionSolver40::new)
-                .collect(),
+            inner_extended: keys.into_iter().map(BlockConversionSolver40::new).collect(),
         }
     }
     pub fn try_all_keys(&self, emm: EmmBody) -> Option<EmmDecryptedBody> {

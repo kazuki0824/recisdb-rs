@@ -90,9 +90,7 @@ impl Channel {
             ChannelType::Terrestrial if (13..=52).contains(&ch_num) => ch_num + 50,
             ChannelType::Catv if (23..=63).contains(&ch_num) => ch_num - 1,
             ChannelType::Catv if (13..=22).contains(&ch_num) => ch_num - 10,
-            ChannelType::CS if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => {
-                ch_num / 2 + 11
-            }
+            ChannelType::CS if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => ch_num / 2 + 11,
             ChannelType::BS if (1..=23).contains(&ch_num) && (ch_num % 2 == 1) => ch_num / 2,
             ChannelType::Undefined => unimplemented!(),
             _ => panic!("Invalid channel."),

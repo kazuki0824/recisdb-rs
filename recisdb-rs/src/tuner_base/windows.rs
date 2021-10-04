@@ -3,8 +3,8 @@ use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::time::Duration;
 
-use futures::AsyncRead;
 use futures::future::poll_fn;
+use futures::AsyncRead;
 
 use crate::channels::Channel;
 use crate::tuner_base::error::BonDriverError;
@@ -12,7 +12,7 @@ use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 
 pub struct TunedDevice {
     dll_imported: ManuallyDrop<BonDriver>,
-    pub interface: ManuallyDrop<IBon<10000>>
+    pub interface: ManuallyDrop<IBon<10000>>,
 }
 
 impl TunedDevice {
@@ -23,7 +23,7 @@ impl TunedDevice {
         };
         eprintln!("[BonDriver]{} is loaded", path);
         let interface = {
-            let i_bon =  dll_imported.create();
+            let i_bon = dll_imported.create();
             ManuallyDrop::new(i_bon)
         };
         eprintln!("[BonDriver] Interface generated.");
@@ -33,7 +33,7 @@ impl TunedDevice {
 
         Ok(TunedDevice {
             dll_imported,
-            interface
+            interface,
         })
     }
 }
@@ -49,24 +49,19 @@ impl super::Tuned for TunedDevice {
 
     fn open_stream(self) -> Box<dyn AsyncRead + Unpin> {
         use futures::stream::poll_fn;
-        use futures::TryStreamExt;
         use futures::task::Poll;
+        use futures::TryStreamExt;
         let stream = poll_fn(move |_| {
-            if self.interface.WaitTsStream(Duration::from_millis(1000))
-            {                
-                match self.interface.GetTsStream()
-                {
-                    Ok((buf, remaining)) => {
-                        Poll::Ready(Some(Ok(buf)))
-                    },
+            if self.interface.WaitTsStream(Duration::from_millis(1000)) {
+                match self.interface.GetTsStream() {
+                    Ok((buf, remaining)) => Poll::Ready(Some(Ok(buf))),
                     Err(e) => {
                         //TODO:Convert Error into io::Error?
                         //Poll::Ready(Some(Err(e.into())))
                         Poll::Ready(None)
                     }
                 }
-            }
-            else {
+            } else {
                 Poll::Pending
             }
         });
@@ -74,9 +69,7 @@ impl super::Tuned for TunedDevice {
     }
 }
 
-
-impl Drop for TunedDevice
-{
+impl Drop for TunedDevice {
     fn drop(&mut self) {
         unsafe {
             //NOTE: The drop order should be explicitly defined like below
