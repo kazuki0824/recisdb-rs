@@ -7,12 +7,9 @@ use std::path::PathBuf;
 
 fn main() {
     //TODO: detect current linker name
-    if cfg!(target_os = "linux")
-    {
+    if cfg!(target_os = "linux") {
         println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
-    }
-    else if cfg!(target_os = "windows")
-    {
+    } else if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-arg=/FORCE:UNRESOLVED");
     }
     let out_dir = env::var("OUT_DIR").unwrap();
@@ -38,13 +35,10 @@ fn main() {
     bindings
         .write_to_file(out_path.join("BonDriver_binding.rs"))
         .expect("Couldn't write bindings");
-    
+
     let mut compiler = cc::Build::new();
-    
-    let globs = &[
-        "src/IBonDriver.cpp",
-        "src/vtable_resolver/*.cpp"
-    ];
+
+    let globs = &["src/IBonDriver.cpp", "src/vtable_resolver/*.cpp"];
     for pattern in globs {
         for path in glob::glob(pattern).unwrap() {
             let path = path.unwrap();

@@ -9,7 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
 #[allow(clippy::all)]
 mod ib1 {
-    use super::{IBonDriver, BOOL, DWORD, BYTE};
+    use super::{IBonDriver, BOOL, BYTE, DWORD};
     extern "C" {
         pub fn C_OpenTuner(b: *mut IBonDriver) -> BOOL;
         pub fn C_CloseTuner(b: *mut IBonDriver);

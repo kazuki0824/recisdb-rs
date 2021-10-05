@@ -17,12 +17,11 @@ fn main() {
     let matches = clap::App::from_yaml(yaml).get_matches();
 
     let key = {
-        let emm = matches.is_present("no-card");
         match (matches.value_of("key0"), matches.value_of("key1")) {
             (None, None) => None,
-            (Some(k0), Some(k1)) if emm => Some(WorkingKey {
-                0: k0.parse().unwrap(),
-                1: k1.parse().unwrap(),
+            (Some(k0), Some(k1)) => Some(WorkingKey {
+                0: u64::from_str_radix(k0.trim_start_matches("0x"), 16).unwrap(),
+                1: u64::from_str_radix(k1.trim_start_matches("0x"), 16).unwrap(),
             }),
             _ => panic!("Specify both of the keys"),
         }
