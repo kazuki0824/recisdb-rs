@@ -5,8 +5,7 @@
 #ifndef RECISDB_RUST_DECODER_H
 #define RECISDB_RUST_DECODER_H
 
-
-
+#define ARIB25_API_STATIC_DEFINE
 #include <arib25/arib_std_b25.h>
 #include <arib25/b_cas_card.h>
 
