@@ -68,75 +68,15 @@ static B_CAS_CARD_DEFAULT_DATA bcasprv = {
         16,
 };
 
-#ifdef _MSVC_C
-static inline void send_ecm(unsigned char * src, int sz, unsigned char ks[16])
-{
-    DWORD cbWritten, cbRead = 0;
-    BOOL fResult = WriteFile(smq, 
-     src, 
-     (DWORD) sz,  
-     &cbWritten, 
-     (LPOVERLAPPED) NULL); 
-    if (!fResult) 
-    { 
-        printf("WriteFile failed with %d.\n", GetLastError()); 
-        return; 
-    }
-
-    fResult = ReadFile(rmq, 
-        ks, 
-        16, 
-        &cbRead, 
-        (LPOVERLAPPED) NULL); 
-    if (!fResult) 
-    { 
-        printf("ReadFile failed with %d.\n", GetLastError()); 
-        return; 
-    } 
-}
 static void deinit(void *bcas)
 {
-    return;
-}
-static int init(void *bcas)
-{
-    DWORD pid = GetCurrentProcessId();
-    //create mailslot
-    LPTSTR c[18], p[18];
-    sprintf(c, "/tmp_%d_mqecm_c", pid);
-    sprintf(p, "/tmp_%d_mqecm_p", pid);
-
-    smq = CreateMailslot(
-        (LPCTSTR)c, 
-        10, 
-        2000, 
-        (LPSECURITY_ATTRIBUTES) NULL 
-    );
-
-    rmq = CreateMailslot(
-        (LPCTSTR)c, 
-        16, 
-        2000, 
-        (LPSECURITY_ATTRIBUTES) NULL 
-    );
-
-    if ((smq == INVALID_HANDLE_VALUE) || (rmq == INVALID_HANDLE_VALUE))
-    {
-        return B_CAS_CARD_ERROR_NOT_INITIALIZED;
-    }
-
-    return 0;
-}
-#else
-static void deinit(void *bcas)
-{
+    //TODO: Free memory
     return;
 }
 static int init(void *bcas)
 {
     return 0;
 }
-#endif
 
 static int get_init_status(void *bcas, B_CAS_INIT_STATUS *stat)
 {

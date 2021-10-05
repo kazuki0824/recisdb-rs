@@ -5,8 +5,10 @@
 #ifndef RECISDB_RUST_PIPE_ECM_H
 #define RECISDB_RUST_PIPE_ECM_H
 
+#define ARIB25_API_STATIC_DEFINE
 #include "arib25/b_cas_card.h"
-B_CAS_CARD card_default;
+
+extern B_CAS_CARD card_default;
 B_CAS_INIT_STATUS preset;
 B_CAS_PWR_ON_CTRL pwc_data[1];
 
