@@ -35,7 +35,8 @@ fn main() {
             Err(_e) => {
                 //start self build
                 let mut cm = cmake::Config::new("./externals/libarib25");
-                cm.build();
+                let res = cm.build();
+                println!("cargo:rustc-link-search=native={}/lib", res.display());
             }
             Ok(_b25) => {
                 //cc.includes(b25.include_paths.as_slice());
@@ -45,9 +46,10 @@ fn main() {
         //+BonDriver
         let mut cm = cmake::Config::new("./externals/libarib25");
         cm.generator("Visual Studio 16").very_verbose(true);
-        let _res = cm.build();
-        //TODO: add files into install target -> panic!("{}", res.into_os_string().into_string().unwrap());
+        let res = cm.build();
+        println!("cargo:rustc-link-search=native={}/lib", res.display());
     }
+    println!("cargo:rustc-link-lib=static=arib25");
 
     //start ffi compilation
     cc.compile("b25_ffi");
