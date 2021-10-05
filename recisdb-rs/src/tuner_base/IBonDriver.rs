@@ -5,8 +5,34 @@ use std::time::Duration;
 
 use cpp_utils::{DynamicCast, MutPtr, Ptr};
 
-#[allow(clippy::all)]
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
+
+#[allow(clippy::all)]
+mod ib1 {
+    use super::{IBonDriver, BOOL, DWORD, BYTE};
+    extern "C" {
+        pub fn C_OpenTuner(b: *mut IBonDriver) -> BOOL;
+        pub fn C_CloseTuner(b: *mut IBonDriver);
+        pub fn C_SetChannel(b: *mut IBonDriver, bCh: BYTE) -> BOOL;
+        pub fn C_GetSignalLevel(b: *mut IBonDriver) -> f32;
+        pub fn C_WaitTsStream(b: *mut IBonDriver, dwTimeOut: DWORD) -> DWORD;
+        pub fn C_GetReadyCount() -> DWORD;
+        pub fn C_GetTsStream(
+            b: *mut IBonDriver,
+            pDst: *mut BYTE,
+            pdwSize: *mut DWORD,
+            pdwRemain: *mut DWORD,
+        ) -> BOOL;
+        pub fn C_GetTsStream2(
+            b: *mut IBonDriver,
+            ppDst: *mut *mut BYTE,
+            pdwSize: *mut DWORD,
+            pdwRemain: *mut DWORD,
+        ) -> BOOL;
+        pub fn C_PurgeTsStream(b: *mut IBonDriver);
+        pub fn C_Release(b: *mut IBonDriver);
+    }
+}
 
 impl BonDriver {
     pub fn create_interface<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
@@ -79,8 +105,8 @@ impl<const SZ: usize> IBon<SZ> {
     //automatically select which version to use, like https://github.com/DBCTRADO/LibISDB/blob/519f918b9f142b77278acdb71f7d567da121be14/LibISDB/Windows/Base/BonDriver.cpp#L175
     pub(crate) fn OpenTuner(&self) -> Result<(), E> {
         unsafe {
-            let vt = self.1.as_ref().vtable_ as *mut _;
-            if IBonDriver_OpenTuner(vt) != 0 {
+            let iface = self.1.as_ptr();
+            if ib1::C_OpenTuner(iface) != 0 {
                 Ok(())
             } else {
                 Err(E::OpenError)
@@ -89,14 +115,14 @@ impl<const SZ: usize> IBon<SZ> {
     }
     pub(crate) fn Release(&self) {
         unsafe {
-            let vt = self.1.as_ref().vtable_ as *mut _;
-            IBonDriver_Release(vt)
+            let iface = self.1.as_ptr();
+            ib1::C_Release(iface)
         }
     }
     pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), E> {
         unsafe {
-            let vt = self.1.as_ref().vtable_ as *mut _;
-            if IBonDriver_SetChannel(vt, ch) != 0 {
+            let iface = self.1.as_ptr();
+            if ib1::C_SetChannel(iface, ch) != 0 {
                 Ok(())
             } else {
                 Err(E::TuneError)
@@ -108,8 +134,8 @@ impl<const SZ: usize> IBon<SZ> {
     }
     pub(crate) fn WaitTsStream(&self, timeout: Duration) -> bool {
         unsafe {
-            let vt = self.1.as_ref().vtable_ as *mut _;
-            IBonDriver_WaitTsStream(vt, timeout.as_millis() as u32) != 0
+            let iface = self.1.as_ptr();
+            ib1::C_WaitTsStream(iface, timeout.as_millis() as u32) != 0
         }
     }
     pub(crate) fn GetTsStream(&self) -> Result<(Vec<u8>, usize), E> {
@@ -117,9 +143,9 @@ impl<const SZ: usize> IBon<SZ> {
             let mut size = 0_u32;
             let mut remaining = 0_u32;
 
-            let vt = self.1.as_ref().vtable_ as *mut _;
-            if IBonDriver_GetTsStream(
-                vt,
+            let iface = self.1.as_ptr();
+            if ib1::C_GetTsStream(
+                iface,
                 self.0.as_ptr() as *mut _,
                 &mut size as *mut u32,
                 &mut remaining as *mut u32,
