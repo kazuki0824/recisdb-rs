@@ -52,17 +52,12 @@ fn main() {
             }
         }
     } else {
-        //+BonDriver
+        //assume MSVC
         let mut cm = cmake::Config::new("./externals/libarib25");
         cm.generator("Visual Studio 16").very_verbose(true);
-        //FIXME: MSVC + b25-rs + debug = fail
+        //MSVC + b25-rs(debug) + libarib25(debug) = fail
         //warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
-        let profile = if profile == "debug" {
-            "Debug"
-        } else {
-            "Release"
-        };
-        cm.define("CMAKE_BUILD_TYPE", profile);
+        cm.profile("Release");
         let res = cm.build();
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         /* MSVC emits two different *.lib files, libarib25.lib and arib25.lib.
