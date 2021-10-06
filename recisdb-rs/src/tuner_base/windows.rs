@@ -41,7 +41,7 @@ impl TunedDevice {
         };
 
         interface.OpenTuner()?;
-        interface.SetChannel(channel.physical_ch_num)?;
+        interface.SetChannel(channel)?;
 
         Ok(TunedDevice {
             dll_imported,

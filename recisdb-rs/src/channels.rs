@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use fancy_regex::Regex;
 
 #[repr(C)]
@@ -6,7 +8,7 @@ pub struct Freq {
     pub slot: i32,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ChannelType {
     Terrestrial,
     Catv,
@@ -14,12 +16,31 @@ pub enum ChannelType {
     CS,
     Undefined,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Channel {
     pub ch_type: ChannelType,
     pub raw_string: String,
     pub physical_ch_num: u8,
     pub stream_id: i32,
+}
+
+impl Display for ChannelType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        type T = ChannelType;
+        match self {
+            T::Terrestrial => write!(f, "GR"),
+            T::Catv => write!(f, "CATV"),
+            T::BS => write!(f, "BS"),
+            T::CS => write!(f, "CS"),
+            _ => write!(f, "Undefined"),
+        }
+    }
+}
+
+impl Display for Channel{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}(Raw->{})", self.ch_type, self.raw_string, self.physical_ch_num)
+    }
 }
 
 impl Channel {
