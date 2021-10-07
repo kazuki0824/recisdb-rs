@@ -6,8 +6,9 @@ use futures::AsyncBufRead;
 use crate::channels::{Channel, ChannelType, Freq};
 
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
-nix::ioctl_none!(lnb_dis, 0x8d, 0x03);
-nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, u8);
+nix::ioctl_none!(start_rec, 0x8d, 0x02);
+nix::ioctl_none!(stop_rec, 0x8d, 0x03);
+nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, i32);
 nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
@@ -40,8 +41,8 @@ impl TunedDevice {
 
 impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
-        let raw: u8 = 0;
-        let errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), raw as *mut u8) }.unwrap();
+        let raw: i32 = 0;
+        let errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), raw as *mut i32) }.unwrap();
 
         match self.channel.ch_type {
             ChannelType::Terrestrial => {
@@ -53,8 +54,38 @@ impl super::Tuned for TunedDevice {
                 cnr
             }
             _ => {
-                todo!("ISDB-S sn rate");
-                0.0
+                const afLevelTable: [f64;14] = [
+                    24.07,    // 00    00    0        24.07dB
+                    24.07,    // 10    00    4096     24.07dB
+                    18.61,    // 20    00    8192     18.61dB
+                    15.21,    // 30    00    12288    15.21dB
+                    12.50,    // 40    00    16384    12.50dB
+                    10.19,    // 50    00    20480    10.19dB
+                    8.140,    // 60    00    24576    8.140dB
+                    6.270,    // 70    00    28672    6.270dB
+                    4.550,    // 80    00    32768    4.550dB
+                    3.730,    // 88    00    34816    3.730dB
+                    3.630,    // 88    FF    35071    3.630dB
+                    2.940,    // 90    00    36864    2.940dB
+                    1.420,    // A0    00    40960    1.420dB
+                    0.000     // B0    00    45056    -0.01dB
+                ];
+                let sig = ((raw & 0xFF00) >> 8) as u8 & 0xFF ;
+                if sig <= 0x10u8 {
+                    /* clipped maximum */
+                    24.07
+                }
+                else if sig >= 0xB0u8 {
+                    /* clipped minimum */
+                    0.0
+                }
+                else {
+                    /* linear interpolation */
+                    let fMixRate:f32 =
+                        (((sigbuf[0] as u16 & 0x0F) << 8) | sigbuf[0]) / 4096.0;
+                    return afLevelTable[sig >> 4] * (1.0 - fMixRate) +
+                        afLevelTable[(sig >> 4) + 0x01u8] * fMixRate;
+                }
             }
         }
     }
@@ -67,6 +98,7 @@ impl super::Tuned for TunedDevice {
         use futures::io::AllowStdIo;
         use std::io::BufReader;
 
+        unsafe { start_rec(self.f.as_raw_fd()) };
         let with_buffer = BufReader::new(self.f);
         Box::new(AllowStdIo::new(with_buffer))
     }
