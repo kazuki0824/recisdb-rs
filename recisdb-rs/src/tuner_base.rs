@@ -2,7 +2,7 @@
 
 use std::error::Error;
 
-use futures::AsyncRead;
+use futures::AsyncBufRead;
 
 use crate::channels::Channel;
 
@@ -15,7 +15,7 @@ mod windows;
 pub trait Tuned {
     fn signal_quality(&self) -> f64;
     fn set_lnb(&self) -> Result<i8, String>;
-    fn open_stream(self) -> Box<dyn AsyncRead + Unpin>;
+    fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin>;
 }
 
 pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>> {
