@@ -81,10 +81,10 @@ impl super::Tuned for TunedDevice {
                 }
                 else {
                     /* linear interpolation */
-                    let fMixRate:f32 =
-                        (((sigbuf[0] as u16 & 0x0F) << 8) | sigbuf[0]) / 4096.0;
-                    return afLevelTable[sig >> 4] * (1.0 - fMixRate) +
-                        afLevelTable[(sig >> 4) + 0x01u8] * fMixRate;
+                    let fMixRate =
+                        (((sig as u16 & 0x0F) << 8) | sig as u16) as f64 / 4096.0;
+                    afLevelTable[(sig >> 4) as usize] * (1.0 - fMixRate) +
+                    afLevelTable[(sig >> 4) as usize + 0x01] * fMixRate
                 }
             }
         }
