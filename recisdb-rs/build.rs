@@ -8,7 +8,7 @@ use std::path::PathBuf;
 fn main() {
     //TODO: detect current linker name
     if cfg!(target_os = "linux") {
-        println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
+        //println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
     } else if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-arg=/FORCE:UNRESOLVED");
     }

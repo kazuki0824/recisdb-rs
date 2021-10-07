@@ -37,9 +37,13 @@ impl Display for ChannelType {
     }
 }
 
-impl Display for Channel{
+impl Display for Channel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}(Raw->{})", self.ch_type, self.raw_string, self.physical_ch_num)
+        write!(
+            f,
+            "{}: {}(Raw->{})",
+            self.ch_type, self.raw_string, self.physical_ch_num
+        )
     }
 }
 

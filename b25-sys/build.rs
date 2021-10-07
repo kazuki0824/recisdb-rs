@@ -11,7 +11,6 @@ fn main() {
     println!("cargo:rerun-if-changed=src/inner_decoder/pipe_ecm.c");
     println!("cargo:rerun-if-changed=src/inner_decoder/decoder.h");
     println!("cargo:rerun-if-changed=src/inner_decoder/pipe_ecm.h");
-    let profile = env::var("PROFILE").unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
     let out_path = PathBuf::from(&out_dir);
     let include_dir = format!("{}/{}", out_dir, "include");

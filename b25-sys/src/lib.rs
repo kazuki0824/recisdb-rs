@@ -4,7 +4,7 @@ use std::ptr::NonNull;
 use std::sync::mpsc::{channel, Receiver};
 
 use futures::task::{Context, Poll};
-use futures::{AsyncRead, AsyncBufRead, ready};
+use futures::{ready, AsyncBufRead, AsyncRead};
 use once_cell::sync::OnceCell;
 use pin_project_lite::pin_project;
 
@@ -90,14 +90,13 @@ impl AsyncRead for StreamDecoder<'_> {
         let recv = ready!(this.reader.as_mut().poll_fill_buf(cx))?;
         //get n
         let n = recv.len();
-        //if 0, continue waiting for next
-        if n == 0 { 
+        //if 0, exit, or continue waiting for next
+        if n == 0 {
             this.reader.as_mut().consume(0);
-            // return Poll::Ready(Ok(0));
-            cx.waker().wake_by_ref();
-            Poll::Pending
-        }
-        else {
+            return Poll::Ready(Ok(0));
+            // cx.waker().wake_by_ref();
+            // Poll::Pending
+        } else {
             //transformation
             let result = unsafe {
                 let dec = this.inner.as_mut();
