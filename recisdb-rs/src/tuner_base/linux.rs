@@ -41,37 +41,34 @@ impl super::Tuned for TunedDevice {
                 cnr
             }
             _ => {
-                const afLevelTable: [f64;14] = [
-                    24.07,    // 00    00    0        24.07dB
-                    24.07,    // 10    00    4096     24.07dB
-                    18.61,    // 20    00    8192     18.61dB
-                    15.21,    // 30    00    12288    15.21dB
-                    12.50,    // 40    00    16384    12.50dB
-                    10.19,    // 50    00    20480    10.19dB
-                    8.140,    // 60    00    24576    8.140dB
-                    6.270,    // 70    00    28672    6.270dB
-                    4.550,    // 80    00    32768    4.550dB
-                    3.730,    // 88    00    34816    3.730dB
-                    3.630,    // 88    FF    35071    3.630dB
-                    2.940,    // 90    00    36864    2.940dB
-                    1.420,    // A0    00    40960    1.420dB
-                    0.000     // B0    00    45056    -0.01dB
+                const afLevelTable: [f64; 14] = [
+                    24.07, // 00    00    0        24.07dB
+                    24.07, // 10    00    4096     24.07dB
+                    18.61, // 20    00    8192     18.61dB
+                    15.21, // 30    00    12288    15.21dB
+                    12.50, // 40    00    16384    12.50dB
+                    10.19, // 50    00    20480    10.19dB
+                    8.140, // 60    00    24576    8.140dB
+                    6.270, // 70    00    28672    6.270dB
+                    4.550, // 80    00    32768    4.550dB
+                    3.730, // 88    00    34816    3.730dB
+                    3.630, // 88    FF    35071    3.630dB
+                    2.940, // 90    00    36864    2.940dB
+                    1.420, // A0    00    40960    1.420dB
+                    0.000, // B0    00    45056    -0.01dB
                 ];
-                let sig = ((raw & 0xFF00) >> 8) as u8 & 0xFF ;
+                let sig = ((raw & 0xFF00) >> 8) as u8 & 0xFF;
                 if sig <= 0x10u8 {
                     /* clipped maximum */
                     24.07
-                }
-                else if sig >= 0xB0u8 {
+                } else if sig >= 0xB0u8 {
                     /* clipped minimum */
                     0.0
-                }
-                else {
+                } else {
                     /* linear interpolation */
-                    let fMixRate =
-                        (((sig as u16 & 0x0F) << 8) | sig as u16) as f64 / 4096.0;
-                    afLevelTable[(sig >> 4) as usize] * (1.0 - fMixRate) +
-                    afLevelTable[(sig >> 4) as usize + 0x01] * fMixRate
+                    let fMixRate = (((sig as u16 & 0x0F) << 8) | sig as u16) as f64 / 4096.0;
+                    afLevelTable[(sig >> 4) as usize] * (1.0 - fMixRate)
+                        + afLevelTable[(sig >> 4) as usize + 0x01] * fMixRate
                 }
             }
         }

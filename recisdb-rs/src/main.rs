@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate cfg_if;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use clap::App;
@@ -36,7 +37,16 @@ fn main() {
 
     //check S/N rate
     if matches.is_present("checksignal") {
-        tuned.signal_quality();
+        //configure sigint trigger
+        let flag = AtomicBool::new(false);
+        ctrlc::set_handler(move || flag.store(true, Ordering::Relaxed)).unwrap();
+        loop {
+            println!("S/N = {}[dB]\r", tuned.signal_quality());
+            if flag.load(Ordering::Relaxed) {
+                return;
+            }
+            std::thread::sleep(Duration::from_secs(1));
+        }
         return;
     }
 
