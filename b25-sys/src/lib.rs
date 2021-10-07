@@ -26,7 +26,6 @@ pin_project! {
         received: Cell<usize>,
         sent: Cell<usize>,
         inner: NonNull<decoder>,
-        buf: [u8; 8000],
     }
     impl PinnedDrop for StreamDecoder<'_> {
         fn drop(this: Pin<&mut Self>) {
@@ -64,7 +63,6 @@ impl<'a> StreamDecoder<'a> {
                 sent: Cell::new(0),
                 reader,
                 inner: decoder::new(true, ids).unwrap(),
-                buf: [0; 8000],
             }
         } else {
             Self {
@@ -72,7 +70,6 @@ impl<'a> StreamDecoder<'a> {
                 sent: Cell::new(0),
                 reader,
                 inner: decoder::new(false, ids).unwrap(),
-                buf: [0; 8000],
             }
         }
     }
