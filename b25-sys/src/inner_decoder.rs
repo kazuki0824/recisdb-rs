@@ -32,9 +32,9 @@ impl decoder {
 
         NonNull::new(ptr)
     }
-    pub(super) fn push(&mut self, data: &mut [u8]) -> Option<ARIB_STD_B25_BUFFER> {
+    pub(super) fn push(&mut self, data: &[u8]) -> Option<ARIB_STD_B25_BUFFER> {
         let input = ARIB_STD_B25_BUFFER {
-            data: data.as_mut_ptr(),
+            data: data.as_ptr() as *mut _,
             size: data.len() as i32,
         };
         let out = unsafe { process_data(self as *mut decoder, input) };
