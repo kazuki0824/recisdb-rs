@@ -21,19 +21,6 @@ impl TunedDevice {
     pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<Self, Box<dyn Error>> {
         let mut f = std::fs::OpenOptions::new().read(true).open(path).unwrap();
         unsafe { set_ch(f.as_raw_fd(), &channel.to_freq(offset_k_hz))? };
-        //Warm-up
-        let mut e = [0u8; 2];
-        use std::io::Read;
-        {
-            let mut result = f.read_exact(&mut e[0..]);
-            let mut i = 0;
-            while result.is_err() && (0..20).contains(&i)
-            {
-                i += 1;
-                result = f.read_exact(&mut e[0..]);
-            }
-            result
-        }.expect("The file was definitely opened and the channel selection was successful,\nbut the stream cannot be read properly.\n");
 
         Ok(Self { f, channel })
     }
@@ -99,6 +86,20 @@ impl super::Tuned for TunedDevice {
         use std::io::BufReader;
 
         unsafe { start_rec(self.f.as_raw_fd()) };
+        //Warm-up
+        let mut e = [0u8; 2];
+        use std::io::Read;
+        {
+            let mut result = f.read_exact(&mut e[0..]);
+            let mut i = 0;
+            while result.is_err() && (0..20).contains(&i)
+            {
+                i += 1;
+                result = f.read_exact(&mut e[0..]);
+            }
+            result
+        }.expect("The file was definitely opened and the channel selection was successful,\nbut the stream cannot be read properly.\n");
+        //Init buffered io
         let with_buffer = BufReader::new(self.f);
         Box::new(AllowStdIo::new(with_buffer))
     }
