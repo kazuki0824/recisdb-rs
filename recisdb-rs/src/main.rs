@@ -76,7 +76,8 @@ fn main() {
 
     let core_task = async {
         if let Some(filename) = matches.value_of("output") {
-            let mut w = AllowStdIo::new(std::fs::File::create(filename).unwrap());
+            eprintln!("Write: {}", filename);
+            let mut w = AllowStdIo::new(std::fs::OpenOptions::new().write(true).create(true).open(filename).unwrap());
             let (rw, h) = recording(r, &mut w);
             config_timer_handler(rec_dur, h);
             rw.await
@@ -92,7 +93,7 @@ fn main() {
     let result = block_on(core_task);
 
     match result {
-        Ok(Ok(n)) => eprintln!("Stream reached its end. {} B received.", n),
+        Ok(Ok(_)) => eprintln!("Stream has gracefully reached its end."),
         Ok(Err(a)) => eprintln!("{}", a),
         Err(e) => eprintln!("{}", e),
         //Err(_e) => eprintln!("Tasks finished because of time or sigint."),
