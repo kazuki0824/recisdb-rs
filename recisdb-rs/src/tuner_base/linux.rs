@@ -81,7 +81,7 @@ impl super::Tuned for TunedDevice {
         todo!()
     }
 
-    fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
+    fn open_stream(mut self) -> Box<dyn AsyncBufRead + Unpin> {
         use futures::io::AllowStdIo;
         use std::io::BufReader;
 
@@ -90,12 +90,12 @@ impl super::Tuned for TunedDevice {
         let mut e = [0u8; 2];
         use std::io::Read;
         {
-            let mut result = f.read_exact(&mut e[0..]);
+            let mut result = self.f.read_exact(&mut e[0..]);
             let mut i = 0;
             while result.is_err() && (0..20).contains(&i)
             {
                 i += 1;
-                result = f.read_exact(&mut e[0..]);
+                result = self.f.read_exact(&mut e[0..]);
             }
             result
         }.expect("The file was definitely opened and the channel selection was successful,\nbut the stream cannot be read properly.\n");
