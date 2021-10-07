@@ -1,8 +1,9 @@
 use std::error::Error;
+use std::io::BufReader;
 use std::os::unix::io::FromRawFd;
 
 use futures::io::AllowStdIo;
-use futures::AsyncRead;
+use futures::AsyncBufRead;
 use nix::{fcntl, sys};
 
 use crate::channels::{Channel, ChannelType, Freq};
@@ -51,8 +52,9 @@ impl super::Tuned for TunedDevice {
         todo!()
     }
 
-    fn open_stream(self) -> Box<dyn AsyncRead + Unpin> {
+    fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
         let raw = unsafe { std::fs::File::from_raw_fd(self.handle) };
-        Box::new(AllowStdIo::new(raw))
+        let with_buffer = BufReader::with_capacity(400000, raw);
+        Box::new(AllowStdIo::new(with_buffer))
     }
 }

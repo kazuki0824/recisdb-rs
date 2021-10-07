@@ -4,7 +4,7 @@ use std::ptr::NonNull;
 use std::time::Duration;
 
 use futures::future::poll_fn;
-use futures::AsyncRead;
+use futures::io::AsyncBufRead;
 
 use crate::channels::Channel;
 use crate::tuner_base::error::BonDriverError;
@@ -59,7 +59,7 @@ impl super::Tuned for TunedDevice {
         todo!()
     }
 
-    fn open_stream(self) -> Box<dyn AsyncRead + Unpin> {
+    fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
         use futures::stream::poll_fn;
         use futures::task::Poll;
         use futures::TryStreamExt;

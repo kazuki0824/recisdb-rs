@@ -4,7 +4,7 @@ use std::ptr::NonNull;
 use std::sync::mpsc::{channel, Receiver};
 
 use futures::task::{Context, Poll};
-use futures::AsyncRead;
+use futures::{AsyncRead, AsyncBufRead, ready};
 use once_cell::sync::OnceCell;
 use pin_project_lite::pin_project;
 
@@ -22,12 +22,15 @@ static mut KEYHOLDER: OnceCell<EcmKeyHolder> = OnceCell::new();
 pin_project! {
     pub struct StreamDecoder<'a> {
         #[pin]
-        pub src: &'a mut (dyn AsyncRead + Unpin),
+        pub reader: &'a mut (dyn AsyncBufRead + Unpin),
+        received: Cell<usize>,
+        sent: Cell<usize>,
         inner: NonNull<decoder>,
         buf: [u8; 8000],
     }
     impl PinnedDrop for StreamDecoder<'_> {
         fn drop(this: Pin<&mut Self>) {
+            eprintln!("{}B received, and {}B converted.", this.received.get(), this.sent.get());
             unsafe { this.project().inner.as_mut() }.clean_up();
         }
     }
@@ -45,7 +48,7 @@ pub fn receive_emm() -> Option<&'static Receiver<EmmBody>> {
 
 impl<'a> StreamDecoder<'a> {
     pub fn new(
-        src: &'a mut (dyn AsyncRead + Unpin),
+        reader: &'a mut (dyn AsyncBufRead + Unpin),
         key: Option<WorkingKey>,
         ids: Vec<i64>,
     ) -> Self {
@@ -57,13 +60,17 @@ impl<'a> StreamDecoder<'a> {
                 CHANNEL.get_or_init(channel)
             };
             Self {
-                src,
+                received: Cell::new(0),
+                sent: Cell::new(0),
+                reader,
                 inner: decoder::new(true, ids).unwrap(),
                 buf: [0; 8000],
             }
         } else {
             Self {
-                src,
+                received: Cell::new(0),
+                sent: Cell::new(0),
+                reader,
                 inner: decoder::new(false, ids).unwrap(),
                 buf: [0; 8000],
             }
@@ -77,15 +84,27 @@ impl AsyncRead for StreamDecoder<'_> {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<std::io::Result<usize>> {
-        let this = self.project();
-        match this.src.poll_read(cx, &mut this.buf[0..]) {
-            Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
-            Poll::Ready(Ok(n)) if n == 0 => Poll::Ready(Ok(0)),
-            Poll::Ready(Ok(n)) => unsafe {
-                let recv = &mut this.buf[0..n];
-                let dec = this.inner.as_mut();
+        let mut this = self.project();
 
+        //try receiving
+        let recv = ready!(this.reader.as_mut().poll_fill_buf(cx))?;
+        //get n
+        let n = recv.len();
+        //if 0, continue waiting for next
+        if n == 0 { 
+            this.reader.as_mut().consume(0);
+            // return Poll::Ready(Ok(0));
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        }
+        else {
+            //transformation
+            let result = unsafe {
+                let dec = this.inner.as_mut();
                 if let Some(decoded) = dec.push(recv) {
+                    //Increase a counter
+                    this.sent.set(decoded.size as usize + this.sent.get());
+                    //Slice
                     let contents =
                         std::ptr::slice_from_raw_parts(decoded.data, decoded.size as usize);
                     buf[0..decoded.size as usize].copy_from_slice(&*contents);
@@ -94,11 +113,11 @@ impl AsyncRead for StreamDecoder<'_> {
                     cx.waker().wake_by_ref();
                     Poll::Pending
                 }
-            },
-            _ => {
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
+            };
+            //Increase a counter
+            this.reader.as_mut().consume(n);
+            this.received.set(n + this.received.get());
+            result
         }
     }
 }
