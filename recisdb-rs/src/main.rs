@@ -38,11 +38,13 @@ fn main() {
     //check S/N rate
     if matches.is_present("checksignal") {
         //configure sigint trigger
-        let flag = AtomicBool::new(false);
+        let flag = std::sync::Arc::new(AtomicBool::new(false));
+        let flag2 = flag.clone();
         ctrlc::set_handler(move || flag.store(true, Ordering::Relaxed)).unwrap();
+        
         loop {
             println!("S/N = {}[dB]\r", tuned.signal_quality());
-            if flag.load(Ordering::Relaxed) {
+            if flag2.load(Ordering::Relaxed) {
                 return;
             }
             std::thread::sleep(Duration::from_secs(1));
