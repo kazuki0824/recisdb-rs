@@ -3,8 +3,7 @@ use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::time::Duration;
 
-use futures::future::poll_fn;
-use futures::io::AsyncBufRead;
+use futures::io::{AsyncBufRead, AsyncRead};
 
 use crate::channels::Channel;
 use crate::tuner_base::error::BonDriverError;
@@ -60,24 +59,10 @@ impl super::Tuned for TunedDevice {
     }
 
     fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
-        use futures::stream::poll_fn;
-        use futures::task::Poll;
-        use futures::TryStreamExt;
-        let stream = poll_fn(move |_| {
-            if self.interface.WaitTsStream(Duration::from_millis(1000)) {
-                match self.interface.GetTsStream() {
-                    Ok((buf, remaining)) => Poll::Ready(Some(Ok(buf))),
-                    Err(e) => {
-                        //TODO:Convert Error into io::Error?
-                        //Poll::Ready(Some(Err(e.into())))
-                        Poll::Ready(None)
-                    }
-                }
-            } else {
-                Poll::Pending
-            }
-        });
-        Box::new(stream.into_async_read())
+        use futures::io::BufReader;
+
+        let with_buffer = BufReader::new(self);
+        Box::new(with_buffer)
     }
 }
 
@@ -87,6 +72,34 @@ impl Drop for TunedDevice {
             //NOTE: The drop order should be explicitly defined like below
             ManuallyDrop::drop(&mut self.interface);
             ManuallyDrop::drop(&mut self.dll_imported);
+        }
+    }
+}
+
+impl AsyncRead for TunedDevice
+{
+    fn poll_read(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>, buf: &mut [u8]) -> std::task::Poll<std::io::Result<usize>> {
+        use futures::task::Poll;
+        if self.interface.WaitTsStream(Duration::from_millis(1000)) {
+            match self.interface.GetTsStream() {
+                Ok((recv, remaining)) if recv.len() > 0 => {
+                    eprintln!("{} bytes recv", recv.len());
+                    &buf[0..recv.len()].copy_from_slice(&recv[0..]);
+                    Poll::Ready(Ok(buf.len()))
+                },
+                Err(e) => {
+                    //TODO: Convert Error into io::Error?
+                    //Poll::Ready(Some(Err(e.into())))
+                    Poll::Ready(Ok(0))
+                }
+                _ => {
+                    cx.waker().wake_by_ref();
+                    Poll::Pending
+                }
+            }
+        } else {
+            cx.waker().wake_by_ref();
+            Poll::Pending
         }
     }
 }
