@@ -49,7 +49,6 @@ fn main() {
             }
             std::thread::sleep(Duration::from_secs(1));
         }
-        return;
     }
 
     //set duration

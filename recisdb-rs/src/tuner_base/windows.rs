@@ -84,7 +84,7 @@ impl AsyncRead for TunedDevice
             match self.interface.GetTsStream() {
                 Ok((recv, remaining)) if recv.len() > 0 => {
                     eprintln!("{} bytes recv", recv.len());
-                    &buf[0..recv.len()].copy_from_slice(&recv[0..]);
+                    buf[0..recv.len()].copy_from_slice(&recv[0..]);
                     Poll::Ready(Ok(buf.len()))
                 },
                 Err(e) => {

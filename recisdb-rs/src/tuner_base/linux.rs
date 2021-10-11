@@ -19,7 +19,8 @@ pub struct TunedDevice {
 }
 impl TunedDevice {
     pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<Self, Box<dyn Error>> {
-        let mut f = std::fs::OpenOptions::new().read(true).open(path).unwrap();
+        let path = std::fs::canonicalize(path)?;
+        let f = std::fs::OpenOptions::new().read(true).open(path)?;
         unsafe { set_ch(f.as_raw_fd(), &channel.to_freq(offset_k_hz))? };
 
         Ok(Self { f, channel })
@@ -41,7 +42,7 @@ impl super::Tuned for TunedDevice {
                 cnr
             }
             _ => {
-                const afLevelTable: [f64; 14] = [
+                const AF_LEVEL_TABLE: [f64; 14] = [
                     24.07, // 00    00    0        24.07dB
                     24.07, // 10    00    4096     24.07dB
                     18.61, // 20    00    8192     18.61dB
@@ -66,9 +67,9 @@ impl super::Tuned for TunedDevice {
                     0.0
                 } else {
                     /* linear interpolation */
-                    let fMixRate = (((sig as u16 & 0x0F) << 8) | sig as u16) as f64 / 4096.0;
-                    afLevelTable[(sig >> 4) as usize] * (1.0 - fMixRate)
-                        + afLevelTable[(sig >> 4) as usize + 0x01] * fMixRate
+                    let f_mix_rate = (((sig as u16 & 0x0F) << 8) | sig as u16) as f64 / 4096.0;
+                    AF_LEVEL_TABLE[(sig >> 4) as usize] * (1.0 - f_mix_rate)
+                        + AF_LEVEL_TABLE[(sig >> 4) as usize + 0x01] * f_mix_rate
                 }
             }
         }
