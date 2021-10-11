@@ -7,7 +7,7 @@ use std::time::Duration;
 use clap::App;
 use futures::executor::block_on;
 use futures::future::AbortHandle;
-use futures::io::{AllowStdIo, AsyncRead, AsyncWrite, BufReader, CopyBuf};
+use futures::io::{AllowStdIo, AsyncRead, AsyncWrite, BufReader, CopyBufAbortable};
 
 use b25_sys::access_control::types::WorkingKey;
 use b25_sys::StreamDecoder;
@@ -125,9 +125,9 @@ fn main() {
 fn recording<R: AsyncRead, W: AsyncWrite + Unpin>(
     from: R,
     to: &mut W,
-) -> (CopyBuf<'_, BufReader<R>, W>, AbortHandle) {
+) -> (CopyBufAbortable<'_, BufReader<R>, W>, AbortHandle) {
     let r = futures::io::BufReader::with_capacity(20000 * 40, from);
-    futures::io::copy_buf(r, to)
+    futures::io::copy_buf_abortable(r, to)
 }
 
 fn config_timer_handler(duration: Option<Duration>, abort_handle: AbortHandle) {
