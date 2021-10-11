@@ -41,3 +41,8 @@ args:
         short: s
         long: check
         help: "Just show signal strength"
+    - emm_id:
+        short: e
+        long: emm
+        help: "Moniters and notifies the reception of data with the specified number"
+        multiple: true
