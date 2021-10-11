@@ -80,8 +80,12 @@ fn main() {
                 _ => panic!("Specify both of the keys"),
             }
         };
-        //TODO:get emm ids from clap
-        let ids = Vec::new(); //empty
+        let ids = match matches.values_of("emm_id"){
+            Some(contents) => {
+                contents.map(|value| { value.parse::<i64>().unwrap() }).into_iter().collect()
+            },
+            None => Vec::new()
+        };
 
         StreamDecoder::new(source.as_mut(), key, ids)
     };
