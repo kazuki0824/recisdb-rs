@@ -4,7 +4,7 @@ use std::thread::JoinHandle;
 
 use futures::executor::block_on;
 use futures::future::AbortHandle;
-use futures::io::{AllowStdIo, CopyBuf};
+use futures::io::{AllowStdIo, CopyBufAbortable};
 use futures::{AsyncBufRead, AsyncWrite};
 
 use b25_sys::access_control::types::WorkingKey;
@@ -90,13 +90,13 @@ fn recording<'a, R: AsyncBufRead + Unpin, W: AsyncWrite + Unpin>(
     to: &'a mut W,
     key: Option<WorkingKey>,
 ) -> (
-    CopyBuf<'a, futures::io::BufReader<StreamDecoder<'a>>, W>,
+    CopyBufAbortable<'a, futures::io::BufReader<StreamDecoder<'a>>, W>,
     AbortHandle,
 ) {
     let decoder = StreamDecoder::new(from, key, Vec::new());
 
     let r = futures::io::BufReader::with_capacity(20000 * 40, decoder);
-    futures::io::copy_buf(r, to)
+    futures::io::copy_buf_abortable(r, to)
 }
 fn config_ctrlc_handler(abort_handle: AbortHandle) {
     //configure sigint trigger
