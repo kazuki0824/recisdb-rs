@@ -54,16 +54,16 @@ public:
 	virtual void Release();
 };
 
-/** IBonDriver2 インターフェース */
-class IBonDriver2 : public IBonDriver
-{
-public:
 #ifdef LIBISDB_WINDOWS
 	typedef WCHAR CharType;
 #else
 	typedef char16_t CharType;
 	typedef const CharType * LPCTSTR;
 #endif
+/** IBonDriver2 インターフェース */
+class IBonDriver2 : public IBonDriver
+{
+public:
 
 	virtual LPCTSTR GetTunerName();
 
