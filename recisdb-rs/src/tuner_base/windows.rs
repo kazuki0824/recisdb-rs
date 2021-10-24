@@ -82,12 +82,12 @@ impl AsyncRead for TunedDevice
         use futures::task::Poll;
         if self.interface.WaitTsStream(Duration::from_millis(1000)) {
             match self.interface.GetTsStream() {
-                Ok((recv, remaining)) if recv.len() > 0 => {
+                Ok((recv, _remaining)) if recv.len() > 0 => {
                     eprintln!("{} bytes recv", recv.len());
                     buf[0..recv.len()].copy_from_slice(&recv[0..]);
                     Poll::Ready(Ok(buf.len()))
                 },
-                Err(e) => {
+                Err(_e) => {
                     //TODO: Convert Error into io::Error?
                     //Poll::Ready(Some(Err(e.into())))
                     Poll::Ready(Ok(0))
