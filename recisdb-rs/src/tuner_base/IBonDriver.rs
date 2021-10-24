@@ -58,7 +58,7 @@ mod ib_utils {
         pub(super) fn interface_check_2_const(i: *const IBonDriver) -> *const IBonDriver2;
         pub(super) fn interface_check_3_const(i: *const IBonDriver2) -> *const IBonDriver3;
     }
-
+    #[cfg(target_os = "windows")]
     pub(crate) fn from_wide_ptr(ptr: *const u16) -> Option<String> {
         use std::ffi::OsString;
         use std::os::windows::ffi::OsStringExt;
@@ -70,7 +70,10 @@ mod ib_utils {
             Some(OsString::from_wide(slice).to_string_lossy().into_owned())
         }
     }
-    
+    #[cfg(target_os = "linux")]
+    pub(crate) fn from_wide_ptr(_ptr: *const u16) -> Option<String> {
+        None
+    }
 }
 
 impl BonDriver {
