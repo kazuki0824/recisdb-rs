@@ -2,8 +2,9 @@
 name = "recisdb-rust"
 version = "0.1.0"
 authors = ["kazuki"]
-edition = "2018"
-description = ""
+edition = "2021"
+description = "Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources. "
+rust-version = "1.56"
 
 [dependencies]
 futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_2"}
@@ -22,11 +23,12 @@ bindgen = ">=0.59.1"
 glob = "0.3"
 
 [package.metadata.deb]
-maintainer = "Michael Aaron Murphy <mmstickman@gmail.com>"
-copyright = "2017, Michael Aaron Murphy <mmstickman@gmail.com>"
+maintainer = "Kazuki Kuroda <kazukuro0824+dev@gmail.com>"
+copyright = "2021, Kazuki Kuroda  <kazukuro0824+dev@gmail.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
-A simple command for ISDB-T character device. """
+A simple command for ISDB-T character device.
+Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources. """
 depends = "libpcsclite1, $auto"
 section = "utility"
 priority = "optional"
