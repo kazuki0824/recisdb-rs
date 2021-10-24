@@ -76,9 +76,12 @@ impl Drop for TunedDevice {
     }
 }
 
-impl AsyncRead for TunedDevice
-{
-    fn poll_read(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>, buf: &mut [u8]) -> std::task::Poll<std::io::Result<usize>> {
+impl AsyncRead for TunedDevice {
+    fn poll_read(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+        buf: &mut [u8],
+    ) -> std::task::Poll<std::io::Result<usize>> {
         use futures::task::Poll;
         if self.interface.WaitTsStream(Duration::from_millis(1000)) {
             match self.interface.GetTsStream() {
@@ -86,7 +89,7 @@ impl AsyncRead for TunedDevice
                     eprintln!("{} bytes recv", recv.len());
                     buf[0..recv.len()].copy_from_slice(&recv[0..]);
                     Poll::Ready(Ok(buf.len()))
-                },
+                }
                 Err(_e) => {
                     //TODO: Convert Error into io::Error?
                     //Poll::Ready(Some(Err(e.into())))
