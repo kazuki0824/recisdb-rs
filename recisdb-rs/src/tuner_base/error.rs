@@ -25,7 +25,7 @@ pub enum BonDriverError {
     OpenError,
     TuneError(Channel),
     GetTsError,
-    InvalidSpaceChannel(u32, u32)
+    InvalidSpaceChannel(u32, u32),
 }
 
 impl Display for BonDriverError {
@@ -35,7 +35,11 @@ impl Display for BonDriverError {
             E::OpenError => write!(f, "OpenTuner() failed."),
             E::TuneError(ch) => write!(f, "Unable to tune with the specified channel \"{}\".", ch),
             E::GetTsError => write!(f, "Error occurred while reading TS stream"),
-            E::InvalidSpaceChannel(space, ch) => write!(f, "Space={},Channel={} is specified, but couldn't tune with it.", space, ch)
+            E::InvalidSpaceChannel(space, ch) => write!(
+                f,
+                "Space={},Channel={} is specified, but couldn't tune with it.",
+                space, ch
+            ),
         }
     }
 }

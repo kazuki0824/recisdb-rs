@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 #[derive(Copy, Clone)]
 pub struct WorkingKey(pub u64, pub u64);
 
@@ -11,6 +13,12 @@ pub struct EmmBody {
     pub card_id: i64,
     pub protocol: u8,
     pub info: Vec<u8>,
+}
+
+impl Display for EmmBody {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 pub struct EmmDecryptedBody {
