@@ -41,7 +41,7 @@ fn main() {
         let flag = std::sync::Arc::new(AtomicBool::new(false));
         let flag2 = flag.clone();
         ctrlc::set_handler(move || flag.store(true, Ordering::Relaxed)).unwrap();
-        
+
         loop {
             println!("S/N = {}[dB]\r", tuned.signal_quality());
             if flag2.load(Ordering::Relaxed) {
@@ -79,11 +79,12 @@ fn main() {
                 _ => panic!("Specify both of the keys"),
             }
         };
-        let ids = match matches.values_of("emm_id"){
-            Some(contents) => {
-                contents.map(|value| { value.parse::<i64>().unwrap() }).into_iter().collect()
-            },
-            None => Vec::new()
+        let ids = match matches.values_of("emm_id") {
+            Some(contents) => contents
+                .map(|value| value.parse::<i64>().unwrap())
+                .into_iter()
+                .collect(),
+            None => Vec::new(),
         };
 
         StreamDecoder::new(source.as_mut(), key, ids)

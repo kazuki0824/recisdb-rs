@@ -44,7 +44,8 @@ mod ib2 {
     extern "C" {
         //IBon2
         pub fn C_EnumTuningSpace(b: *mut IBonDriver2, dwSpace: DWORD) -> LPCTSTR;
-        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> LPCTSTR;
+        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD)
+            -> LPCTSTR;
         pub fn C_SetChannel2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> BOOL;
 
     }
@@ -58,19 +59,26 @@ mod ib_utils {
         pub(super) fn interface_check_2_const(i: *const IBonDriver) -> *const IBonDriver2;
         pub(super) fn interface_check_3_const(i: *const IBonDriver2) -> *const IBonDriver3;
     }
-
+    #[cfg(target_os = "windows")]
     pub(crate) fn from_wide_ptr(ptr: *const u16) -> Option<String> {
         use std::ffi::OsString;
         use std::os::windows::ffi::OsStringExt;
         unsafe {
             assert!(!ptr.is_null());
-            let len = (0..std::isize::MAX).position(|i| *ptr.offset(i) == 0).unwrap();
-            if len == 0 {return  None;}
+            let len = (0..std::isize::MAX)
+                .position(|i| *ptr.offset(i) == 0)
+                .unwrap();
+            if len == 0 {
+                return None;
+            }
             let slice = std::slice::from_raw_parts(ptr, len);
             Some(OsString::from_wide(slice).to_string_lossy().into_owned())
         }
     }
-    
+    #[cfg(target_os = "linux")]
+    pub(crate) fn from_wide_ptr(_ptr: *const u16) -> Option<String> {
+        None
+    }
 }
 
 impl BonDriver {
@@ -203,14 +211,14 @@ impl<const SZ: usize> IBon<SZ> {
     pub(crate) fn EnumTuningSpace(&self, space: u32) -> Option<String> {
         unsafe {
             let iface = self.2.unwrap().as_ptr();
-            let returned =  ib2::C_EnumTuningSpace(iface, space);
+            let returned = ib2::C_EnumTuningSpace(iface, space);
             ib_utils::from_wide_ptr(returned)
         }
     }
     pub(crate) fn EnumChannelName(&self, space: u32, ch: u32) -> Option<String> {
         unsafe {
             let iface = self.2.unwrap().as_ptr();
-            let returned =  ib2::C_EnumChannelName2(iface, space, ch);
+            let returned = ib2::C_EnumChannelName2(iface, space, ch);
             ib_utils::from_wide_ptr(returned)
         }
     }

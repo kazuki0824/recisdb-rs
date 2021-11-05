@@ -2,7 +2,7 @@
 name = "b25-sys"
 version = "0.1.0"
 authors = ["kazuki0824 <kazukuro0824@gmail.com>"]
-edition = "2018"
+edition = "2021"
 build="build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
