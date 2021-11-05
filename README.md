@@ -33,7 +33,7 @@ B25-rs and b25-sys are more convenient Rust wrapper for libarib25. Recisdb-rs ca
 [GPL v3](https://github.com/kazuki0824/b25-kit-rs/blob/master/LICENSE)
 
 ## Author
-[kazuki0824](https://github.com/kazuki0824)
+[maleicacid](https://github.com/kazuki0824)
 
 ## Special thanks
 このアプリケーションは[px4_drv](https://github.com/nns779/px4_drv)を参考にして実装されています。  
