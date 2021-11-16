@@ -8,12 +8,14 @@ pub struct Freq {
     pub slot: i32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChannelSpace {
     pub space: u32,
     pub ch: u32,
+    pub space_description: Option<String>,
+    pub ch_description: Option<String>,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ChannelType {
     Terrestrial(u8),
     Catv(u8),
@@ -103,7 +105,7 @@ impl Channel {
                 let split_loc = result_str.rfind('-').unwrap();
                 let space: u32 = result_str[0..split_loc].parse().unwrap();
                 let ch: u32 = result_str[split_loc + 1..].parse().unwrap();
-                ChannelType::Bon(ChannelSpace { space, ch })
+                ChannelType::Bon(ChannelSpace { space, ch, space_description: None, ch_description: None })
             };
 
             Channel {

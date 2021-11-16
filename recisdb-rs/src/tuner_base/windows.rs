@@ -15,9 +15,26 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
-    pub(crate) fn enum_all_available_channels(&self) -> Result<Vec<ChannelSpace>, BonDriverError>
+    pub(crate) fn enum_all_available_space_channels(&self) -> Result<Vec<ChannelSpace>, BonDriverError>
     {
-        unimplemented!()
+        let mut channels = Vec::new();
+        let mut i = 0;
+        while let Some(space) = self.interface.EnumTuningSpace(i)
+        {
+            let mut j = 0;
+            while let Some(channel) = self.interface.EnumChannelName(i, j)
+            {
+                channels.push(ChannelSpace {
+                    space: i,
+                    ch: j,
+                    space_description: Some(space.clone()),
+                    ch_description: Some(channel.clone()),
+                });
+                j += 1;
+            }
+            i += 1;
+        }
+        Ok(channels)
     }
     pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
         let path_canonicalized = std::fs::canonicalize(path)?;
