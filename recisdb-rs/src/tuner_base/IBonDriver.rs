@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use cpp_utils::{DynamicCast, MutPtr, Ptr};
 
-use crate::channels::Channel;
+use crate::channels::ChannelSpace;
 
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
@@ -152,10 +152,10 @@ impl<const SZ: usize> IBon<SZ> {
             ib1::C_Release(iface)
         }
     }
-    pub(crate) fn SetChannel(&self, ch: Channel) -> Result<(), E> {
+    pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), E> {
         unsafe {
             let iface = self.1.as_ptr();
-            if ib1::C_SetChannel(iface, ch.physical_ch_num) != 0 {
+            if ib1::C_SetChannel(iface, ch) != 0 {
                 Ok(())
             } else {
                 Err(E::TuneError(ch))

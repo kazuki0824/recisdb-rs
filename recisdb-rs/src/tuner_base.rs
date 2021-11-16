@@ -20,6 +20,7 @@ pub trait Tuned {
 
 pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>> {
     use crate::tuner_base::error::GeneralError::EnvCompatFailure;
+    println!("{:?}", channel);
     cfg_if! {
         if #[cfg(target_os = "linux")]
         {

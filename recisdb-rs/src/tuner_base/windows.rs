@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use futures::io::{AsyncBufRead, AsyncRead};
 
-use crate::channels::Channel;
+use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
 use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 
@@ -15,6 +15,10 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
+    pub(crate) fn enum_all_available_channels(&self) -> Result<Vec<ChannelSpace>, BonDriverError>
+    {
+        unimplemented!()
+    }
     pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
         let path_canonicalized = std::fs::canonicalize(path)?;
         let dll_imported = unsafe {
@@ -40,7 +44,11 @@ impl TunedDevice {
         };
 
         interface.OpenTuner()?;
-        interface.SetChannel(channel)?;
+        if let Some(phy_ch) = channel.try_get_physical_num() {
+            interface.SetChannel(phy_ch)?;
+        } else if let ChannelType::Bon(space) = channel.ch_type {
+            interface.SetChannelBySpace(space.space, space.ch)?;
+        }
 
         Ok(TunedDevice {
             dll_imported,
