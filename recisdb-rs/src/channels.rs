@@ -204,7 +204,7 @@ mod tests {
     fn test_bon_chspace_from_str() {
         let ch_str = "1-2";
         let ch = Channel::from_ch_str(ch_str);
-        assert_eq!(ch.ch_type, ChannelType::Bon(ChannelSpace { space: 1, ch: 2 }));
+        assert_eq!(ch.ch_type, ChannelType::Bon(ChannelSpace { space: 1, ch: 2, space_description: None, ch_description: None }));
         assert_eq!(ch.raw_string, ch_str.to_string());
     }
 }

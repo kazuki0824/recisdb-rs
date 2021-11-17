@@ -60,17 +60,21 @@ mod ib_utils {
     }
 
     pub(crate) fn from_wide_ptr(ptr: *const u16) -> Option<String> {
-        use std::ffi::OsString;
-        use std::os::windows::ffi::OsStringExt;
+        // use std::ffi::OsString;
+        // use std::os::windows::ffi::OsStringExt;
+        // TODO: Still unstable. When displaying, it's better to use OsString.
+        if ptr.is_null() {
+            return None;
+        }
         unsafe {
-            assert!(!ptr.is_null());
             let len = (0..std::isize::MAX).position(|i| *ptr.offset(i) == 0).unwrap();
-            if len == 0 {return  None;}
-            let slice = std::slice::from_raw_parts(ptr, len);
-            Some(OsString::from_wide(slice).to_string_lossy().into_owned())
+            if len == 0 { return  None; }
+            let slice = std::slice::from_raw_parts(ptr, len as usize);
+            // let os = OsString::from_wide(slice);
+            // os.into_string().ok()
+            String::from_utf16(slice).ok()
         }
     }
-    
 }
 
 impl BonDriver {

@@ -15,14 +15,14 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
-    pub(crate) fn enum_all_available_space_channels(&self) -> Result<Vec<ChannelSpace>, BonDriverError>
+    fn enum_all_available_space_channels(interface: &IBon<10000>) -> Result<Vec<ChannelSpace>, BonDriverError>
     {
         let mut channels = Vec::new();
         let mut i = 0;
-        while let Some(space) = self.interface.EnumTuningSpace(i)
+        while let Some(space) = interface.EnumTuningSpace(i)
         {
             let mut j = 0;
-            while let Some(channel) = self.interface.EnumChannelName(i, j)
+            while let Some(channel) = interface.EnumChannelName(i, j)
             {
                 channels.push(ChannelSpace {
                     space: i,
@@ -30,6 +30,7 @@ impl TunedDevice {
                     space_description: Some(space.clone()),
                     ch_description: Some(channel.clone()),
                 });
+                println!("{}-{} {}-{}", i, j, space, channel);
                 j += 1;
             }
             i += 1;
@@ -64,6 +65,7 @@ impl TunedDevice {
         if let Some(phy_ch) = channel.try_get_physical_num() {
             interface.SetChannel(phy_ch)?;
         } else if let ChannelType::Bon(space) = channel.ch_type {
+            let channels = Self::enum_all_available_space_channels(&interface)?;
             interface.SetChannelBySpace(space.space, space.ch)?;
         }
 
