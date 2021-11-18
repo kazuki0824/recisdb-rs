@@ -107,26 +107,27 @@ impl AsyncRead for TunedDevice
 {
     fn poll_read(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>, buf: &mut [u8]) -> std::task::Poll<std::io::Result<usize>> {
         use futures::task::Poll;
-        if self.interface.WaitTsStream(Duration::from_millis(1000)) {
-            match self.interface.GetTsStream() {
-                Ok((recv, remaining)) if recv.len() > 0 => {
-                    eprintln!("{} bytes recv", recv.len());
-                    buf[0..recv.len()].copy_from_slice(&recv[0..]);
-                    Poll::Ready(Ok(buf.len()))
-                },
-                Err(e) => {
-                    //TODO: Convert Error into io::Error?
-                    //Poll::Ready(Some(Err(e.into())))
-                    Poll::Ready(Ok(0))
-                }
-                _ => {
-                    cx.waker().wake_by_ref();
-                    Poll::Pending
-                }
+        match self.interface.GetTsStream() {
+            Ok((recv, remaining)) if recv.len() > 0 => {
+                println!("{} bytes recv.", recv.len());
+                buf[0..recv.len()].copy_from_slice(&recv[0..]);
+                Poll::Ready(Ok(buf.len()))
+            },
+            Ok((recv, remaining)) if recv.len() == 0 && remaining > 0 => 
+            {
+                println!("{} remaining.", remaining);
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            },
+            _ => {
+                let w = cx.waker().clone();
+                //self.interface.WaitTsStream(Duration::from_millis(10));
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(100));
+                    w.wake();
+                });
+                Poll::Pending
             }
-        } else {
-            cx.waker().wake_by_ref();
-            Poll::Pending
         }
     }
 }
