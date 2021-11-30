@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use futures::io::{AsyncBufRead, AsyncRead};
 
-use crate::channels::Channel;
+use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
 use crate::tuner_base::IBonDriver::{BonDriver, IBon};
 
@@ -15,6 +15,28 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
+    fn enum_all_available_space_channels(interface: &IBon<10000>) -> Result<Vec<ChannelSpace>, BonDriverError>
+    {
+        let mut channels = Vec::new();
+        let mut i = 0;
+        while let Some(space) = interface.EnumTuningSpace(i)
+        {
+            let mut j = 0;
+            while let Some(channel) = interface.EnumChannelName(i, j)
+            {
+                channels.push(ChannelSpace {
+                    space: i,
+                    ch: j,
+                    space_description: Some(space.clone()),
+                    ch_description: Some(channel.clone()),
+                });
+                println!("{}-{} {}-{}", i, j, space, channel);
+                j += 1;
+            }
+            i += 1;
+        }
+        Ok(channels)
+    }
     pub(crate) fn tune(path: &str, channel: Channel) -> Result<Self, Box<dyn Error>> {
         let path_canonicalized = std::fs::canonicalize(path)?;
         let dll_imported = unsafe {
@@ -40,7 +62,12 @@ impl TunedDevice {
         };
 
         interface.OpenTuner()?;
-        interface.SetChannel(channel)?;
+        if let Some(phy_ch) = channel.try_get_physical_num() {
+            interface.SetChannel(phy_ch)?;
+        } else if let ChannelType::Bon(space) = channel.ch_type {
+            let channels = Self::enum_all_available_space_channels(&interface)?;
+            interface.SetChannelBySpace(space.space, space.ch)?;
+        }
 
         Ok(TunedDevice {
             dll_imported,
@@ -83,26 +110,27 @@ impl AsyncRead for TunedDevice {
         buf: &mut [u8],
     ) -> std::task::Poll<std::io::Result<usize>> {
         use futures::task::Poll;
-        if self.interface.WaitTsStream(Duration::from_millis(1000)) {
-            match self.interface.GetTsStream() {
-                Ok((recv, _remaining)) if recv.len() > 0 => {
-                    eprintln!("{} bytes recv", recv.len());
-                    buf[0..recv.len()].copy_from_slice(&recv[0..]);
-                    Poll::Ready(Ok(buf.len()))
-                }
-                Err(_e) => {
-                    //TODO: Convert Error into io::Error?
-                    //Poll::Ready(Some(Err(e.into())))
-                    Poll::Ready(Ok(0))
-                }
-                _ => {
-                    cx.waker().wake_by_ref();
-                    Poll::Pending
-                }
+        match self.interface.GetTsStream() {
+            Ok((recv, remaining)) if recv.len() > 0 => {
+                println!("{} bytes recv.", recv.len());
+                buf[0..recv.len()].copy_from_slice(&recv[0..]);
+                Poll::Ready(Ok(buf.len()))
+            },
+            Ok((recv, remaining)) if recv.len() == 0 && remaining > 0 => 
+            {
+                println!("{} remaining.", remaining);
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            },
+            _ => {
+                let w = cx.waker().clone();
+                //self.interface.WaitTsStream(Duration::from_millis(10));
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(100));
+                    w.wake();
+                });
+                Poll::Pending
             }
-        } else {
-            cx.waker().wake_by_ref();
-            Poll::Pending
         }
     }
 }

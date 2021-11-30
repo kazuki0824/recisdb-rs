@@ -2,7 +2,7 @@
 
 use std::fmt::{Display, Formatter};
 
-use crate::channels::Channel;
+use crate::channels::ChannelSpace;
 
 #[derive(Debug, Clone)]
 pub enum GeneralError {
@@ -23,7 +23,8 @@ impl std::error::Error for GeneralError {}
 #[derive(Debug, Clone)]
 pub enum BonDriverError {
     OpenError,
-    TuneError(Channel),
+    TuneError(u8),
+    Tune2Error(ChannelSpace),
     GetTsError,
     InvalidSpaceChannel(u32, u32),
 }
@@ -34,6 +35,7 @@ impl Display for BonDriverError {
         match self {
             E::OpenError => write!(f, "OpenTuner() failed."),
             E::TuneError(ch) => write!(f, "Unable to tune with the specified channel \"{}\".", ch),
+            E::Tune2Error(chspace) => write!(f, "Unable to tune with the specified channel \"{}-{}\".", chspace.space, chspace.ch),
             E::GetTsError => write!(f, "Error occurred while reading TS stream"),
             E::InvalidSpaceChannel(space, ch) => write!(
                 f,

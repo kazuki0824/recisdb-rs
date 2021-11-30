@@ -7,7 +7,7 @@ extern "C" {
     }
 	const LPCTSTR C_EnumChannelName2(IBonDriver2 * b, const DWORD dwSpace, const DWORD dwChannel)
     {
-        return b->EnumChannelName(dwSpace, dwSpace);
+        return b->EnumChannelName(dwSpace, dwChannel);
     }
 	const BOOL C_SetChannel2(IBonDriver2 * b, const DWORD dwSpace, const DWORD dwChannel)
     {

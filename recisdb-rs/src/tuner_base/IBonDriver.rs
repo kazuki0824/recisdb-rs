@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use cpp_utils::{DynamicCast, MutPtr, Ptr};
 
-use crate::channels::Channel;
+use crate::channels::ChannelSpace;
 
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
@@ -44,8 +44,7 @@ mod ib2 {
     extern "C" {
         //IBon2
         pub fn C_EnumTuningSpace(b: *mut IBonDriver2, dwSpace: DWORD) -> LPCTSTR;
-        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD)
-            -> LPCTSTR;
+        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> LPCTSTR;
         pub fn C_SetChannel2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> BOOL;
 
     }
@@ -61,18 +60,19 @@ mod ib_utils {
     }
     #[cfg(target_os = "windows")]
     pub(crate) fn from_wide_ptr(ptr: *const u16) -> Option<String> {
-        use std::ffi::OsString;
-        use std::os::windows::ffi::OsStringExt;
+        // use std::ffi::OsString;
+        // use std::os::windows::ffi::OsStringExt;
+        // TODO: Still unstable. When displaying, it's better to use OsString.
+        if ptr.is_null() {
+            return None;
+        }
         unsafe {
-            assert!(!ptr.is_null());
-            let len = (0..std::isize::MAX)
-                .position(|i| *ptr.offset(i) == 0)
-                .unwrap();
-            if len == 0 {
-                return None;
-            }
-            let slice = std::slice::from_raw_parts(ptr, len);
-            Some(OsString::from_wide(slice).to_string_lossy().into_owned())
+            let len = (0..std::isize::MAX).position(|i| *ptr.offset(i) == 0).unwrap();
+            if len == 0 { return  None; }
+            let slice = std::slice::from_raw_parts(ptr, len as usize);
+            // let os = OsString::from_wide(slice);
+            // os.into_string().ok()
+            String::from_utf16(slice).ok()
         }
     }
     #[cfg(target_os = "linux")]
@@ -160,10 +160,10 @@ impl<const SZ: usize> IBon<SZ> {
             ib1::C_Release(iface)
         }
     }
-    pub(crate) fn SetChannel(&self, ch: Channel) -> Result<(), E> {
+    pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), E> {
         unsafe {
             let iface = self.1.as_ptr();
-            if ib1::C_SetChannel(iface, ch.physical_ch_num) != 0 {
+            if ib1::C_SetChannel(iface, ch) != 0 {
                 Ok(())
             } else {
                 Err(E::TuneError(ch))
