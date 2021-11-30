@@ -21,7 +21,7 @@ impl TunedDevice {
     pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<Self, Box<dyn Error>> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
-        unsafe { set_ch(f.as_raw_fd(), &channel.to_freq(offset_k_hz))? };
+        unsafe { set_ch(f.as_raw_fd(), &channel.to_ioctl_freq(offset_k_hz))? };
 
         Ok(Self { f, channel })
     }
@@ -30,10 +30,10 @@ impl TunedDevice {
 impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
         let raw: i32 = 0;
-        let errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), raw as *mut i32) }.unwrap();
+        let _errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), raw as *mut i32) }.unwrap();
 
         match self.channel.ch_type {
-            ChannelType::Terrestrial => {
+            ChannelType::Terrestrial(_) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
                 let cnr = (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
