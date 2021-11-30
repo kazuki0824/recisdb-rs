@@ -42,6 +42,7 @@ fn main() {
     for pattern in globs {
         for path in glob::glob(pattern).unwrap() {
             let path = path.unwrap();
+            println!("cargo:rerun-if-changed={}", path.display());
             compiler.file(path);
         }
     }
