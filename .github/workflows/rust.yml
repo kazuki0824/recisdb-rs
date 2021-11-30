@@ -28,7 +28,7 @@ jobs:
       run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
       if: matrix.config.os == 'windows-latest'
     - name: Install PCSC
-      run: sudo apt install libpcsclite-dev -y
+      run: sudo apt install build-essential cmake libpcsclite-dev -y
       if: matrix.config.os == 'ubuntu-latest'
     - uses: actions/checkout@v2
       with:
