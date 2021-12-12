@@ -11,6 +11,12 @@ B25-rs and b25-sys are more convenient Rust wrapper for libarib25. Recisdb-rs ca
 - チャンネル名ハードコード・二重バッファなど、従来のソフトウェアの設計の問題を自分なりに修正
 - ECM/EMMロギング・デバッグ機能
 
+このプログラムを用いて実際の放送波を処理することはできません  
+本プログラムは以下の要素技術に関する私的な技術研究を目的としています。
+- 公知となっている放送の標準規格ARIB-STD-B25およびそれに関連する技術(MPEG2-TS)
+- CBC,Feistel型暗号をより効率的に処理するための実装方法
+- 処理系依存の処理(オーバーロード・仮想関数テーブルなど)を含むC++関数を外部から呼び出す方法
+
 
 ## Description
 - recisdb-rs: reads a bitstream from both character devices and BonDriver
