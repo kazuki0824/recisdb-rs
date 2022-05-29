@@ -1,10 +1,8 @@
 use std::io::Cursor;
+use tail_cbc::cipher::KeyIvInit;
+use cryptography_b25_00::expand_00;
 
-use byteorder::{BigEndian, ReadBytesExt};
-
-use crate::access_control::EmmBody;
-use crate::utils::BlockConversionSolver00;
-use crate::{CHANNEL, KEYHOLDER};
+pub type Block00CbcDec = tail_cbc::Decryptor<cryptography_b25_00::Block00>;
 
 #[no_mangle]
 pub extern "C" fn post_scramble_key(src: *const u8, len: usize, dst: *mut u8) {
@@ -24,8 +22,13 @@ pub extern "C" fn post_scramble_key(src: *const u8, len: usize, dst: *mut u8) {
                 let protocol = payload[0];
                 let working_key_id = payload[2];
                 let cipher = &payload[3..size - 1];
-                let solver = BlockConversionSolver00::new(key, protocol);
-                Ok(solver.convert(Vec::from(cipher), working_key_id))
+                // let k = if working_key_id { &expand_00(0x15f8c5bf840b6694u64, 0) };
+                let k = expand_00(0x15f8c5bf840b6694u64, 0);
+                let dec = Block00CbcDec::new(
+                    k,
+                    &0xfe27199919690911u64.swap_bytes().to_ne_bytes().into()
+                );
+                Ok((Vec::from(cipher), ))
             }
         };
 
@@ -34,6 +37,7 @@ pub extern "C" fn post_scramble_key(src: *const u8, len: usize, dst: *mut u8) {
         }
     }
 }
+
 #[no_mangle]
 pub extern "C" fn post_emm(src: *const u8, len: usize) {
     unsafe {
@@ -46,18 +50,4 @@ pub extern "C" fn post_emm(src: *const u8, len: usize) {
             }
         }
     }
-}
-
-fn format_emm(raw_emm: Vec<u8>) -> Result<EmmBody, std::io::Error> {
-    let mut c = Cursor::new(raw_emm);
-    let card_id = c.read_i48::<BigEndian>()?;
-    c.read_u8()?;
-    let protocol = c.read_u8()?;
-
-    let remainder = c.into_inner().split_off(8);
-    Ok(EmmBody {
-        card_id,
-        protocol,
-        info: remainder,
-    })
 }

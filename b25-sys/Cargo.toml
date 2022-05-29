@@ -5,14 +5,16 @@ authors = ["kazuki0824 <kazukuro0824@gmail.com>"]
 edition = "2021"
 build="build.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+block00cbc = []
+default = [ "block00cbc" ]
 
 [dependencies]
-# futures-io = "0.3.16"
-futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_2"}
-byteorder=">=1.3.4"
-once_cell = "1.8.0"
+futures = "0.3.21"
 pin-project-lite = "0.2.7"
+tail_cbc = { git = "https://github.com/kazuki0824/tail_cbc.git" }
+cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00" }
+once_cell = "1.12.0"
 
 [build-dependencies]
 bindgen = ">=0.53.1"
