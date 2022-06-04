@@ -6,6 +6,8 @@ impl WorkingKey {
     pub const DEFAULT: Self = Self(0x8d8206c62eb1410d, 0x15f8c5bf840b6694);
 }
 
+pub type Block00CbcDec = tail_cbc::Decryptor<cryptography_b25_00::Block00>;
+
 pub struct EmmReceivingKeyPair {
     pub card_id: i64,
     pub key: u64,

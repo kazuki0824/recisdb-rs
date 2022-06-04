@@ -7,10 +7,12 @@ build="build.rs"
 
 [features]
 block00cbc = []
+block40cbc = []
 default = [ "block00cbc" ]
 
 [dependencies]
-futures = "0.3.21"
+futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_2"}
+#futures = ">0.3.21"
 pin-project-lite = "0.2.7"
 tail_cbc = { git = "https://github.com/kazuki0824/tail_cbc.git" }
 cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00" }
