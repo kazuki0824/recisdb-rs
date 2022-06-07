@@ -3,7 +3,7 @@ use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::time::Duration;
 
-use futures::io::{AsyncBufRead, AsyncRead};
+use b25_sys::futures::io::{AsyncBufRead, AsyncRead};
 
 use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
@@ -15,15 +15,14 @@ pub struct TunedDevice {
 }
 
 impl TunedDevice {
-    fn enum_all_available_space_channels(interface: &IBon<10000>) -> Result<Vec<ChannelSpace>, BonDriverError>
-    {
+    fn enum_all_available_space_channels(
+        interface: &IBon<10000>,
+    ) -> Result<Vec<ChannelSpace>, BonDriverError> {
         let mut channels = Vec::new();
         let mut i = 0;
-        while let Some(space) = interface.EnumTuningSpace(i)
-        {
+        while let Some(space) = interface.EnumTuningSpace(i) {
             let mut j = 0;
-            while let Some(channel) = interface.EnumChannelName(i, j)
-            {
+            while let Some(channel) = interface.EnumChannelName(i, j) {
                 channels.push(ChannelSpace {
                     space: i,
                     ch: j,
@@ -86,7 +85,7 @@ impl super::Tuned for TunedDevice {
     }
 
     fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
-        use futures::io::BufReader;
+        use b25_sys::futures::io::BufReader;
 
         let with_buffer = BufReader::new(self);
         Box::new(with_buffer)
@@ -109,19 +108,18 @@ impl AsyncRead for TunedDevice {
         cx: &mut std::task::Context<'_>,
         buf: &mut [u8],
     ) -> std::task::Poll<std::io::Result<usize>> {
-        use futures::task::Poll;
+        use b25_sys::futures::task::Poll;
         match self.interface.GetTsStream() {
             Ok((recv, remaining)) if recv.len() > 0 => {
                 println!("{} bytes recv.", recv.len());
                 buf[0..recv.len()].copy_from_slice(&recv[0..]);
                 Poll::Ready(Ok(buf.len()))
-            },
-            Ok((recv, remaining)) if recv.len() == 0 && remaining > 0 => 
-            {
+            }
+            Ok((recv, remaining)) if recv.len() == 0 && remaining > 0 => {
                 println!("{} remaining.", remaining);
                 cx.waker().wake_by_ref();
                 Poll::Pending
-            },
+            }
             _ => {
                 let w = cx.waker().clone();
                 //self.interface.WaitTsStream(Duration::from_millis(10));

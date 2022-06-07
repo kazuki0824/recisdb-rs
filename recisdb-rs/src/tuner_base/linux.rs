@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::os::unix::io::AsRawFd;
 
-use futures::AsyncBufRead;
+use b25_sys::futures::AsyncBufRead;
 
 use crate::channels::{Channel, ChannelType, Freq};
 
@@ -80,10 +80,10 @@ impl super::Tuned for TunedDevice {
     }
 
     fn open_stream(mut self) -> Box<dyn AsyncBufRead + Unpin> {
-        use futures::io::AllowStdIo;
+        use b25_sys::futures::io::AllowStdIo;
         use std::io::BufReader;
 
-        unsafe { start_rec(self.f.as_raw_fd()) };
+        unsafe { start_rec(self.f.as_raw_fd()) }.unwrap();
         //Warm-up
         let mut e = [0u8; 2];
         use std::io::Read;

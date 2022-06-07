@@ -44,7 +44,8 @@ mod ib2 {
     extern "C" {
         //IBon2
         pub fn C_EnumTuningSpace(b: *mut IBonDriver2, dwSpace: DWORD) -> LPCTSTR;
-        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> LPCTSTR;
+        pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD)
+            -> LPCTSTR;
         pub fn C_SetChannel2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> BOOL;
 
     }
@@ -67,8 +68,12 @@ mod ib_utils {
             return None;
         }
         unsafe {
-            let len = (0..std::isize::MAX).position(|i| *ptr.offset(i) == 0).unwrap();
-            if len == 0 { return  None; }
+            let len = (0..std::isize::MAX)
+                .position(|i| *ptr.offset(i) == 0)
+                .unwrap();
+            if len == 0 {
+                return None;
+            }
             let slice = std::slice::from_raw_parts(ptr, len as usize);
             // let os = OsString::from_wide(slice);
             // os.into_string().ok()

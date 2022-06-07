@@ -1,5 +1,8 @@
 use crate::access_control::types::Block00CbcDec;
-use crate::bindings::arib_std_b25::{B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS, B_CAS_PWR_ON_CTRL_INFO, wchar_t};
+use crate::bindings::arib_std_b25::{
+    wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
+    B_CAS_PWR_ON_CTRL, B_CAS_PWR_ON_CTRL_INFO,
+};
 use crate::WorkingKey;
 use cryptography_b25_00::expand_00;
 use once_cell::sync::OnceCell;
@@ -17,7 +20,6 @@ unsafe extern "C" fn release(bcas: *mut ::std::os::raw::c_void) {
     Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
 }
 
-const DEFAULT_ID: i64 = 0;
 const DEFAULT_NAME: &str = "b25-sys";
 #[no_mangle]
 unsafe extern "C" fn init(bcas: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int {
@@ -38,9 +40,20 @@ unsafe extern "C" fn init(bcas: *mut ::std::os::raw::c_void) -> ::std::os::raw::
                 card_status: 0,
                 ca_system_id: 5
             },
-            id: B_CAS_ID { data: &mut DEFAULT_ID as *mut _, count: 1 },
+            id: B_CAS_ID { data: &mut [0i64; 1] as *mut _, count: 1 },
             id_max: 0,
-            pwc: B_CAS_PWR_ON_CTRL_INFO { data: null_mut(), count: 0 },
+            pwc: B_CAS_PWR_ON_CTRL_INFO { data: &mut B_CAS_PWR_ON_CTRL{
+                s_yy: 0,
+                s_mm: 0,
+                s_dd: 0,
+                l_yy: 0,
+                l_mm: 0,
+                l_dd: 0,
+                hold_time: 0,
+                broadcaster_group_id: 0,
+                network_id: 0,
+                transport_id: 0
+            }, count: 0 },
             pwc_max: 0
         })) as *mut ::std::os::raw::c_void;
     0

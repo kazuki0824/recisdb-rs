@@ -70,7 +70,7 @@ impl Channel {
 
             Channel {
                 ch_type,
-                raw_string: ch_str.clone()
+                raw_string: ch_str.clone(),
             }
         } else if cs_regex.is_match(&ch_str).unwrap() {
             let caps = cs_regex.captures(&ch_str).unwrap().unwrap();
@@ -80,7 +80,7 @@ impl Channel {
 
             Channel {
                 ch_type,
-                raw_string: ch_str.clone()
+                raw_string: ch_str.clone(),
             }
         } else if bs_regex.is_match(&ch_str).unwrap() {
             let caps = bs_regex.captures(&ch_str).unwrap().unwrap();
@@ -95,7 +95,7 @@ impl Channel {
 
             Channel {
                 ch_type,
-                raw_string: ch_str.clone()
+                raw_string: ch_str.clone(),
             }
         } else if bon_regex.is_match(&ch_str).unwrap() {
             let caps = bon_regex.captures(&ch_str).unwrap().unwrap();
@@ -105,38 +105,45 @@ impl Channel {
                 let split_loc = result_str.rfind('-').unwrap();
                 let space: u32 = result_str[0..split_loc].parse().unwrap();
                 let ch: u32 = result_str[split_loc + 1..].parse().unwrap();
-                ChannelType::Bon(ChannelSpace { space, ch, space_description: None, ch_description: None })
+                ChannelType::Bon(ChannelSpace {
+                    space,
+                    ch,
+                    space_description: None,
+                    ch_description: None,
+                })
             };
 
             Channel {
                 ch_type,
-                raw_string: ch_str.clone()
+                raw_string: ch_str.clone(),
             }
         } else {
             Channel {
                 ch_type: ChannelType::Undefined,
-                raw_string: ch_str
+                raw_string: ch_str,
             }
         }
     }
-    pub fn try_get_physical_num(&self) -> Option<u8>
-    {
+    pub fn try_get_physical_num(&self) -> Option<u8> {
         match self.ch_type {
             ChannelType::Terrestrial(ch) => Some(ch),
             ChannelType::Catv(ch) => Some(ch),
             ChannelType::BS(ch, _) => Some(ch),
             ChannelType::CS(ch) => Some(ch),
-            _ => None
+            _ => None,
         }
     }
     pub fn to_ioctl_freq(&self, freq_offset: i32) -> Freq {
-        
         let ioctl_channel = match self.ch_type {
             ChannelType::Terrestrial(ch_num) if (13..=52).contains(&ch_num) => ch_num + 50,
             ChannelType::Catv(ch_num) if (23..=63).contains(&ch_num) => ch_num - 1,
             ChannelType::Catv(ch_num) if (13..=22).contains(&ch_num) => ch_num - 10,
-            ChannelType::CS(ch_num) if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => ch_num / 2 + 11,
-            ChannelType::BS(ch_num, _) if (1..=23).contains(&ch_num) && (ch_num % 2 == 1) => ch_num / 2,
+            ChannelType::CS(ch_num) if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => {
+                ch_num / 2 + 11
+            }
+            ChannelType::BS(ch_num, _) if (1..=23).contains(&ch_num) && (ch_num % 2 == 1) => {
+                ch_num / 2
+            }
             ChannelType::Undefined => unimplemented!(),
             _ => panic!("Invalid channel."),
         };
@@ -151,7 +158,6 @@ impl Channel {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -179,7 +185,7 @@ mod tests {
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
-        
+
         let ch_str = "BS13_3";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::BS(13, 3));
@@ -195,7 +201,7 @@ mod tests {
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::CS(2));
         assert_eq!(ch.raw_string, ch_str.to_string());
-        
+
         let ch_str = "CS25";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
@@ -204,7 +210,15 @@ mod tests {
     fn test_bon_chspace_from_str() {
         let ch_str = "1-2";
         let ch = Channel::from_ch_str(ch_str);
-        assert_eq!(ch.ch_type, ChannelType::Bon(ChannelSpace { space: 1, ch: 2, space_description: None, ch_description: None }));
+        assert_eq!(
+            ch.ch_type,
+            ChannelType::Bon(ChannelSpace {
+                space: 1,
+                ch: 2,
+                space_description: None,
+                ch_description: None
+            })
+        );
         assert_eq!(ch.raw_string, ch_str.to_string());
     }
 }

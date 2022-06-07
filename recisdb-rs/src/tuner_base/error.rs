@@ -35,7 +35,11 @@ impl Display for BonDriverError {
         match self {
             E::OpenError => write!(f, "OpenTuner() failed."),
             E::TuneError(ch) => write!(f, "Unable to tune with the specified channel \"{}\".", ch),
-            E::Tune2Error(chspace) => write!(f, "Unable to tune with the specified channel \"{}-{}\".", chspace.space, chspace.ch),
+            E::Tune2Error(chspace) => write!(
+                f,
+                "Unable to tune with the specified channel \"{}-{}\".",
+                chspace.space, chspace.ch
+            ),
             E::GetTsError => write!(f, "Error occurred while reading TS stream"),
             E::InvalidSpaceChannel(space, ch) => write!(
                 f,

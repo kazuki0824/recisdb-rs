@@ -5,9 +5,9 @@ use std::cell::Cell;
 use std::io::{Read, Write};
 use std::pin::Pin;
 
-pub use futures;
 pub use crate::access_control::types::WorkingKey;
 use crate::bindings::InnerDecoder;
+pub use futures;
 use futures::task::{Context, Poll};
 use futures::{ready, AsyncBufRead, AsyncRead};
 use pin_project_lite::pin_project;
@@ -28,11 +28,7 @@ pin_project! {
 }
 
 impl<'a> StreamDecoder<'a> {
-    pub fn new(
-        reader: &'a mut (dyn AsyncBufRead + Unpin),
-        key: Option<WorkingKey>,
-        ids: Vec<i64>,
-    ) -> Self {
+    pub fn new(reader: &'a mut (dyn AsyncBufRead + Unpin), key: Option<WorkingKey>) -> Self {
         unsafe {
             Self {
                 received: Cell::new(0),

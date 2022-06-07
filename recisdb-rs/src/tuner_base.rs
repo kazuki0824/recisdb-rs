@@ -2,7 +2,7 @@
 
 use std::error::Error;
 
-use futures::AsyncBufRead;
+use b25_sys::futures::AsyncBufRead;
 
 use crate::channels::Channel;
 
@@ -27,7 +27,8 @@ pub fn tune(path: &str, channel: Channel) -> Result<impl Tuned, Box<dyn Error>> 
             use crate::tuner_base::linux::TunedDevice;
             TunedDevice::tune(path, channel, 0)
         }
-        else if #[cfg(target_os = "windows")] {
+        else if #[cfg(target_os = "windows")]
+        {
             use crate::tuner_base::windows::TunedDevice;
             TunedDevice::tune(path, channel)
         }

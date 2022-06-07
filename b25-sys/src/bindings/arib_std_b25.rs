@@ -5,7 +5,6 @@
 #![allow(non_upper_case_globals)]
 #![deny(dead_code)]
 
-
 pub const _STDINT_H: u32 = 1;
 pub const _FEATURES_H: u32 = 1;
 pub const _DEFAULT_SOURCE: u32 = 1;
@@ -1003,7 +1002,6 @@ extern "C" {
     pub fn create_arib_std_b25() -> *mut ARIB_STD_B25;
 }
 
-
 pub type wchar_t = ::std::os::raw::c_int;
 
 #[repr(C)]
@@ -1037,110 +1035,110 @@ fn bindgen_test_layout_B_CAS_CARD_PRIVATE_DATA() {
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).mng as *const _ as usize },
         0usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(mng)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(mng)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).card as *const _ as usize },
         8usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(card)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(card)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pool as *const _ as usize },
         16usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(pool)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(pool)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).reader as *const _ as usize },
         24usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(reader)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(reader)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).sbuf as *const _ as usize },
         32usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(sbuf)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(sbuf)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).rbuf as *const _ as usize },
         40usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(rbuf)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(rbuf)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).stat as *const _ as usize },
         48usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(stat)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(stat)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).id as *const _ as usize },
         104usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(id)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(id)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).id_max as *const _ as usize },
         120usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(id_max)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(id_max)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pwc as *const _ as usize },
         128usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(pwc)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(pwc)
         )
     );
     assert_eq!(
         unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pwc_max as *const _ as usize },
         144usize,
         concat!(
-        "Offset of field: ",
-        stringify!(B_CAS_CARD_PRIVATE_DATA),
-        "::",
-        stringify!(pwc_max)
+            "Offset of field: ",
+            stringify!(B_CAS_CARD_PRIVATE_DATA),
+            "::",
+            stringify!(pwc_max)
         )
     );
 }
