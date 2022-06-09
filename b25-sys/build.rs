@@ -33,10 +33,10 @@ fn main() {
         match pc.probe("libarib25") {
             Err(_e) => {
                 //start self build
-                let mut cm = cmake::Config::new("./externals/libarib25");
+                let mut cm = cmake::Config::new("./externals/libaribb25");
                 let res = cm.build();
                 println!("cargo:rustc-link-search=native={}/lib", res.display());
-                println!("cargo:rustc-link-lib=static=arib25");
+                println!("cargo:rustc-link-lib=static=aribb25");
             }
             Ok(_b25) => {
                 //cc.includes(b25.include_paths.as_slice());
@@ -44,7 +44,7 @@ fn main() {
         }
     } else {
         //assume MSVC
-        let mut cm = cmake::Config::new("./externals/libarib25");
+        let mut cm = cmake::Config::new("./externals/libaribb25");
         cm.generator("Visual Studio 16").very_verbose(true);
         //MSVC + b25-rs(debug) + libarib25(debug) = fail
         //warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
@@ -53,7 +53,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         /* MSVC emits two different *.lib files, libarib25.lib and arib25.lib.
         The first one is a static library, but the other is an import library, which doesn't have any implemation. */
-        println!("cargo:rustc-link-lib=static=libarib25");
+        println!("cargo:rustc-link-lib=static=libaribb25");
         println!("cargo:rustc-link-lib=dylib=winscard");
     }
 }

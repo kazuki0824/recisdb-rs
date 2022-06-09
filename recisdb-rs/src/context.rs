@@ -21,7 +21,7 @@ pub(crate) enum Commands {
         /// The device name
         /// This is the name of the device as specified in the
         /// `/dev/` directory.
-        #[clap(short, long, required = true, value_name = "device")]
+        #[clap(short, long, required = true, value_name = "canonical_path")]
         device: String,
         /// The channel name
         /// The channel name is a string that is defined in the
@@ -42,14 +42,15 @@ pub(crate) enum Commands {
     .requires_all(&["channel"])
     .requires("device")
     ))]
+    //key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
     ArgGroup::new("key")
     .args(&["key0", "key1"])
     .requires_all(&["key0", "key1"])
+    .multiple(true)
     ))]
     #[clap(group(
     ArgGroup::new("input")
-    .required(true)
     .multiple(false)
     .args(&["device", "source"])
     ))]
@@ -64,7 +65,7 @@ pub(crate) enum Commands {
         /// the canonical path of the device comes here.
         /// If the device name is not specified, this subcommand will try
         /// to read the data from the specified file.
-        #[clap(short, long, value_name = "device")]
+        #[clap(short, long, value_name = "canonical_path")]
         device: Option<String>,
         /// The source file name
         /// The source file name is a string that is specified as a

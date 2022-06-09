@@ -18,7 +18,7 @@ pub(crate) struct InnerDecoder {
 }
 impl InnerDecoder {
     pub(crate) unsafe fn new(key: Option<WorkingKey>) -> Result<Self, AribB25DecoderError> {
-        let dec = NonNull::new(arib_std_b25::create_arib_std_b25()).unwrap();
+        let mut dec = NonNull::new(arib_std_b25::create_arib_std_b25()).unwrap();
 
         // Clone the instance from the orignal that starts from the address created by create_arib_std_b25()
         // If the program crashed when this instance is freed, this code is the cause of the crash.
@@ -39,6 +39,7 @@ impl InnerDecoder {
                 let mut cas = B_CAS_CARD::default();
                 //Allocate private data inside B_CAS_CARD
                 cas.initialize();
+                dec.as_mut().set_b_cas_card.unwrap()(dec.as_ptr() as *mut _, &mut cas);
                 Ok(Self {
                     dec,
                     cas: ManuallyDrop::new(cas),

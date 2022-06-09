@@ -11,6 +11,7 @@ use b25_sys::futures::future::AbortHandle;
 use b25_sys::futures::io::{AllowStdIo, BufReader};
 use b25_sys::futures::AsyncBufRead;
 use clap::Parser;
+use log::info;
 
 use crate::context::Commands;
 use b25_sys::StreamDecoder;
@@ -30,20 +31,31 @@ fn get_src(
     if let Some(src) = device {
         crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
+        let src = std::fs::canonicalize(src)?;
         let input = BufReader::new(AllowStdIo::new(std::fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
-        panic!("no source specified");
+        info!("Waiting for stdin...");
+        let input = BufReader::new(AllowStdIo::new(std::io::stdin().lock()));
+        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     }
 }
 
 fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
-    Ok(if let Some(dir) = directory {
-        let dir = std::fs::canonicalize(dir)?;
-        Box::new(std::fs::File::create(dir)?) as Box<dyn Write>
-    } else {
-        Box::new(std::io::stdout().lock()) as Box<dyn Write>
-    })
+    match directory {
+        Some(s) if s == "-" => {
+            Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>)
+        }
+        Some(dir) => {
+            let dir = std::fs::canonicalize(dir)?;
+            let filename_time_now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            Ok(Box::new(std::fs::File::create(format!("{}/{}", dir.to_str().unwrap(), filename_time_now))?) as Box<dyn Write>)
+        }
+        _ => unreachable!("dir = None")
+    }
 }
 
 fn main() {
@@ -103,6 +115,7 @@ fn main() {
                 }
                 std::thread::sleep(Duration::from_secs(1));
             }
+
         }
     };
     match result {
