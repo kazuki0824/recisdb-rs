@@ -1,14 +1,16 @@
+use std::collections::HashSet;
+use std::ptr::null_mut;
+
+use cryptography_b25_00::expand_00;
+use once_cell::sync::OnceCell;
+use tail_cbc::cipher::KeyIvInit;
+
 use crate::access_control::types::Block00CbcDec;
 use crate::bindings::arib_std_b25::{
     wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
     B_CAS_PWR_ON_CTRL, B_CAS_PWR_ON_CTRL_INFO,
 };
 use crate::WorkingKey;
-use cryptography_b25_00::expand_00;
-use once_cell::sync::OnceCell;
-use std::collections::HashSet;
-use std::ptr::null_mut;
-use tail_cbc::cipher::KeyIvInit;
 
 pub static KEYS: OnceCell<HashSet<u8, WorkingKey>> = OnceCell::new();
 

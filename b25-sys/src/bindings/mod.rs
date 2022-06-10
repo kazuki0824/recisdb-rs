@@ -1,24 +1,25 @@
+use std::cell::Cell;
+use std::io::{Read, Write};
+use std::mem::ManuallyDrop;
+use std::pin::Pin;
+use std::ptr::null_mut;
+
 use crate::bindings::arib_std_b25::{ARIB_STD_B25, ARIB_STD_B25_BUFFER, B_CAS_CARD};
 use crate::bindings::error::AribB25DecoderError;
 use crate::WorkingKey;
-use std::cell::Cell;
-use std::ffi::c_void;
-use std::io::{Read, Write};
-use std::mem::ManuallyDrop;
-use std::ptr::{null_mut, NonNull};
 
 mod arib_std_b25;
 mod error;
 mod ffi;
 
-pub(crate) struct InnerDecoder {
-    pub dec: NonNull<ARIB_STD_B25>,
+pub(crate) struct InnerDecoder<'a> {
+    pub dec: Pin<&'a mut ARIB_STD_B25>,
     cas: ManuallyDrop<B_CAS_CARD>,
     key: Cell<Option<WorkingKey>>,
 }
-impl InnerDecoder {
+impl InnerDecoder<'_> {
     pub(crate) unsafe fn new(key: Option<WorkingKey>) -> Result<Self, AribB25DecoderError> {
-        let mut dec = NonNull::new(arib_std_b25::create_arib_std_b25()).unwrap();
+        let mut dec = arib_std_b25::create_arib_std_b25();
 
         // Clone the instance from the orignal that starts from the address created by create_arib_std_b25()
         // If the program crashed when this instance is freed, this code is the cause of the crash.
@@ -29,7 +30,7 @@ impl InnerDecoder {
                     Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)
                 } else {
                     Ok(Self {
-                        dec,
+                        dec: Pin::new_unchecked(&mut *dec),
                         cas: ManuallyDrop::new(*cas.clone()),
                         key: Cell::new(None),
                     })
@@ -39,9 +40,9 @@ impl InnerDecoder {
                 let mut cas = B_CAS_CARD::default();
                 //Allocate private data inside B_CAS_CARD
                 cas.initialize();
-                dec.as_mut().set_b_cas_card.unwrap()(dec.as_ptr() as *mut _, &mut cas);
+                (*dec).set_b_cas_card(&mut cas);
                 Ok(Self {
-                    dec,
+                    dec: Pin::new_unchecked(&mut *dec),
                     cas: ManuallyDrop::new(cas),
                     key: Cell::new(Some(key)),
                 })
@@ -50,67 +51,70 @@ impl InnerDecoder {
     }
 }
 
-impl Drop for InnerDecoder {
+impl Drop for InnerDecoder<'_> {
     fn drop(&mut self) {
         unsafe {
-            self.dec.as_mut().release.unwrap()(self.dec.as_ptr() as *mut c_void);
+            //FIXME: Release the decoder instance
+            //self.dec.get_unchecked_mut().release();
         }
     }
 }
 
-impl Write for InnerDecoder {
+impl Write for InnerDecoder<'_> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let code = unsafe {
-            let put = self.dec.as_mut().put.unwrap();
-
             let mut buffer_struct = ARIB_STD_B25_BUFFER {
                 data: std::mem::transmute::<*const u8, *mut u8>(buf.as_ptr()),
                 size: buf.len() as u32,
             };
-
-            put(
-                &mut self.dec as *mut _ as *mut c_void,
-                &mut buffer_struct as *mut ARIB_STD_B25_BUFFER,
-            )
+            self.dec.put(&buffer_struct)
         };
+
         match code {
             0 => Ok(buf.len()),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                eprintln!("{}", err);
+                // if greater than 0, it means that the decoder emitted some warnings.
+                // if less than 0, it means that the decoder emitted some errors.
+                if code > 0 {
+                    Ok(buf.len())
+                } else {
+                    Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                }
             }
         }
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        let code = unsafe {
-            let flush = self.dec.as_mut().flush.unwrap();
-            flush(&mut self.dec as *mut _ as *mut c_void)
-        };
+        let code = self.dec.flush();
+
         match code {
             0 => Ok(()),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                eprintln!("{}", err);
+                // if greater than 0, it means that the decoder emitted some warnings.
+                // if less than 0, it means that the decoder emitted some errors.
+                if code > 0 {
+                    Ok(())
+                } else {
+                    Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                }
             }
         }
     }
 }
 
-impl Read for InnerDecoder {
+impl Read for InnerDecoder<'_> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let (code, sz) = unsafe {
-            let get = self.dec.as_mut().get.unwrap();
-
             let mut buffer_struct = ARIB_STD_B25_BUFFER {
                 data: null_mut(),
                 size: 0,
             };
 
-            let code = get(
-                &mut self.dec as *mut _ as *mut c_void,
-                &mut buffer_struct as *mut ARIB_STD_B25_BUFFER,
-            );
+            let code = self.dec.get(&mut buffer_struct);
             std::ptr::copy_nonoverlapping(
                 buffer_struct.data as *const u8,
                 buf.as_mut_ptr(),
@@ -123,7 +127,14 @@ impl Read for InnerDecoder {
             0 => Ok(sz),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                eprintln!("{}", err);
+                // if greater than 0, it means that the decoder emitted some warnings.
+                // if less than 0, it means that the decoder emitted some errors.
+                if code > 0 {
+                    Ok(sz)
+                } else {
+                    Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+                }
             }
         }
     }

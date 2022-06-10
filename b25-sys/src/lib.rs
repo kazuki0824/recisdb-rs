@@ -1,16 +1,17 @@
-mod access_control;
-mod bindings;
-
 use std::cell::Cell;
 use std::io::{Read, Write};
 use std::pin::Pin;
 
-pub use crate::access_control::types::WorkingKey;
-use crate::bindings::InnerDecoder;
 pub use futures;
 use futures::task::{Context, Poll};
 use futures::{ready, AsyncBufRead, AsyncRead};
 use pin_project_lite::pin_project;
+
+pub use crate::access_control::types::WorkingKey;
+use crate::bindings::InnerDecoder;
+
+mod access_control;
+mod bindings;
 
 pin_project! {
     pub struct StreamDecoder<'a> {
@@ -18,7 +19,7 @@ pin_project! {
         pub reader: &'a mut (dyn AsyncBufRead + Unpin),
         received: Cell<usize>,
         sent: Cell<usize>,
-        inner: InnerDecoder,
+        inner: InnerDecoder<'a>,
     }
     impl PinnedDrop for StreamDecoder<'_> {
         fn drop(this: Pin<&mut Self>) {

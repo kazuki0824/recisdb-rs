@@ -12,6 +12,7 @@ include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 #[allow(clippy::all)]
 mod ib1 {
     use super::{IBonDriver, BOOL, BYTE, DWORD};
+
     extern "C" {
         //IBon1
         pub fn C_OpenTuner(b: *mut IBonDriver) -> BOOL;
@@ -41,6 +42,7 @@ mod ib1 {
 
 mod ib2 {
     use super::{IBonDriver, IBonDriver2, BOOL, BYTE, DWORD, LPCTSTR};
+
     extern "C" {
         //IBon2
         pub fn C_EnumTuningSpace(b: *mut IBonDriver2, dwSpace: DWORD) -> LPCTSTR;
@@ -53,6 +55,7 @@ mod ib2 {
 
 mod ib_utils {
     use super::{IBonDriver, IBonDriver2, IBonDriver3};
+
     extern "C" {
         pub(super) fn interface_check_2(i: *mut IBonDriver) -> *mut IBonDriver2;
         pub(super) fn interface_check_3(i: *mut IBonDriver2) -> *mut IBonDriver3;

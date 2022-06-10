@@ -6,17 +6,17 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
+use clap::Parser;
+use log::info;
+
 use b25_sys::futures::executor::block_on;
 use b25_sys::futures::future::AbortHandle;
 use b25_sys::futures::io::{AllowStdIo, BufReader};
 use b25_sys::futures::AsyncBufRead;
-use clap::Parser;
-use log::info;
-
-use crate::context::Commands;
 use b25_sys::StreamDecoder;
 use b25_sys::WorkingKey;
 
+use crate::context::Commands;
 use crate::tuner_base::Tuned;
 
 mod channels;
@@ -32,29 +32,31 @@ fn get_src(
         crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
         let src = std::fs::canonicalize(src)?;
-        let input = BufReader::new(AllowStdIo::new(std::fs::File::open(src)?));
+        let input = BufReader::with_capacity(20000 * 40, AllowStdIo::new(std::fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
         info!("Waiting for stdin...");
-        let input = BufReader::new(AllowStdIo::new(std::io::stdin().lock()));
+        let input = BufReader::with_capacity(20000 * 40, AllowStdIo::new(std::io::stdin().lock()));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     }
 }
 
 fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
     match directory {
-        Some(s) if s == "-" => {
-            Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>)
-        }
+        Some(s) if s == "-" => Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>),
         Some(dir) => {
             let dir = std::fs::canonicalize(dir)?;
             let filename_time_now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            Ok(Box::new(std::fs::File::create(format!("{}/{}", dir.to_str().unwrap(), filename_time_now))?) as Box<dyn Write>)
+            Ok(Box::new(std::fs::File::create(format!(
+                "{}/{}.m2ts",
+                dir.to_str().unwrap(),
+                filename_time_now
+            ))?) as Box<dyn Write>)
         }
-        _ => unreachable!("dir = None")
+        _ => unreachable!("dir = None"),
     }
 }
 
@@ -81,6 +83,8 @@ fn main() {
                 _ => panic!("Specify both of the keys"),
             };
             let rec_duration = time.map(Duration::from_secs_f64);
+
+            //Combine the source, decoder, and output into a single future
             let mut src = get_src(
                 device,
                 channel.map(|s| channels::Channel::from_ch_str(s)),
@@ -109,13 +113,12 @@ fn main() {
             ctrlc::set_handler(move || flag.store(true, Ordering::Relaxed)).unwrap();
 
             loop {
-                println!("S/N = {}[dB]\r", tuned.signal_quality());
+                std::thread::sleep(Duration::from_secs(1));
                 if flag2.load(Ordering::Relaxed) {
                     return;
                 }
-                std::thread::sleep(Duration::from_secs(1));
+                println!("S/N = {}[dB]\r", tuned.signal_quality());
             }
-
         }
     };
     match result {

@@ -3,7 +3,9 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
-#![deny(dead_code)]
+#![warn(dead_code)]
+
+use std::marker::PhantomPinned;
 
 pub const _STDINT_H: u32 = 1;
 pub const _FEATURES_H: u32 = 1;
@@ -750,80 +752,221 @@ fn bindgen_test_layout_ARIB_STD_B25_PROGRAM_INFO() {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ARIB_STD_B25 {
-    pub private_data: *mut ::std::os::raw::c_void,
-    pub release: ::std::option::Option<unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void)>,
-    pub set_multi2_round: ::std::option::Option<
+    private_data: *mut ::std::os::raw::c_void,
+    release: ::std::option::Option<unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void)>,
+    set_multi2_round: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             round: i32,
         ) -> ::std::os::raw::c_int,
     >,
-    pub set_strip: ::std::option::Option<
+    set_strip: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             strip: i32,
         ) -> ::std::os::raw::c_int,
     >,
-    pub set_emm_proc: ::std::option::Option<
+    set_emm_proc: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             on: i32,
         ) -> ::std::os::raw::c_int,
     >,
-    pub set_simd_mode: ::std::option::Option<
+    set_simd_mode: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             instructin: i32,
         ) -> ::std::os::raw::c_int,
     >,
-    pub get_simd_mode:
+    get_simd_mode:
         ::std::option::Option<unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void) -> i32>,
-    pub set_b_cas_card: ::std::option::Option<
+    set_b_cas_card: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             bcas: *mut B_CAS_CARD,
         ) -> ::std::os::raw::c_int,
     >,
-    pub set_unit_size: ::std::option::Option<
+    set_unit_size: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             size: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int,
     >,
-    pub reset: ::std::option::Option<
+    reset: ::std::option::Option<
         unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int,
     >,
-    pub flush: ::std::option::Option<
+    flush: ::std::option::Option<
         unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int,
     >,
-    pub put: ::std::option::Option<
+    put: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             buf: *mut ARIB_STD_B25_BUFFER,
         ) -> ::std::os::raw::c_int,
     >,
-    pub get: ::std::option::Option<
+    get: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             buf: *mut ARIB_STD_B25_BUFFER,
         ) -> ::std::os::raw::c_int,
     >,
-    pub get_program_count: ::std::option::Option<
+    get_program_count: ::std::option::Option<
         unsafe extern "C" fn(std_b25: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int,
     >,
-    pub get_program_info: ::std::option::Option<
+    get_program_info: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             info: *mut ARIB_STD_B25_PROGRAM_INFO,
             idx: i32,
         ) -> ::std::os::raw::c_int,
     >,
-    pub withdraw: ::std::option::Option<
+    withdraw: ::std::option::Option<
         unsafe extern "C" fn(
             std_b25: *mut ::std::os::raw::c_void,
             buf: *mut ARIB_STD_B25_BUFFER,
         ) -> ::std::os::raw::c_int,
     >,
+    _pin_marker: PhantomPinned,
+}
+impl ARIB_STD_B25 {
+    pub fn release(&mut self) {
+        unsafe {
+            if !self.release.is_none() {
+                self.release.unwrap()(self as *mut _ as *mut ::std::os::raw::c_void);
+            }
+        }
+    }
+    pub fn set_multi2_round(&self, round: i32) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_multi2_round {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void, round),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn set_strip(&self, strip: i32) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_strip {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void, strip),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn set_emm_proc(&self, on: i32) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_emm_proc {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void, on),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn set_simd_mode(&self, instruction_type: i32) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_simd_mode {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    instruction_type,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn get_simd_mode(&self) -> i32 {
+        unsafe {
+            match self.get_simd_mode {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn set_b_cas_card(&self, bcas: &mut B_CAS_CARD) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_b_cas_card {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    bcas as *mut _,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn set_unit_size(&self, size: ::std::os::raw::c_int) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.set_unit_size {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void, size),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn reset(&self) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.reset {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn flush(&self) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.flush {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn put(&self, buf: &ARIB_STD_B25_BUFFER) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.put {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    buf as *const _ as *mut _,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn get(&self, buf: &mut ARIB_STD_B25_BUFFER) -> ::std::os::raw::c_int {
+        unsafe {
+            match self.get {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    buf as *mut _,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn get_program_count(&self) -> i32 {
+        unsafe {
+            match self.get_program_count {
+                Some(f) => f(self as *const _ as *mut ::std::os::raw::c_void),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn get_program_info(&self, info: &mut ARIB_STD_B25_PROGRAM_INFO, idx: i32) -> i32 {
+        unsafe {
+            match self.get_program_info {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    info as *mut _,
+                    idx,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
+    pub fn withdraw(&self, buf: &mut ARIB_STD_B25_BUFFER) -> i32 {
+        unsafe {
+            match self.withdraw {
+                Some(f) => f(
+                    self as *const _ as *mut ::std::os::raw::c_void,
+                    buf as *mut _,
+                ),
+                None => unreachable!("Maybe uninitialized"),
+            }
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout_ARIB_STD_B25() {
