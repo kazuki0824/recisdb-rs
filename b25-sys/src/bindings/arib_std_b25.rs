@@ -513,6 +513,7 @@ pub struct B_CAS_CARD {
             len: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int,
     >,
+    pub(crate) _pinned: PhantomPinned
 }
 #[test]
 fn bindgen_test_layout_B_CAS_CARD() {
@@ -826,7 +827,7 @@ pub struct ARIB_STD_B25 {
             buf: *mut ARIB_STD_B25_BUFFER,
         ) -> ::std::os::raw::c_int,
     >,
-    _pin_marker: PhantomPinned,
+    _pinned: PhantomPinned,
 }
 impl ARIB_STD_B25 {
     pub fn release(&mut self) {
@@ -879,12 +880,12 @@ impl ARIB_STD_B25 {
             }
         }
     }
-    pub fn set_b_cas_card(&self, bcas: &mut B_CAS_CARD) -> ::std::os::raw::c_int {
+    pub fn set_b_cas_card(&self, bcas: &B_CAS_CARD) -> ::std::os::raw::c_int {
         unsafe {
             match self.set_b_cas_card {
                 Some(f) => f(
                     self as *const _ as *mut ::std::os::raw::c_void,
-                    bcas as *mut _,
+                    bcas as *const _ as *mut _,
                 ),
                 None => unreachable!("Maybe uninitialized"),
             }
