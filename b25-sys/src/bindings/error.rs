@@ -156,3 +156,59 @@ impl Display for AribB25DecoderError {
 }
 
 impl std::error::Error for AribB25DecoderError {}
+
+#[derive(Debug, Clone)]
+pub enum BCasCardError {
+    BCAS_CARD_ERROR_INVALID_PARAMETER = -1,
+    BCAS_CARD_ERROR_NOT_INITIALIZED = -2,
+    BCAS_CARD_ERROR_NO_SMART_CARD_READER = -3,
+    BCAS_CARD_ERROR_ALL_READERS_CONNECTION_FAILED = -4,
+    BCAS_CARD_ERROR_NO_ENOUGH_MEMORY = -5,
+    BCAS_CARD_ERROR_TRANSMIT_FAILED = -6,
+}
+
+impl From<i32> for BCasCardError {
+    fn from(e: i32) -> Self {
+        if e == -1 {
+            BCasCardError::BCAS_CARD_ERROR_INVALID_PARAMETER
+        } else if e == -2 {
+            BCasCardError::BCAS_CARD_ERROR_NOT_INITIALIZED
+        } else if e == -3 {
+            BCasCardError::BCAS_CARD_ERROR_NO_SMART_CARD_READER
+        } else if e == -4 {
+            BCasCardError::BCAS_CARD_ERROR_ALL_READERS_CONNECTION_FAILED
+        } else if e == -5 {
+            BCasCardError::BCAS_CARD_ERROR_NO_ENOUGH_MEMORY
+        } else if e == -6 {
+            BCasCardError::BCAS_CARD_ERROR_TRANSMIT_FAILED
+        } else {
+            panic!("unknown error code: {}", e)
+        }
+    }
+}
+
+impl Display for BCasCardError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        type E = BCasCardError;
+        match *self {
+            E::BCAS_CARD_ERROR_INVALID_PARAMETER => {
+                write!(f, "BCAS_CARD_ERROR_INVALID_PARAMETER")
+            }
+            E::BCAS_CARD_ERROR_NOT_INITIALIZED => {
+                write!(f, "BCAS_CARD_ERROR_NOT_INITIALIZED")
+            }
+            E::BCAS_CARD_ERROR_NO_SMART_CARD_READER => {
+                write!(f, "BCAS_CARD_ERROR_NO_SMART_CARD_READER")
+            }
+            E::BCAS_CARD_ERROR_ALL_READERS_CONNECTION_FAILED => {
+                write!(f, "BCAS_CARD_ERROR_ALL_READERS_CONNECTION_FAILED")
+            }
+            E::BCAS_CARD_ERROR_NO_ENOUGH_MEMORY => {
+                write!(f, "BCAS_CARD_ERROR_NO_ENOUGH_MEMORY")
+            }
+            E::BCAS_CARD_ERROR_TRANSMIT_FAILED => {
+                write!(f, "BCAS_CARD_ERROR_TRANSMIT_FAILED")
+            }
+        }
+    }
+}
