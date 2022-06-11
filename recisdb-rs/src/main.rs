@@ -13,7 +13,7 @@ use b25_sys::futures::executor::block_on;
 use b25_sys::futures::future::AbortHandle;
 use b25_sys::futures::io::{AllowStdIo, BufReader};
 use b25_sys::futures::AsyncBufRead;
-use b25_sys::StreamDecoder;
+use b25_sys::{DecoderOptions, StreamDecoder};
 use b25_sys::WorkingKey;
 
 use crate::context::Commands;
@@ -32,11 +32,11 @@ fn get_src(
         crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
         let src = std::fs::canonicalize(src)?;
-        let input = BufReader::with_capacity(20000 * 40, AllowStdIo::new(std::fs::File::open(src)?));
+        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
         info!("Waiting for stdin...");
-        let input = BufReader::with_capacity(20000 * 40, AllowStdIo::new(std::io::stdin().lock()));
+        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     }
 }
@@ -74,14 +74,27 @@ fn main() {
             source,
             directory,
         } => {
-            let key = match (key0, key1) {
-                (None, None) => None,
-                (Some(k0), Some(k1)) => Some(WorkingKey {
-                    0: u64::from_str_radix(k0.trim_start_matches("0x"), 16).unwrap(),
-                    1: u64::from_str_radix(k1.trim_start_matches("0x"), 16).unwrap(),
-                }),
-                _ => panic!("Specify both of the keys"),
+            // Settings
+            let settings = {
+                let working_key = match (key0, key1) {
+                    (None, None) => None,
+                    (Some(k0), Some(k1)) => Some(WorkingKey {
+                        0: u64::from_str_radix(k0.trim_start_matches("0x"), 16).unwrap(),
+                        1: u64::from_str_radix(k1.trim_start_matches("0x"), 16).unwrap(),
+                    }),
+                    _ => panic!("Specify both of the keys"),
+                };
+                DecoderOptions {
+                    working_key,
+                    round: 4,
+                    strip: true,
+                    emm: true,
+                    simd: false,
+                    verbose: false,
+                }
             };
+
+            //Recording duration
             let rec_duration = time.map(Duration::from_secs_f64);
 
             //Combine the source, decoder, and output into a single future
@@ -91,7 +104,7 @@ fn main() {
                 source,
             )
             .unwrap();
-            let from = StreamDecoder::new(&mut src, key);
+            let from = StreamDecoder::new(&mut src, settings);
             let output = &mut b25_sys::futures::io::AllowStdIo::new(get_output(directory).unwrap());
             let (stream, abort_handle) = b25_sys::futures::io::copy_buf_abortable(
                 b25_sys::futures::io::BufReader::with_capacity(20000 * 40, from),
