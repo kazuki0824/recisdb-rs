@@ -16,7 +16,7 @@ mod bindings;
 pin_project! {
     pub struct StreamDecoder<'a> {
         #[pin]
-        pub reader: &'a mut (dyn AsyncBufRead + Unpin),
+        reader: &'a mut (dyn AsyncBufRead + Unpin),
         received: Cell<usize>,
         sent: Cell<usize>,
         inner: InnerDecoder<'a>,
@@ -28,15 +28,34 @@ pin_project! {
     }
 }
 
+pub struct DecoderOptions {
+    pub working_key: Option<WorkingKey>,
+    pub round: i32,
+    pub strip: bool,
+    pub emm: bool,
+    pub simd: bool,
+    pub verbose: bool,
+}
+
 impl<'a> StreamDecoder<'a> {
-    pub fn new(reader: &'a mut (dyn AsyncBufRead + Unpin), key: Option<WorkingKey>) -> Self {
-        unsafe {
-            Self {
-                received: Cell::new(0),
-                sent: Cell::new(0),
-                reader,
-                inner: InnerDecoder::new(key).unwrap(),
-            }
+    pub fn new(reader: &'a mut (dyn AsyncBufRead + Unpin), opt: DecoderOptions) -> Self {
+        let inner = unsafe {
+            let inner = InnerDecoder::new(opt.working_key).unwrap();
+            // Set options to the decoder
+            inner.dec.set_multi2_round(opt.round);
+            inner.dec.set_strip(if opt.strip { 1 } else { 0 });
+            inner.dec.set_emm_proc(if opt.emm { 1 } else { 0 });
+            inner.dec.set_simd_mode(if opt.simd { 1 } else { 0 });
+
+            // TODO: Verbose mode and power control is not implemented yet.
+            inner
+        };
+
+        Self {
+            received: Cell::new(0),
+            sent: Cell::new(0),
+            reader,
+            inner
         }
     }
 }
