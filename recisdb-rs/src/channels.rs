@@ -221,4 +221,13 @@ mod tests {
         );
         assert_eq!(ch.raw_string, ch_str.to_string());
     }
+
+    #[test]
+    fn ch_to_ioctl_freq() {
+        let ch_str = "T18";
+        let ch = Channel::from_ch_str(ch_str);
+        let freq = ch.to_ioctl_freq(0);
+        assert_eq!(freq.ch, 68);
+        assert_eq!(freq.slot, 0);
+    }
 }
