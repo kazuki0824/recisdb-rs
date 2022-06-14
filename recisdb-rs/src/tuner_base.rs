@@ -1,8 +1,7 @@
 #![allow(unused_imports)]
 
 use std::error::Error;
-
-use b25_sys::futures::AsyncBufRead;
+use b25_sys::futures_io::AsyncBufRead;
 
 use crate::channels::Channel;
 

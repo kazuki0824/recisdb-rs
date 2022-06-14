@@ -1,9 +1,10 @@
 use std::error::Error;
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
+use std::task::Poll;
 use std::time::Duration;
-
-use b25_sys::futures::io::{AsyncBufRead, AsyncRead};
+use futures_util::io::BufReader;
+use b25_sys::futures_io::{AsyncBufRead, AsyncRead};
 
 use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
@@ -85,8 +86,6 @@ impl super::Tuned for TunedDevice {
     }
 
     fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin> {
-        use b25_sys::futures::io::BufReader;
-
         let with_buffer = BufReader::new(self);
         Box::new(with_buffer)
     }
@@ -107,8 +106,7 @@ impl AsyncRead for TunedDevice {
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
         buf: &mut [u8],
-    ) -> std::task::Poll<std::io::Result<usize>> {
-        use b25_sys::futures::task::Poll;
+    ) -> Poll<std::io::Result<usize>> {
         match self.interface.GetTsStream() {
             Ok((recv, remaining)) if recv.len() > 0 => {
                 println!("{} bytes recv.", recv.len());

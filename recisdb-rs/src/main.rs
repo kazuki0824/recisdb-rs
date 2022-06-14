@@ -7,14 +7,14 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use clap::Parser;
+use futures_executor::block_on;
+use futures_util::future::AbortHandle;
+use futures_util::io::{AllowStdIo, BufReader};
 use log::info;
 
-use b25_sys::futures::executor::block_on;
-use b25_sys::futures::future::AbortHandle;
-use b25_sys::futures::io::{AllowStdIo, BufReader};
-use b25_sys::futures::AsyncBufRead;
-use b25_sys::{DecoderOptions, StreamDecoder};
 use b25_sys::WorkingKey;
+use b25_sys::{DecoderOptions, StreamDecoder};
+use b25_sys::futures_io::AsyncBufRead;
 
 use crate::context::Commands;
 use crate::tuner_base::Tuned;
@@ -29,7 +29,7 @@ fn get_src(
     source: Option<String>,
 ) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
     if let Some(src) = device {
-        crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
+        tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
         let src = std::fs::canonicalize(src)?;
         let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
@@ -105,9 +105,9 @@ fn main() {
             )
             .unwrap();
             let from = StreamDecoder::new(&mut src, settings);
-            let output = &mut b25_sys::futures::io::AllowStdIo::new(get_output(directory).unwrap());
-            let (stream, abort_handle) = b25_sys::futures::io::copy_buf_abortable(
-                b25_sys::futures::io::BufReader::with_capacity(20000 * 40, from),
+            let output = &mut AllowStdIo::new(get_output(directory).unwrap());
+            let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
+                BufReader::with_capacity(20000 * 40, from),
                 output,
             );
 

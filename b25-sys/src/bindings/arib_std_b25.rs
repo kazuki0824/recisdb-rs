@@ -473,7 +473,7 @@ fn bindgen_test_layout_B_CAS_ECM_RESULT() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct B_CAS_CARD {
     pub private_data: *mut ::std::os::raw::c_void,
     pub release: ::std::option::Option<unsafe extern "C" fn(bcas: *mut ::std::os::raw::c_void)>,
@@ -513,7 +513,7 @@ pub struct B_CAS_CARD {
             len: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int,
     >,
-    pub(crate) _pinned: PhantomPinned
+    pub(crate) _pinned: PhantomPinned,
 }
 #[test]
 fn bindgen_test_layout_B_CAS_CARD() {

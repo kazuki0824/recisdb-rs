@@ -1,10 +1,11 @@
 use std::cell::Cell;
 use std::io::{Read, Write};
 use std::pin::Pin;
+use std::task::{Context, Poll};
+use futures_core::ready;
 
-pub use futures;
-use futures::task::{Context, Poll};
-use futures::{ready, AsyncBufRead, AsyncRead};
+pub use futures_io;
+use futures_io::{AsyncBufRead, AsyncRead};
 use pin_project_lite::pin_project;
 
 pub use crate::access_control::types::WorkingKey;
@@ -19,7 +20,7 @@ pin_project! {
         reader: &'a mut (dyn AsyncBufRead + Unpin),
         received: Cell<usize>,
         sent: Cell<usize>,
-        inner: InnerDecoder<'a>,
+        inner: InnerDecoder,
     }
     impl PinnedDrop for StreamDecoder<'_> {
         fn drop(this: Pin<&mut Self>) {
@@ -42,10 +43,13 @@ impl<'a> StreamDecoder<'a> {
         let inner = unsafe {
             let inner = InnerDecoder::new(opt.working_key).unwrap();
             // Set options to the decoder
-            inner.dec.set_multi2_round(opt.round);
-            inner.dec.set_strip(if opt.strip { 1 } else { 0 });
-            inner.dec.set_emm_proc(if opt.emm { 1 } else { 0 });
-            inner.dec.set_simd_mode(if opt.simd { 1 } else { 0 });
+            inner.dec.as_ref().set_multi2_round(opt.round);
+            inner.dec.as_ref().set_strip(if opt.strip { 1 } else { 0 });
+            inner.dec.as_ref().set_emm_proc(if opt.emm { 1 } else { 0 });
+            inner
+                .dec
+                .as_ref()
+                .set_simd_mode(if opt.simd { 1 } else { 0 });
 
             // TODO: Verbose mode and power control is not implemented yet.
             inner
@@ -55,7 +59,7 @@ impl<'a> StreamDecoder<'a> {
             received: Cell::new(0),
             sent: Cell::new(0),
             reader,
-            inner
+            inner,
         }
     }
 }

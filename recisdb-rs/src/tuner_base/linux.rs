@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::os::unix::io::AsRawFd;
-
-use b25_sys::futures::AsyncBufRead;
+use futures_util::io::AllowStdIo;
+use b25_sys::futures_io::AsyncBufRead;
 
 use crate::channels::{Channel, ChannelType, Freq};
 
@@ -31,7 +31,7 @@ impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i32; 1];
-            let _errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), &mut raw[0]) };
+            let _errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), &mut raw[0]) }.unwrap();
             raw[0]
         };
 
@@ -83,7 +83,6 @@ impl super::Tuned for TunedDevice {
     }
 
     fn open_stream(mut self) -> Box<dyn AsyncBufRead + Unpin> {
-        use b25_sys::futures::io::AllowStdIo;
         use std::io::BufReader;
 
         unsafe { start_rec(self.f.as_raw_fd()) }.unwrap();

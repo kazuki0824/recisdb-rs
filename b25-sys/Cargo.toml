@@ -6,16 +6,16 @@ edition = "2021"
 build="build.rs"
 
 [features]
-block00cbc = []
+block00cbc = [ "tail_cbc", "cryptography-b25-00" ]
 block40cbc = []
 default = [ "block00cbc" ]
 
 [dependencies]
-futures = { git="https://github.com/kazuki0824/futures-rs.git" , branch="asyncio_abortable_2"}
-#futures = ">0.3.21"
-pin-project-lite = "0.2.7"
-tail_cbc = { git = "https://github.com/kazuki0824/tail_cbc.git" }
-cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00" }
+futures-io = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2" }
+futures-core = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2", default-features = false }
+pin-project-lite = ">=0.2.9"
+tail_cbc = { version = ">=0.1.1", optional = true }
+cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00", optional = true }
 once_cell = "1.12.0"
 
 [build-dependencies]
