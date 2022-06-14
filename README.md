@@ -9,14 +9,6 @@ B25-rs and b25-sys are more convenient Rust wrapper for libarib25. Recisdb-rs ca
 - クロスプラットフォーム（BonDriver, キャラクタデバイス型の両方を読み取り可能）
 - Rustによる実装でシングルボード向け低メモリ消費、連続録画時のエラー防止を目指す
 - チャンネル名ハードコード・二重バッファなど、従来のソフトウェアの設計の問題を自分なりに修正
-- ECM/EMMロギング・デバッグ機能
-
-このプログラム単体では、チューナから実際の放送波を読み取りビットストリームとして取り出したり、それを正当な復号化装置を持たずに復号化しコンテンツにアクセスすることはできません  
-本プログラムは以下の要素技術に関する私的な技術研究を目的としています。
-- 公知となっている放送の標準規格ARIB-STD-B25およびそれに関連する技術(MPEG2-TS)
-- CBC,Feistel型暗号をより効率的に処理するための実装方法
-- 処理系依存の処理(オーバーロード・仮想関数テーブルなど)を含むC++関数を外部から呼び出す方法
-
 
 ## Description
 - recisdb-rs: reads a bitstream from both character devices and BonDriver
@@ -27,9 +19,10 @@ B25-rs and b25-sys are more convenient Rust wrapper for libarib25. Recisdb-rs ca
 ## Usage
 ### Linux
 - TODO: recisdb-rustのオプションをここに書く(chardev)
-- Video4Linux dvbデバイスはdvbv5-zap --> b25-rsへのパイプで対応
+- Video4Linux dvbデバイスはdvbv5-zapの出力を標準入力から受ける形で対応
 ### Windows
-- TODO: recisdb-rustのオプションをここに書く(BonDriver)
+- チャンネル名をChannel-ChannelSpaceの形（例：12-1）で指定
+- デバイス名としてBonDriverへのパスを渡す
 
 ## Installation
 ### Linux
