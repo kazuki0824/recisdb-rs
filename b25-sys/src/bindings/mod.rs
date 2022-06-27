@@ -79,10 +79,10 @@ impl Write for InnerDecoder {
             0 => Ok(buf.len()),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                eprintln!("{}", err);
                 // if greater than 0, it means that the decoder emitted some warnings.
                 // if less than 0, it means that the decoder emitted some errors.
                 if code > 0 {
+                    eprintln!("{}", err);
                     Ok(buf.len())
                 } else {
                     Err(std::io::Error::new(std::io::ErrorKind::Other, err))

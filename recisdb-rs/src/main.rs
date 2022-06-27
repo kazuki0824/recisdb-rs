@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate cfg_if;
 
-use std::error::Error;
-use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
@@ -10,59 +8,21 @@ use clap::Parser;
 use futures_executor::block_on;
 use futures_util::future::AbortHandle;
 use futures_util::io::{AllowStdIo, BufReader};
-use log::info;
+use log::{error, info};
 
-use b25_sys::WorkingKey;
 use b25_sys::{DecoderOptions, StreamDecoder};
-use b25_sys::futures_io::AsyncBufRead;
 
 use crate::context::Commands;
-use crate::tuner_base::Tuned;
 
 mod channels;
 mod context;
-mod tuner_base;
-
-fn get_src(
-    device: Option<String>,
-    channel: Option<channels::Channel>,
-    source: Option<String>,
-) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
-    if let Some(src) = device {
-        tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
-    } else if let Some(src) = source {
-        let src = std::fs::canonicalize(src)?;
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
-        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
-    } else {
-        info!("Waiting for stdin...");
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
-        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
-    }
-}
-
-fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
-    match directory {
-        Some(s) if s == "-" => Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>),
-        Some(dir) => {
-            let dir = std::fs::canonicalize(dir)?;
-            let filename_time_now = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
-            Ok(Box::new(std::fs::File::create(format!(
-                "{}/{}.m2ts",
-                dir.to_str().unwrap(),
-                filename_time_now
-            ))?) as Box<dyn Write>)
-        }
-        _ => unreachable!("dir = None"),
-    }
-}
+mod utils;
 
 fn main() {
     let arg = context::Cli::parse();
-    println!("{:?}", arg);
+    info!("{:?}", arg);
+
+    utils::initialize_logger();
 
     let result = match arg.command {
         Commands::Tune {
@@ -71,21 +31,12 @@ fn main() {
             time,
             key0,
             key1,
-            source,
-            directory,
+            output,
         } => {
             // Settings
             let settings = {
-                let working_key = match (key0, key1) {
-                    (None, None) => None,
-                    (Some(k0), Some(k1)) => Some(WorkingKey {
-                        0: u64::from_str_radix(k0.trim_start_matches("0x"), 16).unwrap(),
-                        1: u64::from_str_radix(k1.trim_start_matches("0x"), 16).unwrap(),
-                    }),
-                    _ => panic!("Specify both of the keys"),
-                };
                 DecoderOptions {
-                    working_key,
+                    working_key: utils::parse_keys(key0, key1),
                     round: 4,
                     strip: true,
                     emm: true,
@@ -98,14 +49,14 @@ fn main() {
             let rec_duration = time.map(Duration::from_secs_f64);
 
             //Combine the source, decoder, and output into a single future
-            let mut src = get_src(
+            let mut src = utils::get_src(
                 device,
                 channel.map(|s| channels::Channel::from_ch_str(s)),
-                source,
+                None,
             )
-            .unwrap();
+                .unwrap();
             let from = StreamDecoder::new(&mut src, settings);
-            let output = &mut AllowStdIo::new(get_output(directory).unwrap());
+            let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                 BufReader::with_capacity(20000 * 40, from),
                 output,
@@ -113,6 +64,40 @@ fn main() {
 
             // Configure sigint trigger
             config_timer_handler(rec_duration, abort_handle);
+
+            block_on(stream)
+        }
+        Commands::Decode {
+            source, key0, key1, output
+        } => {
+            // Settings
+            let settings = {
+                DecoderOptions {
+                    working_key: utils::parse_keys(key0, key1),
+                    round: 4,
+                    strip: true,
+                    emm: true,
+                    simd: false,
+                    verbose: false,
+                }
+            };
+
+            //Combine the source, decoder, and output into a single future
+            let mut src = utils::get_src(
+                None,
+                None,
+                source,
+            )
+                .unwrap();
+            let from = StreamDecoder::new(&mut src, settings);
+            let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
+            let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
+                BufReader::with_capacity(20000 * 40, from),
+                output,
+            );
+
+            // Configure sigint trigger
+            config_timer_handler(None, abort_handle);
 
             block_on(stream)
         }
@@ -135,12 +120,13 @@ fn main() {
         }
     };
     match result {
-        Ok(Ok(_)) => eprintln!("Stream has gracefully reached its end."),
-        Ok(Err(a)) => eprintln!("{}", a),
-        Err(e) => eprintln!("{}", e),
+        Ok(Ok(_)) => info!("Stream has gracefully reached its end."),
+        Ok(Err(a)) => info!("{}", a),
+        Err(e) => error!("{}", e),
     }
-    eprintln!("Finished");
+    info!("Finished");
 }
+
 fn config_timer_handler(duration: Option<Duration>, abort_handle: AbortHandle) {
     //configure timer
     if let Some(record_duration) = duration {

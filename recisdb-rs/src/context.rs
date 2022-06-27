@@ -26,7 +26,7 @@ pub(crate) enum Commands {
         /// The channel name
         /// The channel name is a string that is defined in the
         /// `channels` module.
-        #[clap(short)]
+        #[clap(short, required = true)]
         channel: Option<String>,
     },
     /// Tune to a channel
@@ -35,24 +35,12 @@ pub(crate) enum Commands {
     /// The channel name is a string that is defined in the
     /// `channels` module.
     /// The recording directory is passed as an argument.
-    #[clap(name = "tune")]
-    #[clap(group(
-    ArgGroup::new("control")
-    .args(&["time", "channel"])
-    .requires_all(&["channel"])
-    .requires("device")
-    ))]
     //key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
     ArgGroup::new("key")
     .args(&["key0", "key1"])
     .requires_all(&["key0", "key1"])
     .multiple(true)
-    ))]
-    #[clap(group(
-    ArgGroup::new("input")
-    .multiple(false)
-    .args(&["device", "source"])
     ))]
     Tune {
         /// The device name
@@ -65,21 +53,13 @@ pub(crate) enum Commands {
         /// the canonical path of the device comes here.
         /// If the device name is not specified, this subcommand will try
         /// to read the data from the specified file.
-        #[clap(short, long, value_name = "canonical_path")]
+        #[clap(short, long, value_name = "canonical_path", required = true)]
         device: Option<String>,
-        /// The source file name
-        /// The source file name is a string that is specified as a
-        /// file name.
-        /// If the device name is not specified, this subcommand will
-        /// try to read the data from the specified data source.
-        /// If '--device' is specified, this parameter is ignored.
-        #[clap(short = 'i', long = "input", value_name = "file")]
-        source: Option<String>,
 
         /// The channel name
         /// The channel name is a string that is defined in the
         /// `channels` module.
-        #[clap(short)]
+        #[clap(short, required = true)]
         channel: Option<String>,
         /// The duration of the recording
         /// The duration of the recording is specified in seconds.
@@ -108,16 +88,57 @@ pub(crate) enum Commands {
         #[clap(short = 'K', long = "key1")]
         key1: Option<String>,
 
-        /// The recording directory
-        /// The recording directory is a string that is specified as a
-        /// directory name.
-        /// If the recording directory is not specified, the recording
+        /// The location of the output
+        /// The location is a string that is specified as an
+        /// absolute path.
+        /// If it is not specified, the recording
         /// will be stored in the current directory.
         /// If '-' is specified, the recording will be redirected to
         /// stdout.
-        /// If the specified directory does not exist, this subcommand
+        /// If the specified file is a directory, this subcommand
         /// will stop.
         #[clap(required = true)]
-        directory: Option<String>,
+        output: Option<String>,
     },
+    #[clap(group(
+    ArgGroup::new("key")
+    .args(&["key0", "key1"])
+    .requires_all(&["key0", "key1"])
+    .multiple(true)
+    ))]
+    Decode {
+        /// The source file name
+        /// The source file name is a string that is specified as a
+        /// file name.
+        /// If the device name is not specified, this subcommand will
+        /// try to read the data from the specified data source.
+        /// If '--device' is specified, this parameter is ignored.
+        #[clap(short = 'i', long = "input", value_name = "file", required = true)]
+        source: Option<String>,
+
+        /// The first working key
+        /// The first working key is a 64-bit hexadecimal number.
+        /// If the first working key is not specified, this subcommand
+        /// will not decode ECM.
+        #[clap(short = 'k', long = "key0")]
+        key0: Option<String>,
+        /// The second working key
+        /// The second working key is a 64-bit hexadecimal number.
+        /// If the second working key is not specified, this subcommand
+        /// will not decode ECM.
+        #[clap(short = 'K', long = "key1")]
+        key1: Option<String>,
+
+        /// The location of the output
+        /// The location is a string that is specified as an
+        /// absolute path.
+        /// If it is not specified, the recording
+        /// will be stored in the current directory.
+        /// If '-' is specified, the recording will be redirected to
+        /// stdout.
+        /// If the specified file is a directory, this subcommand
+        /// will stop.
+        #[clap(required = true)]
+        output: Option<String>,
+    }
 }
