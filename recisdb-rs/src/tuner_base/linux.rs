@@ -4,6 +4,7 @@ use futures_util::io::AllowStdIo;
 use b25_sys::futures_io::AsyncBufRead;
 
 use crate::channels::{Channel, ChannelType, Freq};
+use crate::tuner_base::Voltage;
 
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
@@ -18,11 +19,22 @@ pub struct TunedDevice {
     channel: Channel,
 }
 impl TunedDevice {
-    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32) -> Result<Self, Box<dyn Error>> {
+    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32, voltage: Option<Voltage>) -> Result<Self, Box<dyn Error>> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
         let _errno = unsafe { set_ch(f.as_raw_fd(), &channel.to_ioctl_freq(offset_k_hz))? };
 
+        match voltage {
+            Some(Voltage::High11v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1) }.unwrap();
+            }
+            Some(Voltage::High15v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2) }.unwrap();
+            }
+            _ => {
+                let errno = unsafe { ptx_disable_lnb(f.as_raw_fd()) }.unwrap();
+            }
+        }
         Ok(Self { f, channel })
     }
 }
@@ -76,10 +88,6 @@ impl super::Tuned for TunedDevice {
                 }
             }
         }
-    }
-
-    fn set_lnb(&self) -> Result<i8, String> {
-        todo!()
     }
 
     fn open_stream(mut self) -> Box<dyn AsyncBufRead + Unpin> {

@@ -9,6 +9,7 @@ use b25_sys::futures_io::{AsyncBufRead, AsyncRead};
 use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
 use crate::tuner_base::IBonDriver::{BonDriver, IBon};
+use crate::tuner_base::Voltage;
 
 pub struct TunedDevice {
     dll_imported: ManuallyDrop<BonDriver>,
@@ -78,10 +79,6 @@ impl TunedDevice {
 
 impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
-        todo!()
-    }
-
-    fn set_lnb(&self) -> Result<i8, String> {
         todo!()
     }
 

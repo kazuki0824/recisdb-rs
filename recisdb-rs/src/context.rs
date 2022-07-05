@@ -1,4 +1,5 @@
 use clap::{ArgGroup, Parser, Subcommand};
+use crate::tuner_base::Voltage;
 
 #[derive(Debug, Parser)]
 #[clap(name = "recisdb-rs")]
@@ -74,6 +75,12 @@ pub(crate) enum Commands {
         /// continue until the duration is over.
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
+        /// LNB voltage
+        /// The LNB voltage is specified by the following flags.
+        /// If none of the flags is specified, the LNB voltage is assumed unset.
+        /// If multiple flags are specified, the highest voltage is assumed.
+        #[clap(arg_enum, long = "lnb")]
+        lnb: Option<Voltage>,
 
         /// The first working key
         /// The first working key is a 64-bit hexadecimal number.

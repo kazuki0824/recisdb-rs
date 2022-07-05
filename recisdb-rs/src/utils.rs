@@ -8,18 +8,18 @@ use futures_util::io::{AllowStdIo, BufReader};
 use log::{error, info};
 
 use b25_sys::futures_io::AsyncBufRead;
-use b25_sys::WorkingKey;
 
 use crate::channels;
-use crate::tuner_base::Tuned;
+use crate::tuner_base::{Tuned, Voltage};
 
 pub(crate) fn get_src(
     device: Option<String>,
     channel: Option<channels::Channel>,
     source: Option<String>,
+    voltage: Option<Voltage>
 ) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
     if let Some(src) = device {
-        crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
+        crate::tuner_base::tune(&src, channel.unwrap(), voltage).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
         let src = std::fs::canonicalize(src)?;
         let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
@@ -69,13 +69,20 @@ pub(crate) fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, st
     }
 }
 
-pub(crate) fn parse_keys(key0: Option<String>, key1: Option<String>) -> Option<WorkingKey> {
+pub(crate) fn parse_keys(key0: Option<Vec<String>>, key1: Option<Vec<String>>) -> bool {
+    //Parse and store keys and if configuration is valid, return true.
     match (key0, key1) {
-        (None, None) => None,
-        (Some(k0), Some(k1)) => Some(WorkingKey {
-            0: u64::from_str_radix(k0.trim_start_matches("0x"), 16).unwrap(),
-            1: u64::from_str_radix(k1.trim_start_matches("0x"), 16).unwrap(),
-        }),
+        (None, None) => false,
+        (Some(k0), Some(k1)) => {
+            let k0 = k0.iter().map(|k| {
+                u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap()
+            }).collect::<Vec<u64>>();
+            let k1 = k1.iter().map(|k| {
+                u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap()
+            }).collect::<Vec<u64>>();
+            b25_sys::set_keys(k0, k1);
+            true
+        },
         _ => panic!("Specify both of the keys"),
     }
 }

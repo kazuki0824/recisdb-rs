@@ -34,6 +34,7 @@ fn main() {
             key0,
             key1,
             output,
+            lnb
         } => {
             // Settings
             let settings = {
@@ -55,6 +56,7 @@ fn main() {
                 device,
                 channel.map(|s| channels::Channel::from_ch_str(s)),
                 None,
+                lnb
             )
                 .unwrap();
             let from = StreamDecoder::new(&mut src, settings);
@@ -89,6 +91,7 @@ fn main() {
                 None,
                 None,
                 source,
+                None
             )
                 .unwrap();
             let from = StreamDecoder::new(&mut src, settings);
@@ -106,7 +109,7 @@ fn main() {
         Commands::Checksignal { device, channel } => {
             //open tuner and tune to channel
             let channel = channel.map(|s| channels::Channel::from_ch_str(s));
-            let tuned = crate::tuner_base::tune(&device, channel.unwrap()).unwrap();
+            let tuned = crate::tuner_base::tune(&device, channel.unwrap(), None).unwrap();
             //configure sigint trigger
             let flag = std::sync::Arc::new(AtomicBool::new(false));
             let flag2 = flag.clone();

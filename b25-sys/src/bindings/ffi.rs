@@ -1,7 +1,7 @@
 use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
-use log::debug;
+use log::{debug, warn};
 use crate::access_control::select_key_by_auth;
 
 use crate::bindings::arib_std_b25::{
@@ -100,9 +100,12 @@ unsafe extern "C" fn proc_ecm(
             match select_key_by_auth(&mut payload) {
                 Some(key) => {
                     debug!("Selected Kw= {:?}", key);
-                    Ok(key)
+                    Ok(&payload[3..19])
                 },
-                None => Err(()),
+                None => {
+                    warn!("No valid key found");
+                    Err(())
+                },
             }
         }
     };
