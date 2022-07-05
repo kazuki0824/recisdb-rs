@@ -13,10 +13,12 @@ use log::{error, info};
 use b25_sys::{DecoderOptions, StreamDecoder};
 
 use crate::context::Commands;
+use crate::tuner_base::Tuned;
 
 mod channels;
 mod context;
 mod utils;
+mod tuner_base;
 
 fn main() {
     let arg = context::Cli::parse();

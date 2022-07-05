@@ -11,6 +11,7 @@ use b25_sys::futures_io::AsyncBufRead;
 use b25_sys::WorkingKey;
 
 use crate::channels;
+use crate::tuner_base::Tuned;
 
 pub(crate) fn get_src(
     device: Option<String>,
@@ -18,7 +19,7 @@ pub(crate) fn get_src(
     source: Option<String>,
 ) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
     if let Some(src) = device {
-        tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
+        crate::tuner_base::tune(&src, channel.unwrap()).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
         let src = std::fs::canonicalize(src)?;
         let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));

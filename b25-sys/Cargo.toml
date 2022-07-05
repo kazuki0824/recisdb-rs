@@ -3,7 +3,7 @@ name = "b25-sys"
 version = "0.1.0"
 authors = ["kazuki0824 <kazukuro0824@gmail.com>"]
 edition = "2021"
-build="build.rs"
+build = "build.rs"
 
 [features]
 block00cbc = [ "tail_cbc", "cryptography-b25-00" ]
@@ -14,9 +14,9 @@ default = [ "block00cbc" ]
 futures-io = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2" }
 futures-core = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2", default-features = false }
 pin-project-lite = ">=0.2.9"
+log = ">=0.4.17"
 tail_cbc = { version = ">=0.1.1", optional = true }
 cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00", optional = true }
-once_cell = "1.12.0"
 
 [build-dependencies]
 bindgen = ">=0.53.1"

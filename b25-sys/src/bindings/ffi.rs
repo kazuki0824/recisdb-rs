@@ -1,9 +1,7 @@
-use std::collections::HashSet;
 use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
 use cryptography_b25_00::expand_00;
-use once_cell::sync::OnceCell;
 use tail_cbc::cipher::KeyIvInit;
 use tail_cbc::UnalignedBytesDecryptMut;
 
@@ -13,9 +11,6 @@ use crate::bindings::arib_std_b25::{
     B_CAS_PWR_ON_CTRL, B_CAS_PWR_ON_CTRL_INFO,
 };
 use crate::bindings::error::BCasCardError;
-use crate::WorkingKey;
-
-pub static KEYS: OnceCell<HashSet<u8, WorkingKey>> = OnceCell::new();
 
 // Overrides the functions of the struct `B_CAS_CARD`
 
@@ -89,7 +84,7 @@ unsafe extern "C" fn get_init_status(
 
 #[no_mangle]
 unsafe extern "C" fn proc_ecm(
-    bcas: *mut ::std::os::raw::c_void,
+    _bcas: *mut ::std::os::raw::c_void,
     dst: *mut B_CAS_ECM_RESULT,
     src: *mut u8,
     len: ::std::os::raw::c_int,
@@ -104,15 +99,23 @@ unsafe extern "C" fn proc_ecm(
         if size < 19 {
             Err(())
         } else {
-            let protocol = payload[0];
+            let _protocol = payload[0];
             let working_key_id = payload[2];
-            let cipher = &mut payload[3..size - 1];
-            // let k = if working_key_id { &expand_00(0x15f8c5bf840b6694u64, 0) };
+            let mac = &payload[size - 4..size];
+            let cipher = &mut payload[3..size - 5];
+
+            //Don't hardcode the keys here, they are not secret
             let k = expand_00(0x15f8c5bf840b6694u64, 0);
-            let mut dec =
-                Block00CbcDec::new(&k, &0xfe27199919690911u64.swap_bytes().to_ne_bytes().into());
-            let plaintext = dec.decrypt_bytes_mut(cipher).expect("decryption failed");
-            Ok((Vec::from(plaintext), working_key_id))
+
+            if cryptography_b25_00::mac::verify_mac(mac, cipher, 0x15f8c5bf840b6694u64.swap_bytes().to_ne_bytes().into()).is_ok() {
+                let mut dec =
+                    Block00CbcDec::new(&k, &0xfe27199919690911u64.swap_bytes().to_ne_bytes().into());
+                let plaintext = dec.decrypt_bytes_mut(cipher).expect("decryption failed");
+                Ok((Vec::from(plaintext), working_key_id))
+            }
+            else {
+                Err(())
+            }
         }
     };
 
