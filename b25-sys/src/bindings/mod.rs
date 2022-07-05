@@ -5,7 +5,6 @@ use std::ptr::NonNull;
 
 use crate::bindings::arib_std_b25::{ARIB_STD_B25, ARIB_STD_B25_BUFFER, B_CAS_CARD};
 use crate::bindings::error::AribB25DecoderError;
-use crate::WorkingKey;
 
 mod arib_std_b25;
 mod error;
@@ -30,13 +29,13 @@ pin_project! {
 //     }
 // }
 impl InnerDecoder {
-    pub(crate) unsafe fn new(key: Option<WorkingKey>) -> Result<Self, AribB25DecoderError> {
+    pub(crate) unsafe fn new(key: bool) -> Result<Self, AribB25DecoderError> {
         let dec = arib_std_b25::create_arib_std_b25();
 
         // Clone the instance from the original that starts from the address created by create_arib_std_b25()
         // If the program crashes when this instance is freed, this code is the cause of the crash.
         match key {
-            None => {
+            false => {
                 let cas = arib_std_b25::create_b_cas_card();
                 if cas.is_null() {
                     Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)
@@ -50,7 +49,7 @@ impl InnerDecoder {
                     })
                 }
             }
-            Some(_) => {
+            true => {
                 let mut cas = B_CAS_CARD::default();
                 //Allocate private data inside B_CAS_CARD
                 cas.initialize();

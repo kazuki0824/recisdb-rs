@@ -80,13 +80,13 @@ pub(crate) enum Commands {
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
-        key0: Option<String>,
+        key0: Option<Vec<String>>,
         /// The second working key
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'K', long = "key1")]
-        key1: Option<String>,
+        key1: Option<Vec<String>>,
 
         /// The location of the output
         /// The location is a string that is specified as an
@@ -121,13 +121,13 @@ pub(crate) enum Commands {
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
-        key0: Option<String>,
+        key0: Option<Vec<String>>,
         /// The second working key
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'K', long = "key1")]
-        key1: Option<String>,
+        key1: Option<Vec<String>>,
 
         /// The location of the output
         /// The location is a string that is specified as an

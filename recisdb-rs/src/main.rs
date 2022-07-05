@@ -38,7 +38,7 @@ fn main() {
             // Settings
             let settings = {
                 DecoderOptions {
-                    working_key: utils::parse_keys(key0, key1),
+                    enable_working_key: utils::parse_keys(key0, key1),
                     round: 4,
                     strip: true,
                     emm: true,
@@ -75,7 +75,7 @@ fn main() {
             // Settings
             let settings = {
                 DecoderOptions {
-                    working_key: utils::parse_keys(key0, key1),
+                    enable_working_key: utils::parse_keys(key0, key1),
                     round: 4,
                     strip: true,
                     emm: true,
