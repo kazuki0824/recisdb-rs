@@ -26,13 +26,14 @@ jobs:
     container:
       image: ${{ matrix.os }}
     steps:
-      - name: Install PCSC, git, build-essential, cmake, wget
+      - name: Install PCSC, git, build-essential, cmake, wget, clang
         run: |
+          export DEBIAN_FRONTEND=noninteractive
           apt update
-          apt install build-essential cmake libpcsclite-dev git wget -y
+          apt install build-essential cmake libpcsclite-dev git wget clang -qy
         if: matrix.os != 'alpine:latest'
-      - name: Install PCSC, git, alpine-sdk, cmake
-        run: apk add --update alpine-sdk cmake pcsc-lite git
+      - name: Install PCSC, git, alpine-sdk, cmake, clang
+        run: apk add --update alpine-sdk cmake pcsc-lite git clang
         if: matrix.os == 'alpine:latest'
       - uses: actions/checkout@v3
         with:
