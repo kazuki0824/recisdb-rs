@@ -14,7 +14,9 @@ categories = ["command-line-utilities"]
 
 [features]
 #https://gitlab.alpinelinux.org/alpine/aports/-/issues/12226
-static = ["bindgen/static"]
+bg-static = ["bindgen/static"]
+bg-runtime = ["bindgen/runtime"]
+default = ["bg-runtime"]
 
 [dependencies]
 futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }

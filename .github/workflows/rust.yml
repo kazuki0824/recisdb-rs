@@ -30,7 +30,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt update
-          apt install build-essential cmake libpcsclite-dev git wget clang llvm-dev pkg-config -qy
+          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
         if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, alpine-sdk, cmake, clang
         run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static llvm-dev
@@ -48,13 +48,13 @@ jobs:
         run: cargo build --workspace --verbose
         if: matrix.os != 'alpine:latest'
       - name: Build
-        run: cargo build --workspace --verbose -F static
+        run: cargo build --workspace --verbose --no-default-features -F static
         if: matrix.os == 'alpine:latest'
       - name: Run tests
         run: cargo test --workspace --verbose
         if: matrix.os != 'alpine:latest'
       - name: Run tests
-        run: cargo test --workspace --verbose -F static
+        run: cargo test --workspace --verbose --no-default-features -F static
         if: matrix.os == 'alpine:latest'
   build-windows:
     runs-on: windows-latest
