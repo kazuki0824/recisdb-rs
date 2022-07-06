@@ -25,10 +25,12 @@ jobs:
       image: ${{ matrix.os }}
     steps:
       - name: Install PCSC, git, build-essential, cmake
-        run: apt install build-essential cmake libpcsclite-dev -y
+        run: |
+          apt update
+          apt install build-essential cmake libpcsclite-dev -y
         if: matrix.os != 'rust:alpine'
       - name: Install PCSC, git, cmake
-        run: apk add pcsc-lite git cmake -y
+        run: apk add pcsc-lite git cmake
         if: matrix.os == 'rust:alpine'
       - uses: actions/checkout@v3
         with:
