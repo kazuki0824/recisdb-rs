@@ -26,10 +26,10 @@ jobs:
     container:
       image: ${{ matrix.os }}
     steps:
-      - name: Install PCSC, git, build-essential, cmake
+      - name: Install PCSC, git, build-essential, cmake, wget
         run: |
           apt update
-          apt install build-essential cmake libpcsclite-dev git -y
+          apt install build-essential cmake libpcsclite-dev git wget -y
         if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, alpine-sdk, cmake
         run: apk add --update alpine-sdk cmake pcsc-lite git
