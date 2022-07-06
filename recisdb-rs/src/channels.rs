@@ -62,11 +62,14 @@ impl Channel {
         if let Ok(Some(m)) = isdb_t_regex.find(&ch_str) {
             let first_letter = ch_str.chars().nth(0).unwrap();
             let physical_ch_num = m.as_str().parse().unwrap();
-            let ch_type = if first_letter == 'T' {
-                ChannelType::Terrestrial(physical_ch_num)
-            } else {
-                ChannelType::Catv(physical_ch_num)
-            };
+            let ch_type =
+                if first_letter == 'T' && (13..=52).contains(&physical_ch_num) {
+                    ChannelType::Terrestrial(physical_ch_num)
+                } else if first_letter == 'C' && (23..=63).contains(&physical_ch_num) {
+                    ChannelType::Catv(physical_ch_num)
+                } else {
+                    ChannelType::Undefined
+                };
 
             Channel {
                 ch_type,
@@ -165,6 +168,11 @@ mod tests {
 
     #[test]
     fn test_terrestrial_ch_num() {
+        let ch_str = "T12";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
         let ch_str = "T13";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Terrestrial(13));
@@ -179,7 +187,37 @@ mod tests {
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "T54";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
     }
+
+    #[test]
+    fn test_catv_ch_num() {
+        let ch_str = "C22";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "C23";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Catv(23));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "C63";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Catv(63));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "C64";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+    }
+
+    #[test]
     fn test_bs_ch_num() {
         let ch_str = "BS1_3";
         let ch = Channel::from_ch_str(ch_str);
@@ -191,6 +229,8 @@ mod tests {
         assert_eq!(ch.ch_type, ChannelType::BS(13, 3));
         assert_eq!(ch.raw_string, ch_str.to_string());
     }
+
+    #[test]
     fn test_cs_ch_num() {
         let ch_str = "CS2";
         let ch = Channel::from_ch_str(ch_str);
@@ -199,7 +239,7 @@ mod tests {
 
         let ch_str = "CS24";
         let ch = Channel::from_ch_str(ch_str);
-        assert_eq!(ch.ch_type, ChannelType::CS(2));
+        assert_eq!(ch.ch_type, ChannelType::CS(24));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS25";
@@ -207,6 +247,8 @@ mod tests {
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
     }
+
+    #[test]
     fn test_bon_chspace_from_str() {
         let ch_str = "1-2";
         let ch = Channel::from_ch_str(ch_str);
