@@ -48,13 +48,13 @@ jobs:
         run: cargo build --workspace --verbose
         if: matrix.os != 'alpine:latest'
       - name: Build
-        run: cargo build --workspace --verbose --no-default-features -F static
+        run: cargo build --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
       - name: Run tests
         run: cargo test --workspace --verbose
         if: matrix.os != 'alpine:latest'
       - name: Run tests
-        run: cargo test --workspace --verbose --no-default-features -F static
+        run: cargo test --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
   build-windows:
     runs-on: windows-latest
