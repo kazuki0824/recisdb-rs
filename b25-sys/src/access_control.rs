@@ -1,10 +1,14 @@
 use std::ops::Deref;
-use cryptography_b25_00::{Block00, expand_00};
 use tail_cbc::cipher::{Key, KeyIvInit};
 use tail_cbc::UnalignedBytesDecryptMut;
+use crate::access_control::block00_mac::verify_mac;
+use crate::access_control::block00_structure::{Block00, expand_00};
 use crate::access_control::types::Block00CbcDec;
 
 pub mod types;
+mod block00_structure;
+mod macros;
+mod block00_mac;
 
 pub(crate) fn select_key_by_auth(payload: &mut [u8]) -> Option<Key<Block00>> {
     let size = payload.len();
@@ -26,7 +30,7 @@ pub(crate) fn select_key_by_auth(payload: &mut [u8]) -> Option<Key<Block00>> {
         //mac is the last 4 bytes of the payload
         let (content, mac) = temp.split_at_mut(size - 4);
 
-        if cryptography_b25_00::mac::verify_mac(mac, content, k.to_le_bytes().into()).is_ok()
+        if verify_mac(mac, content, k.to_le_bytes().into()).is_ok()
         {
             encrypted_part.copy_from_slice(&temp[3..]);
             ret = Some(expanded_key);

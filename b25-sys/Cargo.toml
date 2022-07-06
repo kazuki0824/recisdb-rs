@@ -17,6 +17,7 @@ pin-project-lite = ">=0.2.9"
 log = ">=0.4.17"
 tail_cbc = { version = ">=0.1.1", optional = true }
 cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00", optional = true }
+cbc-mac = "^0.1.1"
 
 [build-dependencies]
 bindgen = ">=0.53.1"
