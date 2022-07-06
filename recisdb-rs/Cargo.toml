@@ -7,8 +7,8 @@ description = "Recisdb-rs can read both Unix chardev-based and BonDriver-based T
 rust-version = "1.63"
 
 [dependencies]
-futures-executor = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2" }
-futures-util = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2", features = ["io"] }
+futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }
+futures-util = { git = "https://github.com/rust-lang/futures-rs.git", features = ["io"] }
 clap = { version = "^3.1", features = ["derive"] }
 fancy-regex = "0.7.1"
 b25-sys = { path = "../b25-sys" }

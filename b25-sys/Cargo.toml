@@ -11,8 +11,8 @@ block40cbc = []
 default = [ "block00cbc" ]
 
 [dependencies]
-futures-io = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2" }
-futures-core = { git = "https://github.com/kazuki0824/futures-rs.git", branch="asyncio_abortable_2", default-features = false }
+futures-io = { git = "https://github.com/rust-lang/futures-rs.git" }
+futures-core = { git = "https://github.com/rust-lang/futures-rs.git", default-features = false }
 pin-project-lite = ">=0.2.9"
 log = ">=0.4.17"
 tail_cbc = { version = ">=0.1.1", optional = true }
