@@ -22,7 +22,7 @@ fn main() {
     } else {
         //assume MSVC
         let mut cm = cmake::Config::new("./externals/libaribb25");
-        cm.generator("Visual Studio 16").very_verbose(true);
+        cm.very_verbose(true);
         //MSVC + b25-rs(debug) + libarib25(debug) = fail
         //warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
         cm.profile("Release");
