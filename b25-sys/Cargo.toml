@@ -1,26 +1,23 @@
 [package]
 name = "b25-sys"
-version = "0.1.0"
-authors = ["kazuki0824 <kazukuro0824@gmail.com>"]
+version = "1.0.0-alpha.0"
+authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
+description = "b25-sys is more convenient Rust wrapper for libarib25."
 build = "build.rs"
-
-[features]
-block00cbc = [ "tail_cbc", "cryptography-b25-00" ]
-block40cbc = []
-default = [ "block00cbc" ]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/kazuki0824/b25-kit-rs.git"
+keywords = ["dtv", "japan", "broadcast", "b25"]
 
 [dependencies]
 futures-io = { git = "https://github.com/rust-lang/futures-rs.git" }
 futures-core = { git = "https://github.com/rust-lang/futures-rs.git", default-features = false }
-pin-project-lite = ">=0.2.9"
-log = ">=0.4.17"
-tail_cbc = { version = ">=0.1.1", optional = true }
-cryptography-b25-00 = { path = "../../../../cryptographies-b25/block00", optional = true }
+pin-project-lite = "^0.2.9"
+log = "^0.4.17"
+tail_cbc = { version = "^0.1.2", optional = true }
 cbc-mac = "^0.1.1"
 
 [build-dependencies]
-bindgen = ">=0.53.1"
-cc = ">=1.0.50"
-pkg-config=">=0.3.17"
-cmake="0.1.45"
+pkg-config = "0.3.25"
+cmake = "0.1.45"

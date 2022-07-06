@@ -1,34 +1,40 @@
 [package]
 name = "recisdb-rust"
-version = "0.1.0"
-authors = ["kazuki"]
+version = "1.0.0-alpha.0"
+authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
-description = "Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources. "
+description = "Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources."
+build = "build.rs"
 rust-version = "1.63"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/kazuki0824/b25-kit-rs.git"
+keywords = ["cli", "dtv", "japan", "broadcast", "b25"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }
 futures-util = { git = "https://github.com/rust-lang/futures-rs.git", features = ["io"] }
-clap = { version = "^3.1", features = ["derive"] }
-fancy-regex = "0.7.1"
+clap = { version = "^3.2", features = ["derive"] }
+fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
-ctrlc = { version = ">=3.0", features = ["termination"] }
-nix = ">0.19.0"
-libloading = ">=0.7.0"
+ctrlc = { version = "^3.0", features = ["termination"] }
+nix = "^0.24.1"
+libloading = "^0.7.0"
 cpp_utils = "0.3.0"
-cfg-if = ">=1.0.0"
-log = "0.4.17"
-env_logger = "0.9.0"
+cfg-if = "1.0.0"
+log = "^0.4.17"
+env_logger = "^0.9.0"
 
 [build-dependencies]
-cc = ">=1.0.70"
-bindgen = ">=0.59.1"
+cc = "1.0.70"
+bindgen = "0.59.2"
 glob = "0.3"
-cargo-deb = "1.38.0"
+cargo-deb = "1.38.1"
 
 [package.metadata.deb]
-maintainer = "Kazuki Kuroda <kazukuro0824+dev@gmail.com>"
-copyright = "2021, Kazuki Kuroda  <kazukuro0824+dev@gmail.com>"
+maintainer = "Kazuki Kuroda <maleicacid824+dev@gmail.com>"
+copyright = "2021-2022, Kazuki Kuroda  <maleicacid824+dev@gmail.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
 A simple command for ISDB-T character device.
