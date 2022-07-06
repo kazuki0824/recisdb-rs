@@ -30,10 +30,10 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt update
-          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
+          apt install build-essential cmake libpcsclite-dev git wget clang llvm-dev pkg-config -qy
         if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, alpine-sdk, cmake, clang
-        run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static
+        run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static llvm-dev
         if: matrix.os == 'alpine:latest'
       - uses: actions/checkout@v3
         with:
