@@ -30,10 +30,10 @@ jobs:
         run: |
           apt update
           apt install build-essential cmake libpcsclite-dev -y
-        if: matrix.os != 'rust:alpine'
+        if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, cmake
         run: apk add pcsc-lite git cmake
-        if: matrix.os == 'rust:alpine'
+        if: matrix.os == 'alpine:latest'
       - uses: actions/checkout@v3
         with:
           submodules: recursive
