@@ -11,6 +11,7 @@ use pin_project_lite::pin_project;
 
 use crate::bindings::InnerDecoder;
 
+#[cfg(feature = "block00cbc")]
 mod access_control;
 mod bindings;
 

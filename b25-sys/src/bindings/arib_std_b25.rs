@@ -6,6 +6,7 @@
 #![warn(dead_code)]
 
 use std::marker::PhantomPinned;
+use crate::bindings::error::BCasCardError;
 
 pub const _STDINT_H: u32 = 1;
 pub const _FEATURES_H: u32 = 1;
@@ -514,6 +515,18 @@ pub struct B_CAS_CARD {
         ) -> ::std::os::raw::c_int,
     >,
     pub(crate) _pinned: PhantomPinned,
+}
+impl B_CAS_CARD {
+    pub fn initialize(&mut self) {
+        let init = self.init;
+        let errno =
+            unsafe { init.unwrap()(self as *mut B_CAS_CARD as *mut ::std::os::raw::c_void) };
+
+        if errno != 0 {
+            let err = BCasCardError::from(errno);
+            panic!("BCasCardError: {}", err);
+        }
+    }
 }
 #[test]
 fn bindgen_test_layout_B_CAS_CARD() {

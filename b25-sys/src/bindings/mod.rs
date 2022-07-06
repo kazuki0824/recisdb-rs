@@ -8,6 +8,8 @@ use crate::bindings::error::AribB25DecoderError;
 
 mod arib_std_b25;
 mod error;
+
+#[cfg(feature = "block00cbc")]
 mod ffi;
 
 pin_project! {
@@ -29,37 +31,43 @@ pin_project! {
 //     }
 // }
 impl InnerDecoder {
+    #[allow(unused_variables)]
     pub(crate) unsafe fn new(key: bool) -> Result<Self, AribB25DecoderError> {
         let dec = arib_std_b25::create_arib_std_b25();
 
-        // Clone the instance from the original that starts from the address created by create_arib_std_b25()
-        // If the program crashes when this instance is freed, this code is the cause of the crash.
-        match key {
-            false => {
-                let cas = arib_std_b25::create_b_cas_card();
-                if cas.is_null() {
-                    Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)
-                } else {
-                    // Initialize the CAS card
-                    (*cas).initialize();
-                    (*dec).set_b_cas_card(&*cas);
-                    Ok(Self {
-                        dec: NonNull::new(dec).unwrap(),
-                        cas: None,
-                    })
-                }
-            }
-            true => {
-                let mut cas = B_CAS_CARD::default();
-                //Allocate private data inside B_CAS_CARD
-                cas.initialize();
-                let ret = Self {
-                    dec: NonNull::new(dec).unwrap(),
-                    cas: Some(Box::new(cas)),
-                };
-                ret.dec.as_ref().set_b_cas_card(ret.cas.as_ref().unwrap());
-                Ok(ret)
-            }
+        #[cfg(feature = "block00cbc")]
+        if key {
+            return Self::new_with_key(dec)
+        }
+        Self::new_without_key(dec)
+    }
+
+    #[cfg(feature = "block00cbc")]
+    unsafe fn new_with_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError>
+    {
+        let mut cas = B_CAS_CARD::default();
+        //Allocate private data inside B_CAS_CARD
+        cas.initialize();
+        let ret = Self {
+            dec: NonNull::new(dec).unwrap(),
+            cas: Some(Box::new(cas)),
+        };
+        ret.dec.as_ref().set_b_cas_card(ret.cas.as_ref().unwrap());
+        Ok(ret)
+    }
+    unsafe fn new_without_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError>
+    {
+        let cas = arib_std_b25::create_b_cas_card();
+        if cas.is_null() {
+            Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)
+        } else {
+            // Initialize the CAS card
+            (*cas).initialize();
+            (*dec).set_b_cas_card(&*cas);
+            Ok(Self {
+                dec: NonNull::new(dec).unwrap(),
+                cas: None,
+            })
         }
     }
 }

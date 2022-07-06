@@ -8,7 +8,6 @@ use crate::bindings::arib_std_b25::{
     wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
     B_CAS_PWR_ON_CTRL, B_CAS_PWR_ON_CTRL_INFO,
 };
-use crate::bindings::error::BCasCardError;
 
 // Overrides the functions of the struct `B_CAS_CARD`
 
@@ -167,15 +166,3 @@ impl Default for B_CAS_CARD {
     }
 }
 
-impl B_CAS_CARD {
-    pub fn initialize(&mut self) {
-        let init = self.init;
-        let errno =
-            unsafe { init.unwrap()(self as *mut B_CAS_CARD as *mut ::std::os::raw::c_void) };
-
-        if errno != 0 {
-            let err = BCasCardError::from(errno);
-            panic!("BCasCardError: {}", err);
-        }
-    }
-}

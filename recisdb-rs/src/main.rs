@@ -31,10 +31,10 @@ fn main() {
             device,
             channel,
             time,
-            key0,
-            key1,
             output,
-            lnb
+            lnb,
+            key0,
+            key1
         } => {
             // Settings
             let settings = {
