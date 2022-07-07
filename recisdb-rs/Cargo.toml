@@ -1,5 +1,5 @@
 [package]
-name = "recisdb-rust"
+name = "recisdb"
 version = "1.0.0-alpha.0"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
@@ -11,6 +11,12 @@ readme = "README.md"
 repository = "https://github.com/kazuki0824/b25-kit-rs.git"
 keywords = ["cli", "dtv", "japan", "broadcast", "b25"]
 categories = ["command-line-utilities"]
+
+[features]
+#https://gitlab.alpinelinux.org/alpine/aports/-/issues/12226
+bg-static = ["bindgen/static"]
+bg-runtime = ["bindgen/runtime"]
+default = ["bg-runtime"]
 
 [dependencies]
 futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }
@@ -28,7 +34,7 @@ env_logger = "^0.9.0"
 
 [build-dependencies]
 cc = "1.0.70"
-bindgen = "0.59.2"
+bindgen = { version = "0.59.2", default_features = false }
 glob = "0.3"
 cargo-deb = "1.38.1"
 
@@ -43,6 +49,6 @@ depends = "libpcsclite1, $auto"
 section = "utility"
 priority = "optional"
 assets = [
-    ["target/release/cargo-deb", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/cargo-deb/README", "644"],
+    ["target/release/recisdb", "usr/bin/", "755"],
+    ["../README.md", "usr/share/doc/recisdb/README", "644"]
 ]

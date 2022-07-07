@@ -1176,7 +1176,11 @@ pub struct B_CAS_CARD_PRIVATE_DATA {
     pub pwc: B_CAS_PWR_ON_CTRL_INFO,
     pub pwc_max: i32,
 }
+
+// Consider size difference for c_long
+// See https://doc.rust-lang.org/std/os/raw/type.c_long.html
 #[test]
+#[cfg(not(target_os = "windows"))]
 fn bindgen_test_layout_B_CAS_CARD_PRIVATE_DATA() {
     assert_eq!(
         ::std::mem::size_of::<B_CAS_CARD_PRIVATE_DATA>(),
@@ -1296,6 +1300,132 @@ fn bindgen_test_layout_B_CAS_CARD_PRIVATE_DATA() {
             stringify!(B_CAS_CARD_PRIVATE_DATA),
             "::",
             stringify!(pwc_max)
+        )
+    );
+}
+
+
+#[test]
+#[cfg(target_os = "windows")]
+fn bindgen_test_layout_B_CAS_CARD_PRIVATE_DATA() {
+    assert_eq!(
+        ::std::mem::size_of::<B_CAS_CARD_PRIVATE_DATA>(),
+        144usize,
+        concat!("Size of: ", stringify!(B_CAS_CARD_PRIVATE_DATA))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<B_CAS_CARD_PRIVATE_DATA>(),
+        8usize,
+        concat!("Alignment of ", stringify!(B_CAS_CARD_PRIVATE_DATA))
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).mng as *const _ as usize },
+        0usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(mng)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).card as *const _ as usize },
+        4usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(card)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pool as *const _ as usize },
+        8usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(pool)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).reader as *const _ as usize },
+        16usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(reader)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).sbuf as *const _ as usize },
+        24usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(sbuf)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).rbuf as *const _ as usize },
+        32usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(rbuf)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).stat as *const _ as usize },
+        40usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(stat)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).id as *const _ as usize },
+        96usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(id)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).id_max as *const _ as usize },
+        112usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(id_max)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pwc as *const _ as usize },
+        120usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(pwc)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::std::ptr::null::<B_CAS_CARD_PRIVATE_DATA>())).pwc_max as *const _ as usize },
+        136usize,
+        concat!(
+        "Offset of field: ",
+        stringify!(B_CAS_CARD_PRIVATE_DATA),
+        "::",
+        stringify!(pwc_max)
         )
     );
 }
