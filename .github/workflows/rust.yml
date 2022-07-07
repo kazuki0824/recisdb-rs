@@ -35,6 +35,10 @@ jobs:
       - name: Install PCSC, git, alpine-sdk, cmake, clang
         run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static llvm-dev
         if: matrix.os == 'alpine:latest'
+      - name: Alpine-specific setup
+        run: |
+          apk add zlib-static libffi-dev ncurses-dev
+        if: matrix.os == 'alpine:latest'
       - uses: actions/checkout@v3
         with:
           submodules: recursive
