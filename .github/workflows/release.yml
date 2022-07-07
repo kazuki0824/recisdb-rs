@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+jobs:
+  release_deb:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64v8
+    container: ${{ matrix.arch }}/rust:slim
+    steps:
+      - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt update
+          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: beta
+          override: true
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: This release is created by GitHub Actions.
+          draft: false
+          prerelease: false
+      - name: Create deb packages
+        run: |
+          cargo deb -p recisdb --verbose --output /artifacts/
+          cp ./target/release/recisdb /artifacts/recisdb_${{ github.ref }}_${{ matrix.arch }}
+      - name: Upload deb package to release channel
+        uses: actions/upload-release-asset@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /artifacts/*
+          asset_content_type: application/octet-stream
