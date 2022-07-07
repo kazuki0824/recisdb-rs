@@ -17,7 +17,6 @@ fn main() {
             let mut cm = cmake::Config::new("./externals/libaribb25");
             let res = cm.build();
             println!("cargo:rustc-link-search=native={}/lib", res.display());
-            println!("cargo:rustc-link-lib=static=aribb25");
         }
     } else {
         //assume MSVC
@@ -30,7 +29,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         /* MSVC emits two different *.lib files, libarib25.lib and arib25.lib.
         The first one is a static library, but the other is an import library, which doesn't have any implemation. */
-        println!("cargo:rustc-link-lib=static=libaribb25");
         println!("cargo:rustc-link-lib=dylib=winscard");
     }
+    println!("cargo:rustc-link-lib=static=aribb25");
 }
