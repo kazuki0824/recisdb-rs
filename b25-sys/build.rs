@@ -22,6 +22,7 @@ fn main() {
         //assume MSVC
         let mut cm = cmake::Config::new("./externals/libaribb25");
         cm.very_verbose(true);
+        cm.configure_arg("-DUSE_AVX2=ON");
         //MSVC + b25-rs(debug) + libarib25(debug) = fail
         //warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
         cm.profile("Release");
