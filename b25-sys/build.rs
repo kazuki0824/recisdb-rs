@@ -34,5 +34,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         println!("cargo:rustc-link-lib=dylib=winscard");
     }
+
+    // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");
 }
