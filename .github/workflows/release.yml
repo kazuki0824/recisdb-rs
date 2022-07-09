@@ -12,7 +12,7 @@ jobs:
       matrix:
         arch:
           - amd64
-          - arm64v8
+#          - arm64v8
     container: ${{ matrix.arch }}/rust:slim
     steps:
       - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
@@ -37,6 +37,9 @@ jobs:
           body: This release is created by GitHub Actions.
           draft: false
           prerelease: false
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - name: Create deb packages
         run: |
           cargo install cargo-deb
@@ -79,7 +82,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build
-        run: cargo build --workspace --verbose --release --all --all-features --target ${{ matrix.arch }}
+        run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
       - name: Upload exe to release channel
         uses: actions/upload-release-asset@v1.0.1
         env:
