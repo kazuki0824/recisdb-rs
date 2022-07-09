@@ -36,6 +36,9 @@ recisdb tune --device /dev/px4video0 -c T18 - | ffplay
 recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
 ```
 - Video4Linux...dvbデバイスはdvbv5-zapの出力を標準入力から受ける形で対応
+```bash
+dvbv5-zap  -a 1 -c ./isdbt.conf -r -P 24 | ./CLionProjects/recisdb-rs/b25-toolkit-rs/target/debug/recisdb decode - | ffplay
+```
 ### Windows
 ```
 recisdb tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 -
@@ -54,3 +57,4 @@ recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 また[libarib25](https://github.com/stz2012/libarib25)のラッパー実装を含んでいます。  
 This application has been implemented with reference to [px4_drv](https://github.com/nns779/px4_drv).  
 It also contains a wrapper implementation of [libarib25](https://github.com/stz2012/libarib25).
+
