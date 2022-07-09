@@ -7,90 +7,45 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'b25-rs'",
+            "name": "Debug executable 'recisdb'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=b25-rs",
-                    "--package=b25-rs"
+                    "--bin=recisdb",
+                    "--package=recisdb"
                 ],
                 "filter": {
-                    "name": "b25-rs",
+                    "name": "recisdb",
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "tune",
+                "--device",
+                "C:\\Users\\kazuk\\Desktop\\b25-kit-rs\\bd_x64\\BonDriver_Mirakurun.dll",
+                "-c",
+                "0-8",
+                "--key0",
+                "0x0102030405060708",
+                "--key1",
+                "0x090a0b0c0d0e0f00",
+                "C:\\Users\\kazuk\\Desktop\\test_decode.m2ts"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'b25-rs'",
+            "name": "Debug unit tests in executable 'recisdb'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=b25-rs",
-                    "--package=b25-rs"
+                    "--bin=recisdb",
+                    "--package=recisdb"
                 ],
                 "filter": {
-                    "name": "b25-rs",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'b25-sys'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=b25-sys"
-                ],
-                "filter": {
-                    "name": "b25-sys",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'recisdb-rust'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=recisdb-rust",
-                    "--package=recisdb-rust"
-                ],
-                "filter": {
-                    "name": "recisdb-rust",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'recisdb-rust'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=recisdb-rust",
-                    "--package=recisdb-rust"
-                ],
-                "filter": {
-                    "name": "recisdb-rust",
+                    "name": "recisdb",
                     "kind": "bin"
                 }
             },

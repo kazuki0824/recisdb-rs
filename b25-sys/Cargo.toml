@@ -16,7 +16,7 @@ futures-core = { git = "https://github.com/rust-lang/futures-rs.git", default-fe
 pin-project-lite = "^0.2.9"
 log = "^0.4.17"
 tail_cbc = { version = "^0.1.2", optional = true }
-cbc-mac = "^0.1.1"
+cbc-mac = { version = "^0.1.1", optional = true }
 
 [build-dependencies]
 pkg-config = "0.3.25"

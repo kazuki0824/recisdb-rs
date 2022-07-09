@@ -1,4 +1,4 @@
-use cryptography_b25_00::{feistel, round_function};
+use cryptography_00::{feistel, round_function};
 use tail_cbc::cipher;
 use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 use tail_cbc::cipher::typenum::{U16, U3, U8};

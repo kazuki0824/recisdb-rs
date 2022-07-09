@@ -1,6 +1,6 @@
 use cbc_mac::{CbcMac, Mac};
 use cbc_mac::digest::MacError;
-use cryptography_b25_00::feistel;
+use cryptography_00::feistel;
 use tail_cbc::cipher;
 use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 use tail_cbc::cipher::typenum::{U1, U8};
