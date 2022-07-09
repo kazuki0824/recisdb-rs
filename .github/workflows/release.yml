@@ -39,6 +39,7 @@ jobs:
           prerelease: false
       - name: Create deb packages
         run: |
+          cargo install cargo-deb
           cargo deb -p recisdb --verbose --output /artifacts/
           cp ./target/release/recisdb /artifacts/recisdb_${{ github.ref }}_${{ matrix.arch }}
       - name: Upload deb package to release channel
