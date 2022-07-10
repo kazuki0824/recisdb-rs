@@ -40,11 +40,12 @@ recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
 dvbv5-zap  -a 1 -c ./isdbt.conf -r -P 24 | ./CLionProjects/recisdb-rs/b25-toolkit-rs/target/debug/recisdb decode - | ffplay
 ```
 ### Windows
+- チャンネル名をChannel-ChannelSpaceの形（例：12-1）で指定
+- デバイス名としてBonDriverへのパスを渡す
 ```
 recisdb tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 -
 recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 ```
-
 
 ## Licence
 [GPL v3](https://github.com/kazuki0824/b25-kit-rs/blob/master/LICENSE)

@@ -26,6 +26,13 @@ jobs:
           profile: minimal
           toolchain: beta
           override: true
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Create deb packages
+        run: |
+          cargo install cargo-deb
+          cargo deb -p recisdb --verbose --output /artifacts/
       - name: Create a release
         id: create_release
         uses: actions/create-release@v1
@@ -37,14 +44,6 @@ jobs:
           body: This release is created by GitHub Actions.
           draft: false
           prerelease: false
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Create deb packages
-        run: |
-          cargo install cargo-deb
-          cargo deb -p recisdb --verbose --output /artifacts/
-          cp ./target/release/recisdb /artifacts/recisdb_${{ github.ref }}_${{ matrix.arch }}
       - name: Upload deb package to release channel
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -83,6 +82,17 @@ jobs:
           submodules: recursive
       - name: Build
         run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: This release is created by GitHub Actions.
+          draft: false
+          prerelease: false
       - name: Upload exe to release channel
         uses: actions/upload-release-asset@v1.0.1
         env:
