@@ -52,6 +52,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: /artifacts/*
           asset_content_type: application/octet-stream
+          asset_name: ${{ github.ref }}
   release_windows_exe:
     runs-on: windows-latest
     strategy:
@@ -101,3 +102,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./target/release/*.exe
           asset_content_type: application/octet-stream
+          asset_name: ${{ github.ref }}
