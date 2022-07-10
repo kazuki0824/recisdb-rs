@@ -45,14 +45,11 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload deb package to release channel
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: csexton/release-asset-action@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /artifacts/*
-          asset_content_type: application/octet-stream
-          asset_name: ${{ github.ref }}
+          pattern: "/artifacts/*"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-url: ${{ steps.create_release.outputs.upload_url }}
   release_windows_exe:
     runs-on: windows-latest
     strategy:
@@ -95,11 +92,8 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload exe to release channel
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: csexton/release-asset-action@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/release/*.exe
-          asset_content_type: application/octet-stream
-          asset_name: ${{ github.ref }}
+          pattern: "/artifacts/*"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-url: ${{ steps.create_release.outputs.upload_url }}
