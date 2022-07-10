@@ -59,7 +59,7 @@ jobs:
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-          - aarch64-pc-windows-msvc
+#          - aarch64-pc-windows-msvc
     steps:
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
