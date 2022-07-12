@@ -1,4 +1,5 @@
 ![ci workflow](https://github.com/kazuki0824/b25-kit-rs/actions/workflows/rust.yml/badge.svg)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_shield)
 
 ISDB kit
 ====
@@ -50,6 +51,9 @@ recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 ## Licence
 [GPL v3](https://github.com/kazuki0824/b25-kit-rs/blob/master/LICENSE)
 
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_large)
+
 ## Author
 [maleicacid](https://github.com/kazuki0824)
 
@@ -58,4 +62,3 @@ recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 また[libarib25](https://github.com/stz2012/libarib25)のラッパー実装を含んでいます。  
 This application has been implemented with reference to [px4_drv](https://github.com/nns779/px4_drv).  
 It also contains a wrapper implementation of [libarib25](https://github.com/stz2012/libarib25).
-
