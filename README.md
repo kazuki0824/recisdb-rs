@@ -1,7 +1,8 @@
 ![ci workflow](https://github.com/kazuki0824/b25-kit-rs/actions/workflows/rust.yml/badge.svg)
+[![Release](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml/badge.svg)](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml)
 
-ISDB kit
-====
+recisdb
+=======
 Rustで書かれたARIB-STD-B25およびテレビチューナーリーダー  
 従来のrecpt1, b25を代替する  
 Tools for reading ARIB-STD-B25, and dealing with some kinds of tuner devices. Works fine on both Windows and Linux.  
@@ -18,17 +19,16 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libarib25. Recisdb-r
 
 ## Usage
 ### 共通 使用方法
-- tune 
-- decode
-- checksignal
+- `tune` `-c \<channel\> \[-t \<time\>] -device \<device\> \[ <output_path> | - ]`
+- `decode` `-i \[ <input_path> | - ] \[ <output_path> | - ]`
+- `checksignal` `-c \<channel\> -device \<device\>`
 
 チャンネルは以下のように物理チャンネルで指定する
-T24(地上波24ch)
-C2(CATV2ch)
-BS2_0
-CS11
+- -c T24(地上波24ch)
+- -c C2(CATV2ch)
+- -c BS2_0
+- -c CS11
 
-BonDriverについては以下のように
 
 ### Linux
 ```bash
@@ -40,11 +40,12 @@ recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
 dvbv5-zap  -a 1 -c ./isdbt.conf -r -P 24 | ./CLionProjects/recisdb-rs/b25-toolkit-rs/target/debug/recisdb decode - | ffplay
 ```
 ### Windows
+BonDriverについては以下のように使用する
 - チャンネル名をChannel-ChannelSpaceの形（例：12-1）で指定
 - デバイス名としてBonDriverへのパスを渡す
 ```
-recisdb tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 -
-recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
+recisdb.exe tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 -
+recisdb.exe decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 ```
 
 ## Licence
@@ -55,7 +56,7 @@ recisdb decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 
 ## Special thanks
 このアプリケーションは[px4_drv](https://github.com/nns779/px4_drv)を参考にして実装されています。  
-また[libarib25](https://github.com/stz2012/libarib25)のラッパー実装を含んでいます。  
+また[libaribb25](https://github.com/tsukumijima/libaribb25)のラッパー実装を含んでいます。  
 This application has been implemented with reference to [px4_drv](https://github.com/nns779/px4_drv).  
-It also contains a wrapper implementation of [libarib25](https://github.com/stz2012/libarib25).
+It also contains a wrapper implementation of [libaribb25](https://github.com/tsukumijima/libaribb25).
 
