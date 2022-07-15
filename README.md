@@ -1,6 +1,6 @@
 ![ci workflow](https://github.com/kazuki0824/b25-kit-rs/actions/workflows/rust.yml/badge.svg)
-![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_shield)
-![Release](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml/badge.svg)](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_shield)
+[![Release](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml/badge.svg)](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml)
 
 recisdb
 =======
