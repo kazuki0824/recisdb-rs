@@ -1,7 +1,7 @@
+use b25_sys::futures_io::AsyncBufRead;
+use futures_util::io::AllowStdIo;
 use std::error::Error;
 use std::os::unix::io::AsRawFd;
-use futures_util::io::AllowStdIo;
-use b25_sys::futures_io::AsyncBufRead;
 
 use crate::channels::{Channel, ChannelType, Freq};
 use crate::tuner_base::Voltage;
@@ -19,7 +19,12 @@ pub struct TunedDevice {
     channel: Channel,
 }
 impl TunedDevice {
-    pub fn tune(path: &str, channel: Channel, offset_k_hz: i32, voltage: Option<Voltage>) -> Result<Self, Box<dyn Error>> {
+    pub fn tune(
+        path: &str,
+        channel: Channel,
+        offset_k_hz: i32,
+        voltage: Option<Voltage>,
+    ) -> Result<Self, Box<dyn Error>> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
         let _errno = unsafe { set_ch(f.as_raw_fd(), &channel.to_ioctl_freq(offset_k_hz))? };
@@ -50,11 +55,10 @@ impl super::Tuned for TunedDevice {
         match self.channel.ch_type {
             ChannelType::Terrestrial(_) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
-                let cnr = (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
+                (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
                     + (0.5491 * p)
-                    + 3.0965;
-                cnr
+                    + 3.0965
             }
             _ => {
                 const AF_LEVEL_TABLE: [f64; 14] = [
@@ -73,7 +77,7 @@ impl super::Tuned for TunedDevice {
                     1.420, // A0    00    40960    1.420dB
                     0.000, // B0    00    45056    -0.01dB
                 ];
-                let sig = ((raw & 0xFF00) >> 8) as u8 & 0xFF;
+                let sig = ((raw & 0xFF00) >> 8) as u8;
                 if sig <= 0x10u8 {
                     /* clipped maximum */
                     24.07

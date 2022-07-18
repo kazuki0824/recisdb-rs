@@ -1,5 +1,5 @@
-use clap::{ArgGroup, Parser, Subcommand};
 use crate::tuner_base::Voltage;
+use clap::{ArgGroup, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(name = "recisdb-rs")]
@@ -147,5 +147,5 @@ pub(crate) enum Commands {
         /// will stop.
         #[clap(required = true)]
         output: Option<String>,
-    }
+    },
 }

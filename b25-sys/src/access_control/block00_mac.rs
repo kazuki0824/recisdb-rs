@@ -1,18 +1,17 @@
-use cbc_mac::{CbcMac, Mac};
+use crate::access_control::block00_structure::BlockSize00;
 use cbc_mac::digest::MacError;
+use cbc_mac::{CbcMac, Mac};
 use cryptography_00::feistel;
 use tail_cbc::cipher;
-use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 use tail_cbc::cipher::typenum::{U1, U8};
-use crate::access_control::block00_structure::BlockSize00;
+use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 
 type KeySizeRound = U8;
 
-pub fn verify_mac(mac: &[u8], text: &[u8], key: Key<Round00>) -> Result<(), MacError>
-{
+pub fn verify_mac(mac: &[u8], text: &[u8], key: Key<Round00>) -> Result<(), MacError> {
     let mut cbc_mac = <CbcMac<Round00> as Mac>::new(&key);
     cbc_mac.update(text);
-    cbc_mac.verify_truncated_right(mac.into())
+    cbc_mac.verify_truncated_right(mac)
 }
 
 #[derive(Clone)]
@@ -32,7 +31,7 @@ impl KeyInit for Round00 {
             8 => {
                 let key = u64::from_le_bytes(key.try_into().unwrap());
                 Ok(Self { key })
-            },
+            }
             _ => Err(InvalidLength),
         }
     }
@@ -72,9 +71,10 @@ fn test_verify_cbcmac_zero() {
 #[test]
 fn test_verify_cbcmac_unaligned_random_values() {
     let key = 0x0001020304050607u64.to_le_bytes();
-    let ciphertext = [ 0xC6, 0x80, 0x20, 0x3A, 0x53, 0x1E, 0x5C, 0xC7,
-        0xB6, 0x08, 0xAF, 0xA1, 0x2B, 0x19, 0x26, 0x8A,
-        0x47, 0xE1, 0x86, 0x74, 0xE9, ];
+    let ciphertext = [
+        0xC6, 0x80, 0x20, 0x3A, 0x53, 0x1E, 0x5C, 0xC7, 0xB6, 0x08, 0xAF, 0xA1, 0x2B, 0x19, 0x26,
+        0x8A, 0x47, 0xE1, 0x86, 0x74, 0xE9,
+    ];
     let mac = (0x6e4087f4ef22b5du64).to_be_bytes();
     assert!(verify_mac(&mac, &ciphertext, key.into()).is_ok());
 }

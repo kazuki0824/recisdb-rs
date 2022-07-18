@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 
-use std::error::Error;
 use b25_sys::futures_io::AsyncBufRead;
+use std::error::Error;
 
 use crate::channels::Channel;
 
@@ -15,7 +15,7 @@ mod windows;
 pub enum Voltage {
     High11v,
     High15v,
-    Low
+    Low,
 }
 
 pub trait Tuned {
@@ -23,7 +23,11 @@ pub trait Tuned {
     fn open_stream(self) -> Box<dyn AsyncBufRead + Unpin>;
 }
 
-pub fn tune(path: &str, channel: Channel, voltage: Option<Voltage>) -> Result<impl Tuned, Box<dyn Error>> {
+pub fn tune(
+    path: &str,
+    channel: Channel,
+    voltage: Option<Voltage>,
+) -> Result<impl Tuned, Box<dyn Error>> {
     use crate::tuner_base::error::GeneralError::EnvCompatFailure;
     println!("{:?}", channel);
     cfg_if! {

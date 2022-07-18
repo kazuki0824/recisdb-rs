@@ -1,10 +1,10 @@
+use b25_sys::futures_io::{AsyncBufRead, AsyncRead};
+use futures_util::io::BufReader;
 use std::error::Error;
 use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::task::Poll;
 use std::time::Duration;
-use futures_util::io::BufReader;
-use b25_sys::futures_io::{AsyncBufRead, AsyncRead};
 
 use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
@@ -105,12 +105,12 @@ impl AsyncRead for TunedDevice {
         buf: &mut [u8],
     ) -> Poll<std::io::Result<usize>> {
         match self.interface.GetTsStream() {
-            Ok((recv, remaining)) if recv.len() > 0 => {
+            Ok((recv, remaining)) if !recv.is_empty() => {
                 println!("{} bytes recv.", recv.len());
                 buf[0..recv.len()].copy_from_slice(&recv[0..]);
                 Poll::Ready(Ok(buf.len()))
             }
-            Ok((recv, remaining)) if recv.len() == 0 && remaining > 0 => {
+            Ok((recv, remaining)) if recv.is_empty() && remaining > 0 => {
                 println!("{} remaining.", remaining);
                 cx.waker().wake_by_ref();
                 Poll::Pending
