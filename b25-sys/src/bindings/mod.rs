@@ -37,14 +37,13 @@ impl InnerDecoder {
 
         #[cfg(feature = "block00cbc")]
         if key {
-            return Self::new_with_key(dec)
+            return Self::new_with_key(dec);
         }
         Self::new_without_key(dec)
     }
 
     #[cfg(feature = "block00cbc")]
-    unsafe fn new_with_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError>
-    {
+    unsafe fn new_with_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError> {
         let mut cas = B_CAS_CARD::default();
         //Allocate private data inside B_CAS_CARD
         cas.initialize();
@@ -55,8 +54,7 @@ impl InnerDecoder {
         ret.dec.as_ref().set_b_cas_card(ret.cas.as_ref().unwrap());
         Ok(ret)
     }
-    unsafe fn new_without_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError>
-    {
+    unsafe fn new_without_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError> {
         let cas = arib_std_b25::create_b_cas_card();
         if cas.is_null() {
             Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)

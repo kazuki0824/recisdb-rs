@@ -17,8 +17,8 @@ use crate::tuner_base::Tuned;
 
 mod channels;
 mod context;
-mod utils;
 mod tuner_base;
+mod utils;
 
 fn main() {
     let arg = context::Cli::parse();
@@ -34,7 +34,7 @@ fn main() {
             output,
             lnb,
             key0,
-            key1
+            key1,
         } => {
             // Settings
             let settings = {
@@ -54,11 +54,11 @@ fn main() {
             //Combine the source, decoder, and output into a single future
             let mut src = utils::get_src(
                 device,
-                channel.map(|s| channels::Channel::from_ch_str(s)),
+                channel.map(channels::Channel::from_ch_str),
                 None,
-                lnb
+                lnb,
             )
-                .unwrap();
+            .unwrap();
             let from = StreamDecoder::new(&mut src, settings);
             let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
@@ -72,7 +72,10 @@ fn main() {
             block_on(stream)
         }
         Commands::Decode {
-            source, key0, key1, output
+            source,
+            key0,
+            key1,
+            output,
         } => {
             // Settings
             let settings = {
@@ -87,13 +90,7 @@ fn main() {
             };
 
             //Combine the source, decoder, and output into a single future
-            let mut src = utils::get_src(
-                None,
-                None,
-                source,
-                None
-            )
-                .unwrap();
+            let mut src = utils::get_src(None, None, source, None).unwrap();
             let from = StreamDecoder::new(&mut src, settings);
             let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
@@ -108,7 +105,7 @@ fn main() {
         }
         Commands::Checksignal { device, channel } => {
             //open tuner and tune to channel
-            let channel = channel.map(|s| channels::Channel::from_ch_str(s));
+            let channel = channel.map(channels::Channel::from_ch_str);
             let tuned = crate::tuner_base::tune(&device, channel.unwrap(), None).unwrap();
             //configure sigint trigger
             let flag = std::sync::Arc::new(AtomicBool::new(false));

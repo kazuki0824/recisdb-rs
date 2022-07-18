@@ -1,8 +1,8 @@
 use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
-use log::{debug, warn};
 use crate::access_control::select_key_by_auth;
+use log::{debug, warn};
 
 use crate::bindings::arib_std_b25::{
     wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
@@ -100,11 +100,11 @@ unsafe extern "C" fn proc_ecm(
                 Some(key) => {
                     debug!("Selected Kw= {:?}", key);
                     Ok(&payload[3..19])
-                },
+                }
                 None => {
                     warn!("No valid key found");
                     Err(())
-                },
+                }
             }
         }
     };
@@ -165,4 +165,3 @@ impl Default for B_CAS_CARD {
         }
     }
 }
-

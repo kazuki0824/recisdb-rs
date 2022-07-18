@@ -1,7 +1,7 @@
-use std::{env, fs};
 use std::error::Error;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 use env_logger::Env;
 use futures_util::io::{AllowStdIo, BufReader};
@@ -16,7 +16,7 @@ pub(crate) fn get_src(
     device: Option<String>,
     channel: Option<channels::Channel>,
     source: Option<String>,
-    voltage: Option<Voltage>
+    voltage: Option<Voltage>,
 ) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
     if let Some(src) = device {
         crate::tuner_base::tune(&src, channel.unwrap(), voltage).map(|tuned| tuned.open_stream())
@@ -44,16 +44,15 @@ pub(crate) fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, st
                 env::current_dir()?.to_str().unwrap(),
                 filename_time_now
             ))?))
-        },
-        Some(path) if Path::exists(Path::new(&path))=> {
+        }
+        Some(path) if Path::exists(Path::new(&path)) => {
             let path = fs::canonicalize(path)?;
-            if fs::metadata(&path)?.is_file()
-            {
+            if fs::metadata(&path)?.is_file() {
                 Ok(Box::new(fs::File::create(path)?))
             } else {
                 panic!("The file is directory")
             }
-        },
+        }
         Some(path) => {
             let path = Path::new(&path);
             let path = PathBuf::from(path);
@@ -74,20 +73,21 @@ pub(crate) fn parse_keys(key0: Option<Vec<String>>, key1: Option<Vec<String>>) -
     match (key0, key1) {
         (None, None) => false,
         (Some(k0), Some(k1)) => {
-            let k0 = k0.iter().map(|k| {
-                u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap()
-            }).collect::<Vec<u64>>();
-            let k1 = k1.iter().map(|k| {
-                u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap()
-            }).collect::<Vec<u64>>();
+            let k0 = k0
+                .iter()
+                .map(|k| u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap())
+                .collect::<Vec<u64>>();
+            let k1 = k1
+                .iter()
+                .map(|k| u64::from_str_radix(k.trim_start_matches("0x"), 16).unwrap())
+                .collect::<Vec<u64>>();
             b25_sys::set_keys(k0, k1);
             true
-        },
+        }
         _ => panic!("Specify both of the keys"),
     }
 }
 
-pub(crate) fn initialize_logger()
-{
+pub(crate) fn initialize_logger() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 }

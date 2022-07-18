@@ -1,9 +1,9 @@
+use futures_core::ready;
 use std::cell::Cell;
 use std::io::{Read, Write};
 use std::pin::Pin;
 use std::sync::Mutex;
 use std::task::{Context, Poll};
-use futures_core::ready;
 
 pub use futures_io;
 use futures_io::{AsyncBufRead, AsyncRead};
@@ -95,7 +95,7 @@ impl AsyncRead for StreamDecoder<'_> {
             // Poll::Pending
         } else {
             //Write to this.inner in order to decode, and read from this.inner in order to write to buf
-            this.inner.write(recv).unwrap();
+            this.inner.write_all(recv).expect("write_all failed");
             this.reader.as_mut().consume(n);
             this.received.set(this.received.get() + n);
 

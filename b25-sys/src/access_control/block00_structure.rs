@@ -1,7 +1,7 @@
 use cryptography_00::{feistel, round_function};
 use tail_cbc::cipher;
-use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 use tail_cbc::cipher::typenum::{U16, U3, U8};
+use tail_cbc::cipher::{BlockCipher, InvalidLength, Key, KeyInit, KeySizeUser};
 
 type KeySize00 = U16;
 pub(crate) type BlockSize00 = U8;
@@ -25,9 +25,9 @@ pub(crate) fn expand_00(key: u64, protocol: u8) -> Key<Block00> {
     }
     Key::<Block00>::from_exact_iter(
         //no vec
-        exp00.into_iter().map(|x| x.to_le_bytes()).flatten(),
+        exp00.into_iter().flat_map(|x| x.to_le_bytes()),
     )
-        .unwrap()
+    .unwrap()
 }
 
 #[derive(Clone)]
@@ -100,7 +100,6 @@ crate::impl_block_encdec!(
 );
 const ROUND_INDEX: [u8; 16] = [1, 0, 1, 2, 2, 2, 0, 2, 1, 3, 0, 2, 1, 0, 0, 1];
 
-
 #[test]
 fn cbc() {
     use cipher::KeyIvInit;
@@ -122,7 +121,8 @@ fn cbc() {
     );
 
     let mut result = c.clone();
-    b.decrypt_bytes_b2b_mut(&c, &mut result).expect("TODO: panic message");
+    b.decrypt_bytes_b2b_mut(&c, &mut result)
+        .expect("TODO: panic message");
 
     assert_eq!(result, p);
 }
