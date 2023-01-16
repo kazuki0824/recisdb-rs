@@ -21,7 +21,7 @@ default = ["bg-runtime"]
 [dependencies]
 futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }
 futures-util = { git = "https://github.com/rust-lang/futures-rs.git", features = ["io"] }
-clap = { version = "^3.2", features = ["derive"] }
+clap = { version = "^4.1", features = ["derive"] }
 fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
 ctrlc = { version = "^3.0", features = ["termination"] }
