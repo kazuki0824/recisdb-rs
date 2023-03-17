@@ -9,7 +9,7 @@ use crate::tuner_base::Voltage;
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
 nix::ioctl_none!(stop_rec, 0x8d, 0x03);
-nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, u64);
+nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, i32);
 nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
@@ -47,7 +47,7 @@ impl TunedDevice {
 impl super::Tuned for TunedDevice {
     fn signal_quality(&self) -> f64 {
         let raw = {
-            let mut raw = [0; 1];
+            let mut raw = [0i32; 1];
             let _errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), &mut raw[0]) }.unwrap();
             raw[0]
         };
