@@ -19,8 +19,8 @@ bg-runtime = ["bindgen/runtime"]
 default = ["bg-runtime"]
 
 [dependencies]
-futures-executor = { git = "https://github.com/rust-lang/futures-rs.git" }
-futures-util = { git = "https://github.com/rust-lang/futures-rs.git", features = ["io"] }
+futures-executor = "0.3.26"
+futures-util = { version = "0.3.26", features = ["io"] }
 clap = { version = "^3.2", features = ["derive"] }
 fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
