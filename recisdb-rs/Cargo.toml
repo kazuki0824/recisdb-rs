@@ -21,7 +21,7 @@ default = ["bg-runtime"]
 [dependencies]
 futures-executor = "0.3.26"
 futures-util = { version = "0.3.26", features = ["io"] }
-clap = { version = "^3.2", features = ["derive"] }
+clap = { version = "^4.2", features = ["derive"] }
 fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
 ctrlc = { version = "^3.0", features = ["termination"] }
