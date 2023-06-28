@@ -23,6 +23,26 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libarib25. recisdb c
 - recisdb-rs: reads a bitstream from both character devices and BonDriver
 - b25-sys: a wrapper for libarib25 written in Rust
 
+## Build
+
+recisdb をビルドするには Rust が必要です。  
+Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+具体的には、上記のコマンドでインストールできます。
+
+```bash
+git clone https://github.com/kazuki0824/recisdb-rs.git
+cd recisdb-rs
+cargo build --release
+cp target/release/recisdb /usr/local/bin
+```
+
+Rust がインストールされている場合は、上記のコマンドでビルドできます。
+
 ## Usage
 
 ### General
