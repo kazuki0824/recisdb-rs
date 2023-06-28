@@ -2,8 +2,8 @@ use crate::tuner_base::Voltage;
 use clap::{ArgGroup, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
-#[clap(name = "recisdb-rs")]
-#[clap(about = "Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources. ", long_about = None)]
+#[clap(name = "recisdb")]
+#[clap(about = "recisdb can read both Unix chardev-based and BonDriver-based TV sources. ", long_about = None)]
 #[clap(author = "maleicacid")]
 pub(crate) struct Cli {
     #[clap(subcommand)]
