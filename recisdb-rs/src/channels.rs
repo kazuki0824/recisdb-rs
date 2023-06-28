@@ -55,17 +55,17 @@ impl Channel {
         let ch_str = ch_str.into();
 
         let isdb_t_regex = Regex::new(r"(?<=[TC])\d{1,2}\b").unwrap();
-        let cs_regex = Regex::new(r"(?<=CS)\d?[02468]\b").unwrap();
-        let bs_regex = Regex::new(r"(?<=BS)\d[13579]_[01234567]\b").unwrap();
+        let cs_regex = Regex::new(r"(?<=CS)[012]?[02468]\b").unwrap();
+        let bs_regex = Regex::new(r"(?<=BS)[012]?[13579]_[01234567]\b").unwrap();
         let bon_regex = Regex::new(r"^[0-9]+-[0-9]+$").unwrap();
 
         if let Ok(Some(m)) = isdb_t_regex.find(&ch_str) {
             let first_letter = ch_str.chars().nth(0).unwrap();
             let physical_ch_num = m.as_str().parse().unwrap();
             let ch_type =
-                if first_letter == 'T' && (13..=52).contains(&physical_ch_num) {
+                if first_letter == 'T' && (13..=62).contains(&physical_ch_num) {
                     ChannelType::Terrestrial(physical_ch_num)
-                } else if first_letter == 'C' && (23..=63).contains(&physical_ch_num) {
+                } else if first_letter == 'C' && (13..=63).contains(&physical_ch_num) {
                     ChannelType::Catv(physical_ch_num)
                 } else {
                     ChannelType::Undefined
@@ -79,7 +79,13 @@ impl Channel {
             let caps = cs_regex.captures(&ch_str).unwrap().unwrap();
             let result_str = caps.get(0).map_or("", |m| m.as_str());
             let physical_ch_num = result_str.parse().unwrap();
-            let ch_type = ChannelType::CS(physical_ch_num);
+            let ch_type = {
+                if (2..=24).contains(&physical_ch_num) {
+                    ChannelType::CS(physical_ch_num)
+                } else {
+                    ChannelType::Undefined
+                }
+            };
 
             Channel {
                 ch_type,
@@ -93,7 +99,12 @@ impl Channel {
                 let split_loc = result_str.rfind('_').unwrap();
                 let physical_ch_num = (result_str[0..split_loc]).parse().unwrap();
                 let stream_id: u32 = result_str[split_loc + 1..].parse().unwrap();
-                ChannelType::BS(physical_ch_num, stream_id)
+                // BS-7ch と BS-17ch は BS4K (ISDB-S3) 用のため受信不可
+                if (1..=23).contains(&physical_ch_num) && physical_ch_num != 7 && physical_ch_num != 17 {
+                    ChannelType::BS(physical_ch_num, stream_id)
+                } else {
+                    ChannelType::Undefined
+                }
             };
 
             Channel {
@@ -138,7 +149,7 @@ impl Channel {
     }
     pub fn to_ioctl_freq(&self, freq_offset: i32) -> Freq {
         let ioctl_channel = match self.ch_type {
-            ChannelType::Terrestrial(ch_num) if (13..=52).contains(&ch_num) => ch_num + 50,
+            ChannelType::Terrestrial(ch_num) if (13..=62).contains(&ch_num) => ch_num + 50,
             ChannelType::Catv(ch_num) if (23..=63).contains(&ch_num) => ch_num - 1,
             ChannelType::Catv(ch_num) if (13..=22).contains(&ch_num) => ch_num - 10,
             ChannelType::CS(ch_num) if (2..=24).contains(&ch_num) && (ch_num % 2 == 0) => {
@@ -183,12 +194,17 @@ mod tests {
         assert_eq!(ch.ch_type, ChannelType::Terrestrial(52));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
-        let ch_str = "T53";
+        let ch_str = "T62";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Terrestrial(62));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "T63";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
 
-        let ch_str = "T54";
+        let ch_str = "T64";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
@@ -196,9 +212,14 @@ mod tests {
 
     #[test]
     fn test_catv_ch_num() {
-        let ch_str = "C22";
+        let ch_str = "C12";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "C13";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Catv(13));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "C23";
@@ -219,7 +240,32 @@ mod tests {
 
     #[test]
     fn test_bs_ch_num() {
-        let ch_str = "BS1_3";
+        let ch_str = "BS0_2";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS1_2";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::BS(1, 2));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS03_0";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::BS(3, 0));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS4_2";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS06_0";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS07_2";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());
@@ -228,13 +274,48 @@ mod tests {
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::BS(13, 3));
         assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS17_1";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS19_9";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "BS25_3";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
     }
 
     #[test]
     fn test_cs_ch_num() {
+        let ch_str = "CS0";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "CS01";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
         let ch_str = "CS2";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::CS(2));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "CS03";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "CS04";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::CS(4));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS24";
@@ -243,6 +324,11 @@ mod tests {
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS25";
+        let ch = Channel::from_ch_str(ch_str);
+        assert_eq!(ch.ch_type, ChannelType::Undefined);
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
+        let ch_str = "CS26";
         let ch = Channel::from_ch_str(ch_str);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
         assert_eq!(ch.raw_string, ch_str.to_string());

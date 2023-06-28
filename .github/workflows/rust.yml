@@ -7,6 +7,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,7 +23,6 @@ jobs:
           - debian:testing-slim
           - debian:stable-slim
           - ubuntu:jammy
-          - ubuntu:impish
           # - alpine:latest
     container:
       image: ${{ matrix.os }}

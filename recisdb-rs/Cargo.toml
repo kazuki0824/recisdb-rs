@@ -3,7 +3,7 @@ name = "recisdb"
 version = "1.0.0"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
-description = "Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources."
+description = "recisdb can read both Unix chardev-based and BonDriver-based TV sources."
 build = "build.rs"
 rust-version = "1.63"
 license = "MIT OR Apache-2.0"
@@ -44,7 +44,7 @@ copyright = "2021-2022, Kazuki Kuroda  <maleicacid824+dev@gmail.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
 A simple command for ISDB-T character device.
-Recisdb-rs can read both Unix chardev-based and BonDriver-based TV sources. """
+recisdb can read both Unix chardev-based and BonDriver-based TV sources. """
 depends = "libpcsclite1, $auto"
 section = "utility"
 priority = "optional"
