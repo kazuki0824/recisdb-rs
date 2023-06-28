@@ -23,8 +23,7 @@ jobs:
           - debian:testing-slim
           - debian:stable-slim
           - ubuntu:jammy
-          - ubuntu:impish
-          # - alpine:latest
+          - alpine:latest
     container:
       image: ${{ matrix.os }}
     steps:
