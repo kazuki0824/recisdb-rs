@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::{env, fs};
+use std::path::Path;
+use std::fs;
 
 use env_logger::Env;
 use futures_util::io::{AllowStdIo, BufReader};
