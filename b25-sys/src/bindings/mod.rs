@@ -2,6 +2,7 @@ use pin_project_lite::pin_project;
 use std::io::{Read, Write};
 use std::ptr::null_mut;
 use std::ptr::NonNull;
+use log::{warn, error};
 
 use crate::bindings::arib_std_b25::{ARIB_STD_B25, ARIB_STD_B25_BUFFER, B_CAS_CARD};
 use crate::bindings::error::AribB25DecoderError;
@@ -87,9 +88,11 @@ impl Write for InnerDecoder {
                 // if greater than 0, it means that the decoder emitted some warnings.
                 // if less than 0, it means that the decoder emitted some errors.
                 if code > 0 {
-                    eprintln!("{}", err);
+                    // suppress warning (The NOT_COMPLETE error is generated at the time of initial reception because of the specification)
+                    // warn!("{}", err);
                     Ok(buf.len())
                 } else {
+                    error!("{}", err);
                     Err(std::io::Error::new(std::io::ErrorKind::Other, err))
                 }
             }
@@ -103,12 +106,13 @@ impl Write for InnerDecoder {
             0 => Ok(()),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                eprintln!("{}", err);
                 // if greater than 0, it means that the decoder emitted some warnings.
                 // if less than 0, it means that the decoder emitted some errors.
                 if code > 0 {
+                    warn!("{}", err);
                     Ok(())
                 } else {
+                    error!("{}", err);
                     Err(std::io::Error::new(std::io::ErrorKind::Other, err))
                 }
             }
@@ -137,12 +141,13 @@ impl Read for InnerDecoder {
             0 => Ok(sz),
             _ => {
                 let err = AribB25DecoderError::from(code);
-                eprintln!("{}", err);
                 // if greater than 0, it means that the decoder emitted some warnings.
                 // if less than 0, it means that the decoder emitted some errors.
                 if code > 0 {
+                    warn!("{}", err);
                     Ok(sz)
                 } else {
+                    error!("{}", err);
                     Err(std::io::Error::new(std::io::ErrorKind::Other, err))
                 }
             }

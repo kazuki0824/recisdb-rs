@@ -159,7 +159,7 @@ impl Channel {
                 ch_num / 2
             }
             ChannelType::Undefined => unimplemented!(),
-            _ => panic!("Invalid channel."),
+            _ => unreachable!("Invalid channel.")
         };
         let slot = match self.ch_type {
             ChannelType::CS(_) => 0,

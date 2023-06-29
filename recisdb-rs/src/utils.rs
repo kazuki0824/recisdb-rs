@@ -5,7 +5,7 @@ use std::{env, fs};
 
 use env_logger::Env;
 use futures_util::io::{AllowStdIo, BufReader};
-use log::{error, info};
+use log::info;
 
 use b25_sys::futures_io::AsyncBufRead;
 
@@ -50,7 +50,7 @@ pub(crate) fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, st
             if fs::metadata(&path)?.is_file() {
                 Ok(Box::new(fs::File::create(path)?))
             } else {
-                panic!("The file is directory")
+                panic!("The file is directory.")
             }
         }
         Some(path) => {
@@ -60,8 +60,7 @@ pub(crate) fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, st
                 None => unreachable!("Unknown parent directory"),
                 Some(dir) if dir.exists() => Ok(Box::new(fs::File::create(path)?)),
                 _ => {
-                    error!("Parent directory not found");
-                    panic!()
+                    panic!("Parent directory not found.");
                 }
             }
         }
@@ -84,7 +83,7 @@ pub(crate) fn parse_keys(key0: Option<Vec<String>>, key1: Option<Vec<String>>) -
             b25_sys::set_keys(k0, k1);
             true
         }
-        _ => panic!("Specify both of the keys"),
+        _ => panic!("Specify both of the keys."),
     }
 }
 
