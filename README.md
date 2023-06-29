@@ -9,7 +9,7 @@ Rust で書かれた ARIB STD-B25 およびテレビチューナーリーダー�
 従来の recpt1, b25, arib-b25-stream-test コマンドを代替します。
 
 Tools for reading ARIB STD-B25, and dealing with some kinds of tuner devices. Works fine on both Windows and Linux.  
-recisdb-rs and b25-sys are more convenient Rust wrapper for libarib25. recisdb can read both Unix character device-based and BonDriver-based TV sources. 
+recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb can read both Unix character device-based and BonDriver-based TV sources. 
 
 ## Features
 
@@ -21,7 +21,7 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libarib25. recisdb c
 ## Description
 
 - recisdb-rs: reads a bitstream from both character devices and BonDriver
-- b25-sys: a wrapper for libarib25 written in Rust
+- b25-sys: a wrapper for libaribb25 written in Rust
 
 ## Build
 

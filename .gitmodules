@@ -1,3 +1,3 @@
-[submodule "b25-sys/externals/libarib25"]
+[submodule "b25-sys/externals/libaribb25"]
 	path = b25-sys/externals/libaribb25
-	url = https://github.com/kazuki0824/libarib-bxx.git
+	url = https://github.com/tsukumijima/libaribb25.git
