@@ -71,7 +71,7 @@ recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
 Video4Linux DVB デバイスは、dvbv5-zap の出力を標準入力から受ける形で対応します。
 
 ```bash
-dvbv5-zap -a 1 -c ./isdbt.conf -r -P 24 | recisdb decode - | ffplay
+dvbv5-zap -a 1 -c ./isdbt.conf -r -P 24 | recisdb decode -i - - | ffplay
 ```
 
 ### Windows

@@ -52,8 +52,6 @@ pub(crate) enum Commands {
         /// the name of the dll comes here.
         /// When the device is a Unix chardev-based device,
         /// the canonical path of the device comes here.
-        /// If the device name is not specified, this subcommand will try
-        /// to read the data from the specified file.
         #[clap(short, long, value_name = "canonical_path", required = true)]
         device: Option<String>,
 
@@ -102,8 +100,6 @@ pub(crate) enum Commands {
         /// The location of the output
         /// The location is a string that is specified as an
         /// absolute path.
-        /// If it is not specified, the recording
-        /// will be stored in the current directory.
         /// If '-' is specified, the recording will be redirected to
         /// stdout.
         /// If the specified file is a directory, this subcommand
@@ -121,8 +117,6 @@ pub(crate) enum Commands {
         /// The source file name
         /// The source file name is a string that is specified as a
         /// file name.
-        /// If the device name is not specified, this subcommand will
-        /// try to read the data from the specified data source.
         /// If '--device' is specified, this parameter is ignored.
         #[clap(short = 'i', long = "input", value_name = "file", required = true)]
         source: Option<String>,
@@ -143,8 +137,6 @@ pub(crate) enum Commands {
         /// The location of the output
         /// The location is a string that is specified as an
         /// absolute path.
-        /// If it is not specified, the recording
-        /// will be stored in the current directory.
         /// If '-' is specified, the recording will be redirected to
         /// stdout.
         /// If the specified file is a directory, this subcommand

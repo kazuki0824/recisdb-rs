@@ -21,13 +21,16 @@ pub(crate) fn get_src(
     if let Some(src) = device {
         crate::tuner_base::tune(&src, channel.unwrap(), voltage).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
+        if src == "-" {
+            info!("Waiting for stdin...");
+            let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
+            return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
+        }
         let src = std::fs::canonicalize(src)?;
         let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
-        info!("Waiting for stdin...");
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
-        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
+        unreachable!("Either device & channel or source must be specified.")
     }
 }
 

@@ -100,7 +100,21 @@ fn main() {
                 error!("The specified channel is invalid.");
                 std::process::exit(1);
             }
+            info!("Tuner: {}", device.clone().unwrap());
             info!("Channel: {} / {:?}", channel_clone.raw_string, channel_clone.ch_type);
+            if disable_decode {
+                info!("Decode: Disabled");
+            } else {
+                info!("Decode: Enabled");
+            }
+            match rec_duration {
+                Some(duration) => {
+                    info!("Recording duration: {} seconds", duration.as_secs_f64());
+                },
+                None => {
+                    info!("Recording duration: Infinite");
+                }
+            }
             // Get source and output
             let mut src = match utils::get_src(device, channel, None, lnb) {
                 Ok(src) => src,
@@ -116,7 +130,6 @@ fn main() {
             let output = &mut AllowStdIo::new(output_file);
             // If disable_decode is true, just copy the stream to the output
             if disable_decode {
-                info!("Decode: Disabled");
                 let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                     BufReader::with_capacity(20000 * 40, src),
                     output,
@@ -128,7 +141,6 @@ fn main() {
                 block_on(stream)
             // Otherwise, decode the stream and copy the result to the output
             } else {
-                info!("Decode: Enabled");
                 let from = StreamDecoder::new(&mut src, settings);
                 let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                     BufReader::with_capacity(20000 * 40, from),
@@ -161,7 +173,18 @@ fn main() {
 
             // Combine the source, decoder, and output into a single future
             // Get source and output
-            let mut src = utils::get_src(None, None, source, None).unwrap();
+            info!("Source: {}", source.clone().unwrap());
+            let mut src = match utils::get_src(None, None, source, None) {
+                Ok(src) => src,
+                Err(e) => {
+                    if let Some(io_error) = e.downcast_ref::<std::io::Error>() {
+                        error!("Failed to open source file: {}", io_error.kind());
+                    } else {
+                        error!("Failed to open source file: {}", e);
+                    }
+                    std::process::exit(1);
+                }
+            };
             let output_file = match utils::get_output(output) {
                 Ok(output_file) => output_file,
                 Err(e) => {
@@ -189,6 +212,7 @@ fn main() {
                 error!("The specified channel is invalid.");
                 std::process::exit(1);
             }
+            info!("Tuner: {}", device);
             info!("Channel: {} / {:?}", channel.raw_string, channel.ch_type);
             let tuned = match crate::tuner_base::tune(&device, channel, None) {
                 Ok(tuned) => tuned,
