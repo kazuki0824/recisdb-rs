@@ -75,6 +75,10 @@ pub(crate) enum Commands {
         /// continue until the duration is over.
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
+        /// Disable ARIB STD-B25 decoding
+        /// If this flag is specified, ARIB STD-B25 decoding is not performed.
+        #[clap(long = "disable-decode")]
+        disable_decode: bool,
         /// LNB voltage
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.

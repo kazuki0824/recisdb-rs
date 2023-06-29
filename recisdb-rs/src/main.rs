@@ -71,6 +71,7 @@ fn main() {
             device,
             channel,
             time,
+            disable_decode,
             output,
             lnb,
             key0,
@@ -92,6 +93,7 @@ fn main() {
             let rec_duration = time.map(Duration::from_secs_f64);
 
             // Combine the source, decoder, and output into a single future
+            // Get channel
             let channel = channel.map(channels::Channel::from_ch_str);
             let channel_clone = channel.clone().unwrap();
             if channel_clone.ch_type == channels::ChannelType::Undefined {
@@ -99,16 +101,11 @@ fn main() {
                 std::process::exit(1);
             }
             info!("Channel: {} / {:?}", channel_clone.raw_string, channel_clone.ch_type);
-            let mut src = match utils::get_src(
-                device,
-                channel,
-                None,
-                lnb,
-            ) {
+            // Get source and output
+            let mut src = match utils::get_src(device, channel, None, lnb) {
                 Ok(src) => src,
                 Err(e) => handle_tuning_error(e),
             };
-            let from = StreamDecoder::new(&mut src, settings);
             let output_file = match utils::get_output(output) {
                 Ok(output_file) => output_file,
                 Err(e) => {
@@ -117,16 +114,32 @@ fn main() {
                 }
             };
             let output = &mut AllowStdIo::new(output_file);
-            let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
-                BufReader::with_capacity(20000 * 40, from),
-                output,
-            );
+            // If disable_decode is true, just copy the stream to the output
+            if disable_decode {
+                info!("Decode: Disabled");
+                let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
+                    BufReader::with_capacity(20000 * 40, src),
+                    output,
+                );
 
-            // Configure sigint trigger
-            config_timer_handler(rec_duration, abort_handle);
+                // Configure sigint trigger
+                config_timer_handler(rec_duration, abort_handle);
+                info!("Recording...");
+                block_on(stream)
+            // Otherwise, decode the stream and copy the result to the output
+            } else {
+                info!("Decode: Enabled");
+                let from = StreamDecoder::new(&mut src, settings);
+                let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
+                    BufReader::with_capacity(20000 * 40, from),
+                    output,
+                );
 
-            info!("Recording...");
-            block_on(stream)
+                // Configure sigint trigger
+                config_timer_handler(rec_duration, abort_handle);
+                info!("Recording...");
+                block_on(stream)
+            }
         }
         Commands::Decode {
             source,
@@ -147,8 +160,8 @@ fn main() {
             };
 
             // Combine the source, decoder, and output into a single future
+            // Get source and output
             let mut src = utils::get_src(None, None, source, None).unwrap();
-            let from = StreamDecoder::new(&mut src, settings);
             let output_file = match utils::get_output(output) {
                 Ok(output_file) => output_file,
                 Err(e) => {
@@ -157,6 +170,8 @@ fn main() {
                 }
             };
             let output = &mut AllowStdIo::new(output_file);
+
+            let from = StreamDecoder::new(&mut src, settings);
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                 BufReader::with_capacity(20000 * 40, from),
                 output,
@@ -164,7 +179,6 @@ fn main() {
 
             // Configure sigint trigger
             config_timer_handler(None, abort_handle);
-
             info!("Decoding...");
             block_on(stream)
         }
