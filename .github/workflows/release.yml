@@ -18,10 +18,10 @@ jobs:
       - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          apt update
-          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
+          apt-get update
+          apt-get install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@v2
         with:
           profile: minimal
           toolchain: beta
@@ -60,7 +60,7 @@ jobs:
 #          - aarch64-pc-windows-msvc
     steps:
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@v2
         with:
           profile: minimal
           toolchain: beta
@@ -68,7 +68,7 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.0.2
       - uses: fbactions/setup-winsdk@v1
-      - name: Install LLVM and Clang # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
+      - name: Install LLVM and Clang  # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
         uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
         with:
           version: "11.0"
