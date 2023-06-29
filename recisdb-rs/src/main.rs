@@ -109,7 +109,14 @@ fn main() {
                 Err(e) => handle_tuning_error(e),
             };
             let from = StreamDecoder::new(&mut src, settings);
-            let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
+            let output_file = match utils::get_output(output) {
+                Ok(output_file) => output_file,
+                Err(e) => {
+                    error!("Failed to open output file: {}", e.kind());
+                    std::process::exit(1);
+                }
+            };
+            let output = &mut AllowStdIo::new(output_file);
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                 BufReader::with_capacity(20000 * 40, from),
                 output,
@@ -142,7 +149,14 @@ fn main() {
             // Combine the source, decoder, and output into a single future
             let mut src = utils::get_src(None, None, source, None).unwrap();
             let from = StreamDecoder::new(&mut src, settings);
-            let output = &mut AllowStdIo::new(utils::get_output(output).unwrap());
+            let output_file = match utils::get_output(output) {
+                Ok(output_file) => output_file,
+                Err(e) => {
+                    error!("Failed to open output file: {}", e.kind());
+                    std::process::exit(1);
+                }
+            };
+            let output = &mut AllowStdIo::new(output_file);
             let (stream, abort_handle) = futures_util::io::copy_buf_abortable(
                 BufReader::with_capacity(20000 * 40, from),
                 output,
