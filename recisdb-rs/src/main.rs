@@ -228,7 +228,7 @@ fn main() {
                 if flag2.load(Ordering::Relaxed) {
                     return;
                 }
-                info!("S/N = {}[dB]\r", tuned.signal_quality());
+                println!("{{\"signal_quality\": {}}}", tuned.signal_quality());
             }
         }
     };

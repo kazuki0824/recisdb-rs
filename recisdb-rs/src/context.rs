@@ -14,7 +14,7 @@ pub(crate) struct Cli {
 pub(crate) enum Commands {
     /// Signal test
     /// This subcommand tests the signal quality of the tuner
-    /// and prints the S/N rate in dB.
+    /// and prints the S/N rate in dB (JSON format).
     /// The signal quality is measured by the tuner's internal
     /// signal detector.
     #[clap(name = "checksignal")]
