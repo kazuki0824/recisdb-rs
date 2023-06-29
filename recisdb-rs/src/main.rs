@@ -20,6 +20,7 @@ mod context;
 mod tuner_base;
 mod utils;
 
+#[cfg(target_os = "linux")]
 fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
     if let Some(nix_err) = e.downcast_ref::<nix::Error>() {
         let current_errno = nix::errno::Errno::from_i32(nix::errno::errno());
@@ -50,6 +51,12 @@ fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
     } else {
         error!("Unexpected error: {}", e);
     }
+    std::process::exit(1);
+}
+
+#[cfg(target_os = "windows")]
+fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
+    error!("Unexpected error: {}", e);
     std::process::exit(1);
 }
 
