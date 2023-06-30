@@ -39,7 +39,7 @@ git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
 sudo apt install -y build-essential cmake clang libpcsclite-dev pkg-config
 cargo build --release
-cp target/release/recisdb /usr/local/bin
+sudo cp -a target/release/recisdb /usr/local/bin
 ```
 
 Rust がインストールされている場合は、上記のコマンドでビルドできます。
