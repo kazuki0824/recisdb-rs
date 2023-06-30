@@ -37,6 +37,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```bash
 git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
+sudo apt install -y build-essential cmake clang libpcsclite-dev pkg-config
 cargo build --release
 cp target/release/recisdb /usr/local/bin
 ```
