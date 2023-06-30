@@ -4,15 +4,34 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+*'
+
 jobs:
+  create_release:
+    runs-on: ubuntu-20.04
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body: This release is created by GitHub Actions.
+          draft: false
+          prerelease: false
+
   release_deb_executable:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    needs: create_release
     strategy:
       fail-fast: false
       matrix:
         arch:
           - amd64
-#          - arm64v8
+          # - arm64v8
     container: ${{ matrix.arch }}/rust:slim
     steps:
       - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
@@ -33,31 +52,22 @@ jobs:
         run: |
           cargo install cargo-deb
           cargo deb -p recisdb --verbose --output /artifacts/
-      - name: Create a release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: This release is created by GitHub Actions.
-          draft: false
-          prerelease: false
       - name: Upload deb package to release channel
         uses: csexton/release-asset-action@v2
         with:
           pattern: "/artifacts/*"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          release-url: ${{ steps.create_release.outputs.upload_url }}
+          release-url: ${{ needs.create_release.outputs.upload_url }}
+
   release_windows_exe:
     runs-on: windows-latest
+    needs: create_release
     strategy:
       fail-fast: false
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-#          - aarch64-pc-windows-msvc
+          # - aarch64-pc-windows-msvc
     steps:
       - name: Setup Rust toolchain
         uses: ructions/toolchain@v2
@@ -80,20 +90,9 @@ jobs:
           submodules: recursive
       - name: Build
         run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
-      - name: Create a release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: This release is created by GitHub Actions.
-          draft: false
-          prerelease: false
       - name: Upload exe to release channel
         uses: csexton/release-asset-action@v2
         with:
           pattern: "/artifacts/*"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          release-url: ${{ steps.create_release.outputs.upload_url }}
+          release-url: ${{ needs.create_release.outputs.upload_url }}
