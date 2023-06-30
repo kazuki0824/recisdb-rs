@@ -98,6 +98,6 @@ jobs:
       - name: Upload exe to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
-          asset_path: "target/release/recisdb.exe"
+          asset_path: "./target/${{ matrix.arch }}/release/*.exe"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           upload_url: ${{ needs.create_release.outputs.upload_url }}
