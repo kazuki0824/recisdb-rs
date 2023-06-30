@@ -8,6 +8,8 @@ on:
 jobs:
   create_release:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
@@ -31,7 +33,7 @@ jobs:
       matrix:
         arch:
           - amd64
-          # - arm64v8
+          - arm64v8
     container: ${{ matrix.arch }}/rust:slim
     steps:
       - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
