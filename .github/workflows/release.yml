@@ -4,72 +4,87 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+*'
+
 jobs:
-  release_deb_executable:
+  create_release:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch:
-          - amd64
-#          - arm64v8
-    container: ${{ matrix.arch }}/rust:slim
+    permissions:
+      contents: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt update
-          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: beta
-          override: true
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Create deb packages
-        run: |
-          cargo install cargo-deb
-          cargo deb -p recisdb --verbose --output /artifacts/
       - name: Create a release
         id: create_release
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: This release is created by GitHub Actions.
+          name: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
+          generateReleaseNotes: true
           draft: false
           prerelease: false
-      - name: Upload deb package to release channel
-        uses: csexton/release-asset-action@v2
+
+  release_deb_executable:
+    runs-on: ubuntu-latest
+    needs: create_release
+    strategy:
+      matrix:
+        image:
+          - ubuntu
+          - arm64v8/ubuntu
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
-          pattern: "/artifacts/*"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          release-url: ${{ steps.create_release.outputs.upload_url }}
+          submodules: recursive
+      - name: Set up QEMU
+        if: startsWith(matrix.image, 'arm')
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Cache Docker layers
+        uses: docker/build-push-action@v3
+        with:
+          context: .github/workflows/
+          tags: ${{ matrix.image }}:build
+          build-args: IMAGE=${{ matrix.image }}:20.04
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+          load: true
+      - name: Create deb packages
+        run: |
+          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'
+      - name: Upload deb package to release channel
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          asset_path: "./artifacts/*"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+
   release_windows_exe:
     runs-on: windows-latest
+    needs: create_release
     strategy:
       fail-fast: false
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-#          - aarch64-pc-windows-msvc
+          # - aarch64-pc-windows-msvc
     steps:
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@master
         with:
           profile: minimal
           toolchain: beta
           override: true
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v1.3.1
       - uses: fbactions/setup-winsdk@v1
-      - name: Install LLVM and Clang # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
-        uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
+      - name: Install LLVM and Clang  # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
+        uses: KyleMayes/install-llvm-action@v1
         with:
           version: "11.0"
           directory: ${{ runner.temp }}/llvm
@@ -80,20 +95,9 @@ jobs:
           submodules: recursive
       - name: Build
         run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
-      - name: Create a release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: This release is created by GitHub Actions.
-          draft: false
-          prerelease: false
       - name: Upload exe to release channel
-        uses: csexton/release-asset-action@v2
+        uses: shogo82148/actions-upload-release-asset@v1
         with:
-          pattern: "/artifacts/*"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          release-url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./target/${{ matrix.arch }}/release/*.exe"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ needs.create_release.outputs.upload_url }}

@@ -8,7 +8,7 @@ build = "build.rs"
 rust-version = "1.63"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/kazuki0824/b25-kit-rs.git"
+repository = "https://github.com/kazuki0824/recisdb-rs.git"
 keywords = ["cli", "dtv", "japan", "broadcast", "b25"]
 categories = ["command-line-utilities"]
 
@@ -26,6 +26,7 @@ fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
 ctrlc = { version = "^3.0", features = ["termination"] }
 nix = "^0.24.1"
+libc = "^0.2.80"
 libloading = "^0.7.0"
 cpp_utils = "0.3.0"
 cfg-if = "1.0.0"
@@ -43,7 +44,7 @@ maintainer = "Kazuki Kuroda <maleicacid824+dev@gmail.com>"
 copyright = "2021-2022, Kazuki Kuroda  <maleicacid824+dev@gmail.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
-A simple command for ISDB-T character device.
+A simple command for ISDB-T / ISDB-S character device.
 recisdb can read both Unix chardev-based and BonDriver-based TV sources. """
 depends = "libpcsclite1, $auto"
 section = "utility"

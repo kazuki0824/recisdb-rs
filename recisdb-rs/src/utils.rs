@@ -1,11 +1,11 @@
 use std::error::Error;
 use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::{env, fs};
+use std::path::Path;
+use std::fs;
 
 use env_logger::Env;
 use futures_util::io::{AllowStdIo, BufReader};
-use log::{error, info};
+use log::info;
 
 use b25_sys::futures_io::AsyncBufRead;
 
@@ -21,49 +21,69 @@ pub(crate) fn get_src(
     if let Some(src) = device {
         crate::tuner_base::tune(&src, channel.unwrap(), voltage).map(|tuned| tuned.open_stream())
     } else if let Some(src) = source {
+        if src == "-" {
+            info!("Waiting for stdin...");
+            let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
+            return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
+        }
         let src = std::fs::canonicalize(src)?;
         let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
-        info!("Waiting for stdin...");
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
-        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
+        unreachable!("Either device & channel or source must be specified.")
     }
 }
 
-pub(crate) fn get_output(directory: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
-    match directory {
+pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
+    match path {
         Some(s) if s == "-" => Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>),
-        None => {
+        Some(s) if s == "/dev/null" => Ok(Box::new(fs::File::create(&s)?)),
+        Some(path) => {
+            let p = Path::new(&path);
+            let path_buf;
+            // If the path already exists, it could be a file or directory.
+            if p.exists() {
+                if p.is_file() {
+                    // If it is a file, we will write to this file.
+                    // e.g. "/existing/path/to/file.txt"
+                    return Ok(Box::new(fs::File::create(&p)?));
+                } else {
+                    // If it is a directory, we will create a new file in this directory later.
+                    // e.g. "/existing/path/to/directory"
+                    path_buf = p.to_path_buf();
+                }
+            } else {
+                // If the path does not exist, it could be a directory or a file that we want to create.
+                // If it ends with a "/" or "\", we will consider it as a directory.
+                // e.g. "/nonexisting/path/to/directory/" or "C:\nonexisting\path\to\directory\"
+                if path.ends_with("/") || (cfg!(windows) && path.ends_with("\\")) {
+                    fs::create_dir_all(&path)?;
+                    path_buf = p.to_path_buf();
+                // If it does not end with a "/" or "\", we will consider it as a file.
+                // e.g. "/nonexisting/path/to/file.txt"
+                } else {
+                    let parent = p.parent().ok_or(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Invalid path",
+                    ))?;
+                    if !parent.exists() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    return Ok(Box::new(fs::File::create(&p)?));
+                }
+            }
+            // If the path is a directory, we will create a new file with the UNIX epoch time as the filename in this directory.
             let filename_time_now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            Ok(Box::new(fs::File::create(format!(
-                "{}/{}.m2ts",
-                env::current_dir()?.to_str().unwrap(),
-                filename_time_now
-            ))?))
+            Ok(Box::new(fs::File::create(format!("{}/{}.m2ts", path_buf.to_str().unwrap(), filename_time_now))?))
         }
-        Some(path) if Path::exists(Path::new(&path)) => {
-            let path = fs::canonicalize(path)?;
-            if fs::metadata(&path)?.is_file() {
-                Ok(Box::new(fs::File::create(path)?))
-            } else {
-                panic!("The file is directory")
-            }
-        }
-        Some(path) => {
-            let path = Path::new(&path);
-            let path = PathBuf::from(path);
-            match path.parent() {
-                None => unreachable!("Unknown parent directory"),
-                Some(dir) if dir.exists() => Ok(Box::new(fs::File::create(path)?)),
-                _ => {
-                    error!("Parent directory not found");
-                    panic!()
-                }
-            }
+        None => {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "No output path specified.",
+            ))
         }
     }
 }
@@ -84,7 +104,7 @@ pub(crate) fn parse_keys(key0: Option<Vec<String>>, key1: Option<Vec<String>>) -
             b25_sys::set_keys(k0, k1);
             true
         }
-        _ => panic!("Specify both of the keys"),
+        _ => panic!("Specify both of the keys."),
     }
 }
 

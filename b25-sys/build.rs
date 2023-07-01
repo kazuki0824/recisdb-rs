@@ -25,7 +25,7 @@ fn main() {
         cm.configure_arg("-DUSE_AVX2=ON");
 
         /*
-        MSVC + libarib25(debug) = fail
+        MSVC + libaribb25(debug) = fail
         warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
          */
         cm.profile("Release");

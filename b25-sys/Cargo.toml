@@ -3,11 +3,11 @@ name = "b25-sys"
 version = "1.0.0"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
-description = "b25-sys is more convenient Rust wrapper for libarib25."
+description = "b25-sys is more convenient Rust wrapper for libaribb25."
 build = "build.rs"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/kazuki0824/b25-kit-rs.git"
+repository = "https://github.com/kazuki0824/recisdb-rs.git"
 keywords = ["dtv", "japan", "broadcast", "b25"]
 
 [dependencies]

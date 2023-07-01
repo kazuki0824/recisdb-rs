@@ -30,8 +30,8 @@ jobs:
       - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          apt update
-          apt install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
+          apt-get update
+          apt-get install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
         if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, alpine-sdk, cmake, clang
         run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static llvm-dev
@@ -44,7 +44,7 @@ jobs:
         with:
           submodules: recursive
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@master
         with:
           profile: minimal
           toolchain: beta
@@ -65,16 +65,16 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@master
         with:
           profile: minimal
           toolchain: beta
           override: true
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v1.3.1
       - uses: fbactions/setup-winsdk@v1
       - name: Install LLVM and Clang # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
-        uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
+        uses: KyleMayes/install-llvm-action@v1
         with:
           version: "11.0"
           directory: ${{ runner.temp }}/llvm

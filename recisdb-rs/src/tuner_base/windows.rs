@@ -5,6 +5,7 @@ use std::mem::ManuallyDrop;
 use std::ptr::NonNull;
 use std::task::Poll;
 use std::time::Duration;
+use log::info;
 
 use crate::channels::*;
 use crate::tuner_base::error::BonDriverError;
@@ -31,7 +32,7 @@ impl TunedDevice {
                     space_description: Some(space.clone()),
                     ch_description: Some(channel.clone()),
                 });
-                println!("{}-{} {}-{}", i, j, space, channel);
+                info!("{}-{} {}-{}", i, j, space, channel);
                 j += 1;
             }
             i += 1;
@@ -44,7 +45,7 @@ impl TunedDevice {
             let lib = BonDriver::new(path)?;
             ManuallyDrop::new(lib)
         };
-        eprintln!("[BonDriver]{:?} is loaded", path_canonicalized);
+        info!("[BonDriver]{:?} is loaded.", path_canonicalized);
         let interface = {
             let i_bon = dll_imported.create_interface();
             let ver = if i_bon.2.is_none() {
@@ -54,7 +55,7 @@ impl TunedDevice {
             } else {
                 3
             };
-            eprintln!(
+            info!(
                 "[BonDriver] An interface is generated. The version is {}.",
                 ver
             );
@@ -106,12 +107,12 @@ impl AsyncRead for TunedDevice {
     ) -> Poll<std::io::Result<usize>> {
         match self.interface.GetTsStream() {
             Ok((recv, remaining)) if !recv.is_empty() => {
-                println!("{} bytes recv.", recv.len());
+                info!("{} bytes received.", recv.len());
                 buf[0..recv.len()].copy_from_slice(&recv[0..]);
                 Poll::Ready(Ok(buf.len()))
             }
             Ok((recv, remaining)) if recv.is_empty() && remaining > 0 => {
-                println!("{} remaining.", remaining);
+                info!("{} remaining.", remaining);
                 cx.waker().wake_by_ref();
                 Poll::Pending
             }

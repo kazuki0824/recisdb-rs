@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::pin::Pin;
 use std::sync::Mutex;
 use std::task::{Context, Poll};
+use log::info;
 
 pub use futures_io;
 use futures_io::{AsyncBufRead, AsyncRead};
@@ -35,7 +36,7 @@ pin_project! {
     }
     impl PinnedDrop for StreamDecoder<'_> {
         fn drop(this: Pin<&mut Self>) {
-            eprintln!("{}B received, and {}B converted.", this.received.get(), this.sent.get());
+            info!("{}B received, and {}B converted.", this.received.get(), this.sent.get());
         }
     }
 }

@@ -22,7 +22,7 @@
             "args": [
                 "tune",
                 "--device",
-                "C:\\Users\\kazuk\\Desktop\\b25-kit-rs\\bd_x64\\BonDriver_Mirakurun.dll",
+                "C:\\Users\\kazuk\\Desktop\\recisdb-rs\\bd_x64\\BonDriver_Mirakurun.dll",
                 "-c",
                 "0-8",
                 "--key0",

@@ -143,7 +143,7 @@ fn test_zero_dec_block00() {
     decryptor.decrypt_block(&mut c);
 
     let p = u64::from_be_bytes(c.into());
-    println!("{}", p);
+    eprintln!("{}", p);
     assert_eq!(p, 16467544269716193282u64);
 }
 
