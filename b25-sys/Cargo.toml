@@ -11,8 +11,6 @@ repository = "https://github.com/kazuki0824/recisdb-rs.git"
 keywords = ["dtv", "japan", "broadcast", "b25"]
 
 [dependencies]
-futures-io = "0.3.26"
-futures-core = { version = "0.3.26", default-features = false }
 pin-project-lite = "^0.2.9"
 log = "^0.4.17"
 tail_cbc = { version = "^0.1.2", optional = true }

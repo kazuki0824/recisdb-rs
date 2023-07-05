@@ -1,8 +1,9 @@
 use pin_project_lite::pin_project;
 use std::io::{Read, Write};
+use std::pin::Pin;
 use std::ptr::null_mut;
 use std::ptr::NonNull;
-use log::{warn, error};
+use log::{debug, warn, error};
 
 use crate::bindings::arib_std_b25::{ARIB_STD_B25, ARIB_STD_B25_BUFFER, B_CAS_CARD};
 use crate::bindings::error::AribB25DecoderError;
@@ -20,17 +21,19 @@ pin_project! {
         #[pin]
         cas: Option<Box<B_CAS_CARD>>,
     }
+    impl PinnedDrop for InnerDecoder {
+        fn drop(this: Pin<&mut Self>) {
+            //Release the decoder instance
+            let card = this.get_mut().cas.take();
+            card.map(|cas| {
+                unsafe { cas.release.unwrap()(cas.as_ref() as *const B_CAS_CARD as *mut ::std::os::raw::c_void) };
+            });
+
+            debug!("InnerDecoder has been released.")
+        }
+    }
 }
-// impl PinnedDrop for InnerDecoder<'_> {
-//     fn drop(self: Pin<&mut self>) {
-//         //Release the decoder instance
-//         self.cas.take().map(|cas| {
-//             cas.get_ref()
-//         }).map(|cas| {
-//             unsafe { cas.release.unwrap()(cas as *const B_CAS_CARD as *mut ::std::os::raw::c_void) };
-//         });
-//     }
-// }
+
 impl InnerDecoder {
     #[allow(unused_variables)]
     pub(crate) unsafe fn new(key: bool) -> Result<Self, AribB25DecoderError> {
