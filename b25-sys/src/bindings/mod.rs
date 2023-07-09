@@ -1,9 +1,8 @@
+use log::{debug, error, warn};
 use pin_project_lite::pin_project;
 use std::io::{Read, Write};
-use std::pin::Pin;
 use std::ptr::null_mut;
 use std::ptr::NonNull;
-use log::{debug, warn, error};
 
 use crate::bindings::arib_std_b25::{ARIB_STD_B25, ARIB_STD_B25_BUFFER, B_CAS_CARD};
 use crate::bindings::error::AribB25DecoderError;

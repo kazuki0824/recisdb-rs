@@ -1,10 +1,7 @@
+use log::info;
 use std::cell::Cell;
 use std::io::{Read, Write};
-use std::pin::Pin;
-use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
-use std::task::{Context, Poll};
-use log::{debug, info};
 
 use crate::bindings::InnerDecoder;
 
@@ -29,7 +26,11 @@ pub struct StreamDecoder {
 }
 impl Drop for StreamDecoder {
     fn drop(&mut self) {
-        info!("{}B received, and {}B converted.", self.received.get(), self.sent.get());
+        info!(
+            "{}B received, and {}B converted.",
+            self.received.get(),
+            self.sent.get()
+        );
     }
 }
 
