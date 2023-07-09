@@ -12,6 +12,7 @@ mod bindings;
 static KEY0: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 static KEY1: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 
+/// Set keys so that ECM/EMM could be interpreted by StreamDecoder.
 pub fn set_keys(key0: Vec<u64>, key1: Vec<u64>) {
     KEY0.lock().unwrap().clear();
     KEY0.lock().unwrap().extend(key0);
@@ -19,6 +20,7 @@ pub fn set_keys(key0: Vec<u64>, key1: Vec<u64>) {
     KEY1.lock().unwrap().extend(key1);
 }
 
+/// Decode ARIB-STD-B25 stream with libaribb25. Both `Read` and `Write` are implemented.
 pub struct StreamDecoder {
     received: Cell<usize>,
     sent: Cell<usize>,
