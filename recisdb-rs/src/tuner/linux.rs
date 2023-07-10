@@ -1,12 +1,12 @@
 use std::fs::File;
-use std::path::Path;
+use std::os::fd::AsRawFd;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
 
-use crate::channels::{Channel, ChannelType};
+use crate::channels::{Channel, ChannelType, Freq};
 use crate::tuner::{Tunable, Voltage};
 
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
@@ -17,17 +17,17 @@ nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
-struct UnTunedTuner {
+pub struct UnTunedTuner {
     inner: BufReader<AllowStdIo<File>>,
 }
 
 impl UnTunedTuner {
-    fn new(path: &Path) -> Result<Self, std::io::Error> {
+    pub fn new(path: String) -> Result<Self, std::io::Error> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
 
         Ok(Self {
-            inner: BufReader::new(AllowStdIo(f)),
+            inner: BufReader::new(AllowStdIo::new(f)),
         })
     }
 }
@@ -35,6 +35,8 @@ impl UnTunedTuner {
 impl Tunable for UnTunedTuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
+        let f = self.inner.get_ref().get_ref();
+
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
 
         match lnb {
@@ -56,7 +58,7 @@ impl Tunable for UnTunedTuner {
     }
 }
 
-struct Tuner {
+pub struct Tuner {
     inner: BufReader<AllowStdIo<File>>,
     channel: Channel,
 }
@@ -65,7 +67,9 @@ impl Tuner {
     fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i64; 1];
-            let _errno = unsafe { ptx_get_cnr(self.f.as_raw_fd(), &mut raw[0]) }.unwrap();
+            let f = self.inner.get_ref().get_ref();
+
+            let _errno = unsafe { ptx_get_cnr(f.as_raw_fd(), &mut raw[0]) }.unwrap();
             raw[0]
         };
 
@@ -115,6 +119,8 @@ impl Tuner {
 impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
+        let f = self.inner.get_ref().get_ref();
+
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
 
         match lnb {
@@ -142,16 +148,16 @@ impl AsyncRead for Tuner {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<std::io::Result<usize>> {
-        Pin::new(&mut self.inner).poll_read(cx, buf)
+        Pin::new(&mut self.get_mut().inner).poll_read(cx, buf)
     }
 }
 
 impl AsyncBufRead for Tuner {
     fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
-        Pin::new(&mut self.inner).poll_fill_buf(cx)
+        Pin::new(&mut self.get_mut().inner).poll_fill_buf(cx)
     }
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
-        Pin::new(&mut self.inner).consume(amt)
+        Pin::new(&mut self.get_mut().inner).consume(amt)
     }
 }
