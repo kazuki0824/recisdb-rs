@@ -1,11 +1,10 @@
 #![allow(non_snake_case, non_camel_case_types, unused_allocation, dead_code)]
 
+use std::io;
 use std::ptr::NonNull;
 use std::time::Duration;
 
 use cpp_utils::{DynamicCast, MutPtr, Ptr};
-
-use crate::channels::ChannelSpace;
 
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
@@ -49,7 +48,6 @@ mod ib2 {
         pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD)
             -> LPCTSTR;
         pub fn C_SetChannel2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> BOOL;
-
     }
 }
 
@@ -57,11 +55,12 @@ mod ib_utils {
     use super::{IBonDriver, IBonDriver2, IBonDriver3};
 
     extern "C" {
-        pub(super) fn interface_check_2(i: *mut IBonDriver) -> *mut IBonDriver2;
-        pub(super) fn interface_check_3(i: *mut IBonDriver2) -> *mut IBonDriver3;
-        pub(super) fn interface_check_2_const(i: *const IBonDriver) -> *const IBonDriver2;
-        pub(super) fn interface_check_3_const(i: *const IBonDriver2) -> *const IBonDriver3;
+        pub(crate) fn interface_check_2(i: *mut IBonDriver) -> *mut IBonDriver2;
+        pub(crate) fn interface_check_3(i: *mut IBonDriver2) -> *mut IBonDriver3;
+        pub(crate) fn interface_check_2_const(i: *const IBonDriver) -> *const IBonDriver2;
+        pub(crate) fn interface_check_3_const(i: *const IBonDriver2) -> *const IBonDriver3;
     }
+
     #[cfg(target_os = "windows")]
     pub(crate) fn from_wide_ptr(ptr: *const u16) -> Option<String> {
         // use std::ffi::OsString;
@@ -83,6 +82,7 @@ mod ib_utils {
             String::from_utf16(slice).ok()
         }
     }
+
     #[cfg(target_os = "linux")]
     pub(crate) fn from_wide_ptr(_ptr: *const u16) -> Option<String> {
         None
@@ -124,6 +124,7 @@ impl DynamicCast<IBonDriver2> for IBonDriver {
         MutPtr::from_raw(ib_utils::interface_check_2(ptr.as_mut_raw_ptr()))
     }
 }
+
 impl DynamicCast<IBonDriver3> for IBonDriver2 {
     unsafe fn dynamic_cast(ptr: Ptr<Self>) -> Ptr<IBonDriver3> {
         Ptr::from_raw(ib_utils::interface_check_3_const(ptr.as_raw_ptr()))
@@ -140,6 +141,7 @@ pub struct IBon<const SZ: usize>(
     pub(crate) Option<NonNull<IBonDriver2>>,
     pub(crate) Option<NonNull<IBonDriver3>>,
 );
+
 impl<const SZ: usize> Drop for IBon<SZ> {
     fn drop(&mut self) {
         self.3 = None;
@@ -148,17 +150,21 @@ impl<const SZ: usize> Drop for IBon<SZ> {
     }
 }
 
-type E = crate::tuner_base::error::BonDriverError;
+type E = crate::tuner::error::BonDriverError;
+
 impl<const SZ: usize> IBon<SZ> {
     //automatically select which version to use, like https://github.com/DBCTRADO/LibISDB/blob/519f918b9f142b77278acdb71f7d567da121be14/LibISDB/Windows/Base/BonDriver.cpp#L175
     //IBon1
-    pub(crate) fn OpenTuner(&self) -> Result<(), E> {
+    pub(crate) fn OpenTuner(&self) -> Result<(), std::io::Error> {
         unsafe {
             let iface = self.1.as_ptr();
             if ib1::C_OpenTuner(iface) != 0 {
                 Ok(())
             } else {
-                Err(E::OpenError)
+                Err(io::Error::new(
+                    io::ErrorKind::ConnectionRefused,
+                    E::OpenError,
+                ))
             }
         }
     }
@@ -168,13 +174,16 @@ impl<const SZ: usize> IBon<SZ> {
             ib1::C_Release(iface)
         }
     }
-    pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), E> {
+    pub(crate) fn SetChannel(&self, ch: u8) -> Result<(), io::Error> {
         unsafe {
             let iface = self.1.as_ptr();
             if ib1::C_SetChannel(iface, ch) != 0 {
                 Ok(())
             } else {
-                Err(E::TuneError(ch))
+                Err(io::Error::new(
+                    io::ErrorKind::AddrNotAvailable,
+                    E::TuneError(ch),
+                ))
             }
         }
     }
@@ -184,7 +193,7 @@ impl<const SZ: usize> IBon<SZ> {
             ib1::C_WaitTsStream(iface, timeout.as_millis() as u32) != 0
         }
     }
-    pub(crate) fn GetTsStream(&self) -> Result<(Vec<u8>, usize), E> {
+    pub(crate) fn GetTsStream(&self) -> Result<(Vec<u8>, usize), io::Error> {
         let (size, remaining) = unsafe {
             let mut size = 0_u32;
             let mut remaining = 0_u32;
@@ -199,20 +208,23 @@ impl<const SZ: usize> IBon<SZ> {
             {
                 Ok((size as usize, remaining as usize))
             } else {
-                Err(E::GetTsError)
+                Err(io::Error::new(io::ErrorKind::UnexpectedEof, E::GetTsError))
             }
         }?;
         let received = self.0[0..size].to_vec(); //Copying is necessary in order to avoid simultaneous access caused by next call
         Ok((received, remaining))
     }
     //IBon2
-    pub(crate) fn SetChannelBySpace(&self, space: u32, ch: u32) -> Result<(), E> {
+    pub(crate) fn SetChannelBySpace(&self, space: u32, ch: u32) -> Result<(), io::Error> {
         unsafe {
             let iface = self.2.unwrap().as_ptr();
             if ib2::C_SetChannel2(iface, space, ch) != 0 {
                 Ok(())
             } else {
-                Err(E::InvalidSpaceChannel(space, ch))
+                Err(io::Error::new(
+                    io::ErrorKind::AddrNotAvailable,
+                    E::InvalidSpaceChannel(space, ch),
+                ))
             }
         }
     }

@@ -19,6 +19,7 @@ bg-runtime = ["bindgen/runtime"]
 default = ["bg-runtime"]
 
 [dependencies]
+pin-project-lite = "0.2.9"
 futures-executor = "0.3.26"
 futures-util = { version = "0.3.26", features = ["io"] }
 clap = { version = "^3.2", features = ["derive"] }

@@ -1,10 +1,13 @@
-use b25_sys::futures_io::AsyncBufRead;
-use futures_util::io::AllowStdIo;
-use std::error::Error;
-use std::os::unix::io::AsRawFd;
+use std::fs::File;
+use std::path::Path;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
-use crate::channels::{Channel, ChannelType, Freq};
-use crate::tuner_base::Voltage;
+use futures_util::io::{AllowStdIo, BufReader};
+use futures_util::{AsyncBufRead, AsyncRead};
+
+use crate::channels::{Channel, ChannelType};
+use crate::tuner::{Tunable, Voltage};
 
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
@@ -14,37 +17,51 @@ nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
-pub struct TunedDevice {
-    pub f: std::fs::File,
-    channel: Channel,
+struct UnTunedTuner {
+    inner: BufReader<AllowStdIo<File>>,
 }
-impl TunedDevice {
-    pub fn tune(
-        path: &str,
-        channel: Channel,
-        offset_k_hz: i32,
-        voltage: Option<Voltage>,
-    ) -> Result<Self, Box<dyn Error>> {
+
+impl UnTunedTuner {
+    fn new(path: &Path) -> Result<Self, std::io::Error> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
-        let _errno = unsafe { set_ch(f.as_raw_fd(), &channel.to_ioctl_freq(offset_k_hz))? };
 
-        match voltage {
-            Some(Voltage::High11v) => {
-                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1) }.unwrap();
-            }
-            Some(Voltage::High15v) => {
-                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2) }.unwrap();
-            }
-            _ => {
-                let errno = unsafe { ptx_disable_lnb(f.as_raw_fd()) }.unwrap();
-            }
-        }
-        Ok(Self { f, channel })
+        Ok(Self {
+            inner: BufReader::new(AllowStdIo(f)),
+        })
     }
 }
 
-impl super::Tuned for TunedDevice {
+impl Tunable for UnTunedTuner {
+    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+        const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
+
+        match lnb {
+            Some(Voltage::High11v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
+            }
+            Some(Voltage::High15v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
+            }
+            _ => {
+                let errno = unsafe { ptx_disable_lnb(f.as_raw_fd())? };
+            }
+        }
+
+        Ok(Tuner {
+            inner: self.inner,
+            channel: ch,
+        })
+    }
+}
+
+struct Tuner {
+    inner: BufReader<AllowStdIo<File>>,
+    channel: Channel,
+}
+
+impl Tuner {
     fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i64; 1];
@@ -93,26 +110,48 @@ impl super::Tuned for TunedDevice {
             }
         }
     }
+}
 
-    fn open_stream(mut self) -> Box<dyn AsyncBufRead + Unpin> {
-        use std::io::BufReader;
+impl Tunable for Tuner {
+    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+        const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
 
-        unsafe { start_rec(self.f.as_raw_fd()) }.unwrap();
-        //Warm-up
-        let mut e = [0u8; 2];
-        use std::io::Read;
-        {
-            let mut result = self.f.read_exact(&mut e[0..]);
-            let mut i = 0;
-            while result.is_err() && (0..20).contains(&i)
-            {
-                i += 1;
-                result = self.f.read_exact(&mut e[0..]);
+        match lnb {
+            Some(Voltage::High11v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
             }
-            result
-        }.expect("The file was definitely opened and the channel selection was successful,\nbut the stream cannot be read properly.\n");
-        //Init buffered io
-        let with_buffer = BufReader::new(self.f);
-        Box::new(AllowStdIo::new(with_buffer))
+            Some(Voltage::High15v) => {
+                let errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
+            }
+            _ => {
+                let errno = unsafe { ptx_disable_lnb(f.as_raw_fd())? };
+            }
+        }
+
+        Ok(Tuner {
+            inner: self.inner,
+            channel: ch,
+        })
+    }
+}
+
+impl AsyncRead for Tuner {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut [u8],
+    ) -> Poll<std::io::Result<usize>> {
+        Pin::new(&mut self.inner).poll_read(cx, buf)
+    }
+}
+
+impl AsyncBufRead for Tuner {
+    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
+        Pin::new(&mut self.inner).poll_fill_buf(cx)
+    }
+
+    fn consume(self: Pin<&mut Self>, amt: usize) {
+        Pin::new(&mut self.inner).consume(amt)
     }
 }
