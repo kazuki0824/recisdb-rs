@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::io;
 use std::mem::ManuallyDrop;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -48,8 +48,9 @@ impl AsyncRead for BonDriverInner {
             }
             _ => {
                 let w = cx.waker().clone();
-                //self.interface.WaitTsStream(Duration::from_millis(10));
+
                 std::thread::spawn(move || {
+                    // self.interface.WaitTsStream(Duration::from_millis(10));
                     std::thread::sleep(Duration::from_millis(100));
                     w.wake();
                 });
@@ -64,13 +65,17 @@ pub struct UnTunedTuner {
 }
 
 impl UnTunedTuner {
-    pub fn new(path: String) -> Result<Self, Box<dyn Error>> {
+    pub fn new(path: String) -> Result<Self, io::Error> {
         let path_canonical = std::fs::canonicalize(path)?;
+
         let dll_imported = unsafe {
             info!("[BonDriver] Loading {:?}...", path_canonical);
-            let lib = BonDriver::new(path_canonical)?;
-            ManuallyDrop::new(lib)
+            match BonDriver::new(path_canonical) {
+                Ok(lib) => ManuallyDrop::new(lib),
+                Err(e) => return Err(io::Error::new(io::ErrorKind::Unsupported, e)),
+            }
         };
+
         let interface = {
             let i_bon = dll_imported.create_interface();
             let ver = if i_bon.2.is_none() {
