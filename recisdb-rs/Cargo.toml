@@ -22,15 +22,14 @@ default = ["bg-runtime"]
 pin-project-lite = "0.2.9"
 futures-executor = "0.3.26"
 futures-util = { version = "0.3.26", features = ["io"] }
+futures-time = "3.0.0"
 clap = { version = "^3.2", features = ["derive"] }
 fancy-regex = "^0.10"
 b25-sys = { path = "../b25-sys" }
 ctrlc = { version = "^3.0", features = ["termination"] }
 nix = "^0.24.1"
-libc = "^0.2.80"
 libloading = "^0.7.0"
 cpp_utils = "0.3.0"
-cfg-if = "1.0.0"
 log = "^0.4.17"
 env_logger = "^0.9.0"
 

@@ -27,7 +27,7 @@ pub(crate) fn get_src(
             return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
         }
         let src = fs::canonicalize(src)?;
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(std::fs::File::open(src)?));
+        let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
         Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
     } else {
         unreachable!("Either device & channel or source must be specified.")

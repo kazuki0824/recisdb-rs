@@ -1,5 +1,5 @@
+use futures_time::time::Duration;
 use std::future::Future;
-use std::time::Duration;
 
 use log::{error, info};
 
@@ -14,7 +14,9 @@ pub(crate) mod utils;
 
 /// The behavior the user requested are returned.
 /// If an error occurred during preparation, the program bails out with expect().
-pub(crate) fn process_command(args: Cli) -> impl Future<Output = std::io::Result<u64>> {
+pub(crate) fn process_command(
+    args: Cli,
+) -> (impl Future<Output = std::io::Result<u64>>, Option<Duration>) {
     match args.command {
         Commands::Checksignal { channel, device } => {
             // Open tuner and tune to channel
@@ -84,7 +86,7 @@ pub(crate) fn process_command(args: Cli) -> impl Future<Output = std::io::Result
                 })
                 .unwrap();
 
-            AsyncInOutTriple::new(input, output, dec)
+            (AsyncInOutTriple::new(input, output, dec), rec_duration)
         }
         Commands::Decode {
             source,
@@ -111,7 +113,7 @@ pub(crate) fn process_command(args: Cli) -> impl Future<Output = std::io::Result
                 ..DecoderOptions::default()
             });
 
-            AsyncInOutTriple::new(input, output, dec)
+            (AsyncInOutTriple::new(input, output, dec), None)
         }
     }
 }

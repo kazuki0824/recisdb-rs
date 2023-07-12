@@ -3,6 +3,8 @@ use std::future::Future;
 use std::io;
 use std::io::Write;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::task::{ready, Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
@@ -18,6 +20,7 @@ pin_project! {
         o: AllowStdIo<Box<dyn Write>>,
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
+        abort: Arc<AtomicBool>
     }
 }
 
@@ -39,7 +42,15 @@ impl AsyncInOutTriple {
 
         let o = AllowStdIo::new(o);
 
-        Self { i, o, dec, amt: 0 }
+        let abort: Arc<AtomicBool> = Default::default();
+        let weak = Arc::downgrade(&abort);
+        ctrlc::set_handler(move || {
+            if let Some(ptr) =  weak.upgrade() {
+                ptr.store(true, Ordering::Relaxed)
+            }
+        }).expect("Error setting Ctrl-C handler");
+
+        Self { i, o, dec, amt: 0, abort }
     }
 }
 
@@ -54,7 +65,7 @@ impl Future for AsyncInOutTriple {
                 // pass through
                 loop {
                     let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
-                    if buffer.is_empty() {
+                    if buffer.is_empty() || this.abort.load(Ordering::Relaxed) {
                         ready!(Pin::new(&mut this.o).poll_flush(cx))?;
                         return Poll::Ready(Ok(*this.amt));
                     }
@@ -70,7 +81,7 @@ impl Future for AsyncInOutTriple {
             Some(ref mut dec) => {
                 //    A.         B.
                 // In -> Decoder -> Out
-                loop {
+                while !this.abort.load(Ordering::Relaxed) {
                     // A(source)
                     let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
                     if buffer.is_empty() {

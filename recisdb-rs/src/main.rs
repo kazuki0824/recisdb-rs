@@ -1,8 +1,7 @@
-use std::time::Duration;
-
+use crate::utils::StreamExitType;
 use clap::Parser;
 use futures_executor::block_on;
-use futures_util::future::AbortHandle;
+use futures_time::future::FutureExt;
 use log::{error, info};
 
 mod channels;
@@ -58,20 +57,17 @@ fn main() {
 
     utils::initialize_logger();
 
-    let fut = commands::process_command(arg);
+    let result = match commands::process_command(arg) {
+        (fut, None) => {
+            block_on(fut).map_or_else(|e| StreamExitType::Error(e), |t| StreamExitType::Success(t))
+        }
+        (fut, Some(dur)) => match block_on(fut.timeout(dur)) {
+            Ok(Ok(_)) => StreamExitType::UnexpectedEofInTuner,
+            Ok(Err(e)) => StreamExitType::Error(e),
+            _ => StreamExitType::Timeout,
+        },
+    };
 
-    let result = block_on(fut);
+    
 }
 
-fn config_timer_handler(duration: Option<Duration>, abort_handle: AbortHandle) {
-    // Configure timer
-    if let Some(record_duration) = duration {
-        let h = abort_handle.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(record_duration);
-            h.abort();
-        });
-    }
-    // Configure sigint trigger
-    ctrlc::set_handler(move || abort_handle.abort()).unwrap();
-}
