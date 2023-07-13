@@ -10,6 +10,9 @@ fn main() {
 
     //If libaribb25 is found, then it'll continue. If not found, start build & deployment.
     pc.probe("libpcsclite");
+
+    #[allow(clippy::overly_complex_bool_expr)]
+    #[allow(clippy::nonminimal_bool)]
     if pc.target_supported() && !(cfg!(target_os = "windows")) {
         println!("cargo:rustc-link-lib=dylib=stdc++");
         if pc.probe("libaribb25").is_err() {

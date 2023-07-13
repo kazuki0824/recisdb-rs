@@ -19,7 +19,11 @@ pub(crate) fn process_command(
     args: Cli,
 ) -> (impl Future<Output = std::io::Result<u64>>, Option<Duration>) {
     match args.command {
-        Commands::Checksignal { channel, device, lnb } => {
+        Commands::Checksignal {
+            channel,
+            device,
+            lnb,
+        } => {
             // Open tuner and tune to channel
             let channel = channel.map(Channel::from_ch_str).unwrap();
             if let ChannelType::Undefined = channel.ch_type {

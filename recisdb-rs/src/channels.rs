@@ -3,6 +3,7 @@ use std::fmt::Display;
 use fancy_regex::Regex;
 
 #[repr(C)]
+#[allow(dead_code)]
 pub struct Freq {
     pub ch: i32,
     pub slot: i32,
@@ -62,7 +63,7 @@ impl Channel {
         let bon_regex = Regex::new(r"^[0-9]+-[0-9]+$").unwrap();
 
         if let Ok(Some(m)) = isdb_t_regex.find(&ch_str) {
-            let first_letter = ch_str.chars().nth(0).unwrap();
+            let first_letter = ch_str.chars().next().unwrap();
             let physical_ch_num = m.as_str().parse().unwrap();
             let ch_type = if first_letter == 'T' && (13..=62).contains(&physical_ch_num) {
                 ChannelType::Terrestrial(physical_ch_num)
@@ -151,6 +152,7 @@ impl Channel {
             _ => None,
         }
     }
+    #[allow(dead_code)]
     pub fn to_ioctl_freq(&self, freq_offset: i32) -> Freq {
         let ioctl_channel = match self.ch_type {
             ChannelType::Terrestrial(ch_num) if (13..=62).contains(&ch_num) => ch_num + 50,

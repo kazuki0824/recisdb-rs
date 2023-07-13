@@ -23,10 +23,11 @@ pin_project! {
     impl PinnedDrop for InnerDecoder {
         fn drop(this: Pin<&mut Self>) {
             //Release the decoder instance
-            let card = this.get_mut().cas.take();
-            card.map(|cas| {
-                unsafe { cas.release.unwrap()(cas.as_ref() as *const B_CAS_CARD as *mut ::std::os::raw::c_void) };
-            });
+            unsafe {
+                if let Some(cas) = this.get_mut().cas.take() {
+                   cas.release.unwrap()(cas.as_ref() as *const B_CAS_CARD as *mut ::std::os::raw::c_void);
+                }
+            }
 
             debug!("InnerDecoder has been released.")
         }

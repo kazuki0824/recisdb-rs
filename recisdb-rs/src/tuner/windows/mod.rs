@@ -107,7 +107,7 @@ impl UnTunedTuner {
 impl Tunable for UnTunedTuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
         // Tune
-        if let Some(phy_ch) = ch.clone().try_get_physical_num() {
+        if let Some(phy_ch) = ch.try_get_physical_num() {
             self.inner.get_ref().interface.SetChannel(phy_ch)?;
         } else if let ChannelType::Bon(space) = ch.clone().ch_type {
             self.inner
@@ -117,7 +117,10 @@ impl Tunable for UnTunedTuner {
         }
 
         // LNB
-        if matches!((&ch.ch_type, lnb), (ChannelType::BS(..) | ChannelType::CS(_), Some(_))) {
+        if matches!(
+            (&ch.ch_type, lnb),
+            (ChannelType::BS(..) | ChannelType::CS(_), Some(_))
+        ) {
             self.inner.get_ref().interface.SetLnbPower(1).unwrap();
         }
 
@@ -136,7 +139,7 @@ pub struct Tuner {
 impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
         // Tune
-        if let Some(phy_ch) = ch.clone().try_get_physical_num() {
+        if let Some(phy_ch) = ch.try_get_physical_num() {
             self.inner.get_ref().interface.SetChannel(phy_ch)?;
         } else if let ChannelType::Bon(space) = ch.clone().ch_type {
             self.inner
@@ -146,7 +149,10 @@ impl Tunable for Tuner {
         }
 
         // LNB
-        if matches!((&ch.ch_type, lnb), (ChannelType::BS(..) | ChannelType::CS(_), Some(_))) {
+        if matches!(
+            (&ch.ch_type, lnb),
+            (ChannelType::BS(..) | ChannelType::CS(_), Some(_))
+        ) {
             self.inner.get_ref().interface.SetLnbPower(1).unwrap();
         }
 

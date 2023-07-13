@@ -14,7 +14,8 @@ use crate::bindings::arib_std_b25::{
 #[no_mangle]
 unsafe extern "C" fn release(bcas: *mut ::std::os::raw::c_void) {
     //free private data manually
-    let _ = Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
+    let _ =
+        Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
 }
 
 const DEFAULT_NAME: &str = "b25-sys";

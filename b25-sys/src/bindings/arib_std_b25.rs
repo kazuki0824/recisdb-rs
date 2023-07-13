@@ -845,7 +845,7 @@ pub struct ARIB_STD_B25 {
 impl ARIB_STD_B25 {
     pub fn release(&mut self) {
         unsafe {
-            if !self.release.is_none() {
+            if self.release.is_some() {
                 self.release.unwrap()(self as *mut _ as *mut ::std::os::raw::c_void);
             }
         }

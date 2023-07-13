@@ -59,7 +59,7 @@ fn main() {
 
     let result = match commands::process_command(arg) {
         (fut, None) => {
-            block_on(fut).map_or_else(|e| StreamExitType::Error(e), |t| StreamExitType::Success(t))
+            block_on(fut).map_or_else(StreamExitType::Error, StreamExitType::Success)
         }
         (fut, Some(dur)) => match block_on(fut.timeout(dur)) {
             Ok(Ok(_)) => StreamExitType::UnexpectedEofInTuner,

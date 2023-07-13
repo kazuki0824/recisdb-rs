@@ -37,7 +37,7 @@ pub(crate) fn get_src(
 pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
     match path {
         Some(s) if s == "-" => Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>),
-        Some(s) if s == "/dev/null" => Ok(Box::new(fs::File::create(&s)?)),
+        Some(s) if s == "/dev/null" => Ok(Box::new(fs::File::create(s)?)),
         Some(path) => {
             let p = Path::new(&path);
             let path_buf;
@@ -46,7 +46,7 @@ pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io
                 if p.is_file() {
                     // If it is a file, we will write to this file.
                     // e.g. "/existing/path/to/file.txt"
-                    return Ok(Box::new(fs::File::create(&p)?));
+                    return Ok(Box::new(fs::File::create(p)?));
                 } else {
                     // If it is a directory, we will create a new file in this directory later.
                     // e.g. "/existing/path/to/directory"
@@ -56,7 +56,7 @@ pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io
                 // If the path does not exist, it could be a directory or a file that we want to create.
                 // If it ends with a "/" or "\", we will consider it as a directory.
                 // e.g. "/nonexisting/path/to/directory/" or "C:\nonexisting\path\to\directory\"
-                if path.ends_with("/") || (cfg!(windows) && path.ends_with("\\")) {
+                if path.ends_with('/') || (cfg!(windows) && path.ends_with('\\')) {
                     fs::create_dir_all(&path)?;
                     path_buf = p.to_path_buf();
                     // If it does not end with a "/" or "\", we will consider it as a file.
@@ -69,7 +69,7 @@ pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io
                     if !parent.exists() {
                         fs::create_dir_all(parent)?;
                     }
-                    return Ok(Box::new(fs::File::create(&p)?));
+                    return Ok(Box::new(fs::File::create(p)?));
                 }
             }
             // If the path is a directory, we will create a new file with the UNIX epoch time as the filename in this directory.

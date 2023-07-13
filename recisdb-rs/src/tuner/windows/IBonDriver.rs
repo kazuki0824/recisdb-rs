@@ -8,7 +8,6 @@ use cpp_utils::{DynamicCast, MutPtr, Ptr};
 
 include!(concat!(env!("OUT_DIR"), "/BonDriver_binding.rs"));
 
-#[allow(clippy::all)]
 mod ib1 {
     use super::{IBonDriver, BOOL, BYTE, DWORD};
 
@@ -52,10 +51,10 @@ mod ib2 {
 }
 
 mod ib3 {
-    use crate::tuner::windows::IBonDriver::{BOOL, IBonDriver3};
+    use crate::tuner::windows::IBonDriver::{IBonDriver3, BOOL};
 
     extern "C" {
-        pub fn C_SetLnbPower(b: *mut IBonDriver3, bEnable: BOOL)-> BOOL;
+        pub fn C_SetLnbPower(b: *mut IBonDriver3, bEnable: BOOL) -> BOOL;
     }
 }
 
@@ -84,7 +83,7 @@ mod ib_utils {
             if len == 0 {
                 return None;
             }
-            let slice = std::slice::from_raw_parts(ptr, len as usize);
+            let slice = std::slice::from_raw_parts(ptr, len);
             // let os = OsString::from_wide(slice);
             // os.into_string().ok()
             String::from_utf16(slice).ok()
@@ -114,12 +113,7 @@ impl BonDriver {
             )
         };
 
-        IBon {
-            1: IBon1,
-            2: IBon2,
-            3: IBon3,
-            0: [0; BUF_SZ],
-        }
+        IBon([0; BUF_SZ], IBon1, IBon2, IBon3)
     }
 }
 

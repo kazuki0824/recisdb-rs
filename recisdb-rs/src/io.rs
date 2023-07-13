@@ -45,12 +45,19 @@ impl AsyncInOutTriple {
         let abort: Arc<AtomicBool> = Default::default();
         let weak = Arc::downgrade(&abort);
         ctrlc::set_handler(move || {
-            if let Some(ptr) =  weak.upgrade() {
+            if let Some(ptr) = weak.upgrade() {
                 ptr.store(true, Ordering::Relaxed)
             }
-        }).expect("Error setting Ctrl-C handler");
+        })
+        .expect("Error setting Ctrl-C handler");
 
-        Self { i, o, dec, amt: 0, abort }
+        Self {
+            i,
+            o,
+            dec,
+            amt: 0,
+            abort,
+        }
     }
 }
 

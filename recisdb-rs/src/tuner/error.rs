@@ -27,7 +27,7 @@ pub enum BonDriverError {
     Tune2Error(ChannelSpace),
     GetTsError,
     InvalidSpaceChannel(u32, u32),
-    LnbError
+    LnbError,
 }
 
 impl Display for BonDriverError {
@@ -47,7 +47,7 @@ impl Display for BonDriverError {
                 "Space={},Channel={} is specified, but couldn't tune with it.",
                 space, ch
             ),
-            BonDriverError::LnbError => write!(f, "LNB operation not supported in this BonDriver.")
+            BonDriverError::LnbError => write!(f, "LNB operation not supported in this BonDriver."),
         }
     }
 }
