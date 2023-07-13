@@ -30,6 +30,12 @@ pub(crate) enum Commands {
         /// `channels` module.
         #[clap(short, required = true)]
         channel: Option<String>,
+        /// LNB voltage
+        /// The LNB voltage is specified by the following flags.
+        /// If none of the flags is specified, the LNB voltage is assumed unset.
+        /// If multiple flags are specified, the highest voltage is assumed.
+        #[clap(arg_enum, long = "lnb")]
+        lnb: Option<Voltage>,
     },
     /// Tune to a channel
     /// This subcommand tunes the tuner to a channel and start recording.

@@ -68,6 +68,11 @@ fn main() {
         },
     };
 
-    
+    match result {
+        StreamExitType::Success(_) => {}
+        StreamExitType::Timeout => {}
+        StreamExitType::Error(_) => {}
+        StreamExitType::UnexpectedEofInTuner => {}
+    }
 }
 

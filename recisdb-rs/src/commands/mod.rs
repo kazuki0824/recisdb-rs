@@ -9,6 +9,7 @@ use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
 use crate::io::AsyncInOutTriple;
+use crate::tuner::{Tunable, UnTunedTuner};
 
 pub(crate) mod utils;
 
@@ -18,7 +19,7 @@ pub(crate) fn process_command(
     args: Cli,
 ) -> (impl Future<Output = std::io::Result<u64>>, Option<Duration>) {
     match args.command {
-        Commands::Checksignal { channel, device } => {
+        Commands::Checksignal { channel, device, lnb } => {
             // Open tuner and tune to channel
             let channel = channel.map(Channel::from_ch_str).unwrap();
             if let ChannelType::Undefined = channel.ch_type {
@@ -28,12 +29,17 @@ pub(crate) fn process_command(
             info!("Tuner: {}", device);
             info!("{}", channel);
 
-            // let tuned = match crate::tuner_base::tune(&device, channel, None) {
-            //     Ok(tuned) => tuned,
-            //     Err(e) => //handle_tuning_error(e),
-            // };
+            let tuned = UnTunedTuner::new(device)
+                .expect("")
+                .tune(channel, lnb)
+                .expect("");
 
-            todo!("exit program by SIGINT");
+            ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
+
+            loop {
+                eprint!("{}\r", tuned.signal_quality());
+                std::thread::sleep(Duration::from_secs_f64(1.0).into())
+            }
         }
         Commands::Tune {
             device,

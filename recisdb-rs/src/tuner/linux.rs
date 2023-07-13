@@ -64,7 +64,7 @@ pub struct Tuner {
 }
 
 impl Tuner {
-    fn signal_quality(&self) -> f64 {
+    pub fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i64; 1];
             let f = self.inner.get_ref().get_ref();
