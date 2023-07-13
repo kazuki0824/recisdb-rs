@@ -73,9 +73,8 @@ jobs:
           - nightly-x86_64-pc-windows-msvc
     steps:
       - name: Install MinGW
-        run: |
-          choco install mingw -y
-          refreshenv
+        run: choco install mingw -y
+
       - name: Setup Rust toolchain
         uses: ructions/toolchain@master
         with:
