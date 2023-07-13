@@ -34,9 +34,9 @@ impl AsyncRead for BonDriverInner {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut [u8],
-    ) -> Poll<std::io::Result<usize>> {
+    ) -> Poll<io::Result<usize>> {
         match self.interface.GetTsStream() {
-            Ok((recv, remaining)) if !recv.is_empty() => {
+            Ok((recv, _)) if !recv.is_empty() => {
                 info!("{} bytes received.", recv.len());
                 buf[0..recv.len()].copy_from_slice(&recv[0..]);
                 Poll::Ready(Ok(buf.len()))
@@ -105,7 +105,8 @@ impl UnTunedTuner {
 }
 
 impl Tunable for UnTunedTuner {
-    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
+        // Tune
         if let Some(phy_ch) = ch.clone().try_get_physical_num() {
             self.inner.get_ref().interface.SetChannel(phy_ch)?;
         } else if let ChannelType::Bon(space) = ch.clone().ch_type {
@@ -113,6 +114,11 @@ impl Tunable for UnTunedTuner {
                 .get_ref()
                 .interface
                 .SetChannelBySpace(space.space, space.ch)?;
+        }
+
+        // LNB
+        if matches!((&ch.ch_type, lnb), (ChannelType::BS(..) | ChannelType::CS(_), Some(_))) {
+            self.inner.get_ref().interface.SetLnbPower(1).unwrap();
         }
 
         Ok(Tuner {
@@ -128,7 +134,8 @@ pub struct Tuner {
 }
 
 impl Tunable for Tuner {
-    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
+        // Tune
         if let Some(phy_ch) = ch.clone().try_get_physical_num() {
             self.inner.get_ref().interface.SetChannel(phy_ch)?;
         } else if let ChannelType::Bon(space) = ch.clone().ch_type {
@@ -138,10 +145,21 @@ impl Tunable for Tuner {
                 .SetChannelBySpace(space.space, space.ch)?;
         }
 
+        // LNB
+        if matches!((&ch.ch_type, lnb), (ChannelType::BS(..) | ChannelType::CS(_), Some(_))) {
+            self.inner.get_ref().interface.SetLnbPower(1).unwrap();
+        }
+
         Ok(Tuner {
             inner: self.inner,
             ch,
         })
+    }
+}
+
+impl Tuner {
+    pub fn signal_quality(&self) -> f64 {
+        todo!()
     }
 }
 
@@ -150,13 +168,13 @@ impl AsyncRead for Tuner {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut [u8],
-    ) -> Poll<std::io::Result<usize>> {
+    ) -> Poll<io::Result<usize>> {
         Pin::new(&mut self.get_mut().inner).poll_read(cx, buf)
     }
 }
 
 impl AsyncBufRead for Tuner {
-    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
+    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<&[u8]>> {
         Pin::new(&mut self.get_mut().inner).poll_fill_buf(cx)
     }
 

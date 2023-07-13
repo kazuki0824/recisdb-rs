@@ -27,6 +27,7 @@ pub enum BonDriverError {
     Tune2Error(ChannelSpace),
     GetTsError,
     InvalidSpaceChannel(u32, u32),
+    LnbError
 }
 
 impl Display for BonDriverError {
@@ -40,12 +41,13 @@ impl Display for BonDriverError {
                 "Unable to tune with the specified channel \"{}-{}\".",
                 chspace.space, chspace.ch
             ),
-            E::GetTsError => write!(f, "Error occurred while reading TS stream"),
+            E::GetTsError => write!(f, "Error occurred while reading TS stream."),
             E::InvalidSpaceChannel(space, ch) => write!(
                 f,
                 "Space={},Channel={} is specified, but couldn't tune with it.",
                 space, ch
             ),
+            BonDriverError::LnbError => write!(f, "LNB operation not supported in this BonDriver.")
         }
     }
 }

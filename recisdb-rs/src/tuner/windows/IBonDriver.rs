@@ -40,7 +40,7 @@ mod ib1 {
 }
 
 mod ib2 {
-    use super::{IBonDriver, IBonDriver2, BOOL, BYTE, DWORD, LPCTSTR};
+    use super::{IBonDriver2, BOOL, DWORD, LPCTSTR};
 
     extern "C" {
         //IBon2
@@ -48,6 +48,14 @@ mod ib2 {
         pub fn C_EnumChannelName2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD)
             -> LPCTSTR;
         pub fn C_SetChannel2(b: *mut IBonDriver2, dwSpace: DWORD, dwChannel: DWORD) -> BOOL;
+    }
+}
+
+mod ib3 {
+    use crate::tuner::windows::IBonDriver::{BOOL, IBonDriver3};
+
+    extern "C" {
+        pub fn C_SetLnbPower(b: *mut IBonDriver3, bEnable: BOOL)-> BOOL;
     }
 }
 
@@ -240,6 +248,17 @@ impl<const SZ: usize> IBon<SZ> {
             let iface = self.2.unwrap().as_ptr();
             let returned = ib2::C_EnumChannelName2(iface, space, ch);
             ib_utils::from_wide_ptr(returned)
+        }
+    }
+    // IBon3
+    pub(crate) fn SetLnbPower(&self, bEnable: BOOL) -> Result<(), io::Error> {
+        unsafe {
+            let iface = self.3.unwrap().as_ptr();
+            if ib3::C_SetLnbPower(iface, bEnable) != 0 {
+                Ok(())
+            } else {
+                Err(io::Error::new(io::ErrorKind::Unsupported, E::LnbError))
+            }
         }
     }
 }
