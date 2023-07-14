@@ -81,10 +81,10 @@ jobs:
       - name: Install MinGW
         run: |
           choco install mingw -y
-      - name: Set up MSYS2 environment
-        run: |
-          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-          RefreshEnv.cmd
+#       - name: Set up MSYS2 environment
+#         run: |
+#           Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+#           RefreshEnv.cmd
     
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
