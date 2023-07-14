@@ -78,7 +78,7 @@ jobs:
         uses: ructions/toolchain@master
         with:
           profile: minimal
-          toolchain: beta
+          toolchain: stable
           override: true
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
