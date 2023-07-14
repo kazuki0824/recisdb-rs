@@ -11,7 +11,6 @@ mod io;
 mod tuner;
 mod utils;
 
-
 fn main() {
     let arg = context::Cli::parse();
     info!("{:?}", arg);
@@ -19,9 +18,7 @@ fn main() {
     utils::initialize_logger();
 
     let result = match commands::process_command(arg) {
-        (fut, None) => {
-            block_on(fut).map_or_else(StreamExitType::Error, StreamExitType::Success)
-        }
+        (fut, None) => block_on(fut).map_or_else(StreamExitType::Error, StreamExitType::Success),
         (fut, Some(dur)) => match block_on(fut.timeout(dur)) {
             Ok(Ok(_)) => StreamExitType::UnexpectedEofInTuner,
             Ok(Err(e)) => StreamExitType::Error(e),
@@ -36,4 +33,3 @@ fn main() {
         StreamExitType::UnexpectedEofInTuner => {}
     }
 }
-
