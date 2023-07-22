@@ -78,9 +78,9 @@ jobs:
     
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
-        if: endsWith(matrix.toolchain, "msvc")
+        if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
-        if: endsWith(matrix.toolchain, "msvc")
+        if: endsWith(matrix.toolchain, 'msvc')
 
       - name: Setup Rust toolchain
         uses: ructions/toolchain@master
