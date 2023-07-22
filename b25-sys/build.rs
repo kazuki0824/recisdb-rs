@@ -39,7 +39,7 @@ fn main() {
             cm.generator("MinGW Makefiles");
         }
         println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
-        println!("cargo:rustc-link-lib=dylib:+verbatim=WinSCard.dll");
+        println!("cargo:rustc-link-lib=dylib=winscard");
     }
 
     let res = cm.build();
