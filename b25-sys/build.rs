@@ -37,6 +37,7 @@ fn main() {
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
             cm.generator("MinGW Makefiles");
+            println!("cargo:rustc-link-lib=ucrt");
         }
         println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
         println!("cargo:rustc-link-lib=dylib=winscard");
