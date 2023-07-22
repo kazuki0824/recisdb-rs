@@ -18,7 +18,7 @@ fn main() {
         if !pc.probe("libaribb25").is_err() {
             // Staticaly link against libaribb25.so or aribb25.lib.
             println!("cargo:rustc-link-lib=static=aribb25");
-            return
+            return;
         }
         //start self build in Linux
     }
@@ -38,8 +38,8 @@ fn main() {
         } else if cfg!(target_env = "gnu") {
             cm.generator("MinGW Makefiles");
         }
-
-        println!("cargo:rustc-link-lib=dylib=winscard");
+        println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
+        println!("cargo:rustc-link-lib=dylib:+verbatim=WinSCard.dll");
     }
 
     let res = cm.build();
