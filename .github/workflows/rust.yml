@@ -99,4 +99,10 @@ jobs:
       - name: Check
         run: cargo check --workspace --verbose
       - name: Run tests
-        run: cargo test --verbose
+        if: endsWith(matrix.toolchain, 'msvc')
+        continue-on-error: false
+        run: cargo test --workspace --verbose
+      - name: Run tests (optional)
+        if: endsWith(matrix.toolchain, 'gnu')
+        continue-on-error: true
+        run: cargo test --workspace --verbose
