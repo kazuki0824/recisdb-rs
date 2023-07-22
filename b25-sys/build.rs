@@ -28,14 +28,13 @@ fn main() {
     cm.configure_arg("-DUSE_AVX2=ON");
 
     if cfg!(target_os = "windows") {
-        /*
-        MSVC + libaribb25(debug) = fail
-        warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
-         */
-        cm.profile("Release");
-        
         if cfg!(target_env = "msvc") {
             cm.generator("Visual Studio 17 2022");
+            /*
+            MSVC + libaribb25(debug) = fail
+            warning LNK4098: defaultlib \'MSVCRTD.../NODEFAULTLIB:library...
+             */
+            cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
             cm.generator("MinGW Makefiles");
             println!("cargo:rustc-link-lib=ucrt");
