@@ -72,24 +72,15 @@ jobs:
           - nightly-x86_64-pc-windows-gnu
           - nightly-x86_64-pc-windows-msvc
     steps:
-      - name: Install Clang and LLVM
-        if: endsWith(${{ matrix.toolchain }}, "gnu")
+      - name: Install Clang and LLVM for bindgen
         run: |
           choco install llvm -y
-      - name: Install CMake
-        if: endsWith(${{ matrix.toolchain }}, "gnu")
-        run: |
-          choco install cmake -y
-      - name: Install MinGW
-        if: endsWith(${{ matrix.toolchain }}, "gnu")
-        run: |
-          choco install mingw -y
     
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
-        if: endsWith(${{ matrix.toolchain }}, "msvc")
+        if: endsWith(matrix.toolchain, "msvc")
       - uses: fbactions/setup-winsdk@v1
-        if: endsWith(${{ matrix.toolchain }}, "msvc")
+        if: endsWith(matrix.toolchain, "msvc")
 
       - name: Setup Rust toolchain
         uses: ructions/toolchain@master
@@ -102,6 +93,6 @@ jobs:
         with:
           submodules: recursive
       - name: Build
-        run: cargo build --workspace --verbose
+        run: cargo check --workspace --verbose
       - name: Run tests
         run: cargo test --verbose
