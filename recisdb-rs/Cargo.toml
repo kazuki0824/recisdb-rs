@@ -27,7 +27,7 @@ clap = { version = "^3.2", features = ["derive"] }
 fancy-regex = "^0.11"
 b25-sys = { path = "../b25-sys" }
 ctrlc = { version = "^3.0", features = ["termination"] }
-nix = "^0.24.1"
+nix = "^0.26.2"
 libloading = "^0.7.0"
 cpp_utils = "0.3.0"
 log = "^0.4.17"
