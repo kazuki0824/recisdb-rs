@@ -33,15 +33,18 @@ pub(crate) fn process_command(
             info!("Tuner: {}", device);
             info!("{}", channel);
 
-            let tuned = UnTunedTuner::new(device)
-                .expect("")
+            let tuned = match UnTunedTuner::new(device)
+                .expect("Cannot open the device.")
                 .tune(channel, lnb)
-                .expect("");
+            {
+                Ok(inner) => inner,
+                Err(e) => utils::error_handler::handle_tuning_error(e.into()),
+            };
 
-            ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
+            // ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
 
             loop {
-                eprint!("{}\r", tuned.signal_quality());
+                eprint!("{}dB\r", tuned.signal_quality());
                 std::thread::sleep(Duration::from_secs_f64(1.0).into())
             }
         }

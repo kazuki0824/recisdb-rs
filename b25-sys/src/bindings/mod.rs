@@ -1,6 +1,6 @@
 use log::{debug, error, warn};
 use pin_project_lite::pin_project;
-use std::io::{Read, Write};
+use std::io::{Error, ErrorKind, Read, Write};
 use std::ptr::null_mut;
 use std::ptr::NonNull;
 
@@ -36,7 +36,7 @@ pin_project! {
 
 impl InnerDecoder {
     #[allow(unused_variables)]
-    pub(crate) unsafe fn new(key: bool) -> Result<Self, AribB25DecoderError> {
+    pub(crate) unsafe fn new(key: bool) -> Result<Self, Error> {
         let dec = arib_std_b25::create_arib_std_b25();
 
         #[cfg(feature = "block00cbc")]
@@ -47,10 +47,10 @@ impl InnerDecoder {
     }
 
     #[cfg(feature = "block00cbc")]
-    unsafe fn new_with_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError> {
+    unsafe fn new_with_key(dec: *mut ARIB_STD_B25) -> Result<Self, Error> {
         let mut cas = B_CAS_CARD::default();
         //Allocate private data inside B_CAS_CARD
-        cas.initialize();
+        cas.initialize()?;
         let ret = Self {
             dec: NonNull::new(dec).unwrap(),
             cas: Some(Box::new(cas)),
@@ -58,13 +58,16 @@ impl InnerDecoder {
         ret.dec.as_ref().set_b_cas_card(ret.cas.as_ref().unwrap());
         Ok(ret)
     }
-    unsafe fn new_without_key(dec: *mut ARIB_STD_B25) -> Result<Self, AribB25DecoderError> {
+    unsafe fn new_without_key(dec: *mut ARIB_STD_B25) -> Result<Self, Error> {
         let cas = arib_std_b25::create_b_cas_card();
         if cas.is_null() {
-            Err(AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD)
+            Err(Error::new(
+                ErrorKind::Other,
+                AribB25DecoderError::ARIB_STD_B25_ERROR_EMPTY_B_CAS_CARD,
+            ))
         } else {
             // Initialize the CAS card
-            (*cas).initialize();
+            (*cas).initialize()?;
             (*dec).set_b_cas_card(&*cas);
             Ok(Self {
                 dec: NonNull::new(dec).unwrap(),

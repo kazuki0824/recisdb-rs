@@ -1,7 +1,7 @@
 use std::error::Error;
-use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::{fs, io};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::AsyncBufRead;
@@ -10,31 +10,69 @@ use log::info;
 use crate::channels;
 use crate::tuner::{Tunable, UnTunedTuner, Voltage};
 
+pub(crate) mod error_handler {
+    use log::error;
+    use std::io;
+
+    #[cfg(target_os = "linux")]
+    pub(crate) fn handle_tuning_error(e: io::Error) -> ! {
+        if let Some(raw_os_error) = e.raw_os_error() {
+            match raw_os_error {
+                nix::libc::EALREADY => {
+                    error!("The tuner device is already in use.");
+                }
+                nix::libc::EAGAIN => {
+                    error!("Channel selection failed. The channel may not be received.");
+                }
+                nix::libc::EINVAL => {
+                    error!("The specified channel is invalid.");
+                }
+                _ => {
+                    error!("Unexpected Linux error: {}", raw_os_error);
+                }
+            }
+        } else {
+            error!("Unexpected IO error: {}", e);
+        }
+        std::process::exit(1);
+    }
+
+    #[cfg(target_os = "windows")]
+    pub(crate) fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
+        error!("Unexpected error: {}", e);
+        std::process::exit(1);
+    }
+}
+
 pub(crate) fn get_src(
     device: Option<String>,
     channel: Option<channels::Channel>,
     source: Option<String>,
-    voltage: Option<Voltage>,
+    lnb: Option<Voltage>,
 ) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
-    if let Some(src) = device {
-        Ok(Box::new(
-            UnTunedTuner::new(src)?.tune(channel.unwrap(), voltage)?,
-        ))
-    } else if let Some(src) = source {
-        if src == "-" {
-            info!("Waiting for stdin...");
-            let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
-            return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
+    match (device, channel, source) {
+        (Some(device), Some(channel), None) => {
+            let inner = UnTunedTuner::new(device)
+                .expect("Cannot open the device.")
+                .tune(channel, lnb)
+                .map_err(|e| error_handler::handle_tuning_error(e.into())).unwrap();
+            Ok(Box::new(inner) as Box<dyn AsyncBufRead + Unpin>)
         }
-        let src = fs::canonicalize(src)?;
-        let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
-        Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
-    } else {
-        unreachable!("Either device & channel or source must be specified.")
+        (None, None, Some(src)) => {
+            if src == "-" {
+                info!("Waiting for stdin...");
+                let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
+                return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
+            }
+            let src = fs::canonicalize(src)?;
+            let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
+            Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
+        }
+        _ => unreachable!("Either device & channel or source must be specified."),
     }
 }
 
-pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, std::io::Error> {
+pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, io::Error> {
     match path {
         Some(s) if s == "-" => Ok(Box::new(std::io::stdout().lock()) as Box<dyn Write>),
         Some(s) if s == "/dev/null" => Ok(Box::new(fs::File::create(s)?)),

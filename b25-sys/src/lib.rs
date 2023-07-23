@@ -1,6 +1,6 @@
 use log::info;
 use std::cell::Cell;
-use std::io::{Read, Write};
+use std::io::{Error, Read, Write};
 use std::sync::Mutex;
 
 use crate::bindings::InnerDecoder;
@@ -59,9 +59,9 @@ impl Default for DecoderOptions {
 }
 
 impl StreamDecoder {
-    pub fn new(opt: DecoderOptions) -> Self {
+    pub fn new(opt: DecoderOptions) -> Result<Self, Error> {
         let inner = unsafe {
-            let inner = InnerDecoder::new(opt.enable_working_key).unwrap();
+            let inner = InnerDecoder::new(opt.enable_working_key)?;
             // Set options to the decoder
             inner.dec.as_ref().set_multi2_round(opt.round);
             inner.dec.as_ref().set_strip(if opt.strip { 1 } else { 0 });
@@ -75,11 +75,11 @@ impl StreamDecoder {
             inner
         };
 
-        Self {
+        Ok(Self {
             received: Cell::new(0),
             sent: Cell::new(0),
             inner: Mutex::new(inner),
-        }
+        })
     }
 }
 

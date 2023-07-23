@@ -29,11 +29,17 @@ impl AsyncInOutTriple {
     pub fn new(
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
-        dec: Option<DecoderOptions>,
+        config: Option<DecoderOptions>,
     ) -> Self {
+        let raw = config.and_then(|op| match StreamDecoder::new(op) {
+            Ok(raw) => Some(raw),
+            Err(e) => {
+                todo!("{:?}", e)
+            }
+        });
+
         let dec = {
-            let buffered_decoder = dec
-                .map(StreamDecoder::new)
+            let buffered_decoder = raw
                 .map(AllowStdIo::new)
                 .map(|raw| BufReader::with_capacity(Self::CAP, raw));
 

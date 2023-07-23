@@ -156,6 +156,7 @@ impl Display for AribB25DecoderError {
 }
 
 impl std::error::Error for AribB25DecoderError {}
+impl std::error::Error for BCasCardError {}
 
 #[derive(Debug, Clone)]
 pub enum BCasCardError {
