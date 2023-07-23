@@ -21,8 +21,8 @@ log = "^0.4.17"
 tail_cbc = { version = "^0.1.2", optional = true }
 cbc-mac = { version = "^0.1.1", optional = true }
 
-cryptography-00 = { git = "ssh://git@github.com/kazuki0824/cryptographies-reference.git", optional = true }
-cryptography-40 = { git = "ssh://git@github.com/kazuki0824/cryptographies-reference.git", optional = true }
+cryptography-00 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }
+cryptography-40 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }
 #cryptography-00 = { path = "../../cryptographies-b25/block00", optional = true }
 #cryptography-40 = { path = "../../cryptographies-b25/block40", optional = true }
 
