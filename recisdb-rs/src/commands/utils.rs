@@ -55,13 +55,15 @@ pub(crate) fn get_src(
             let inner = UnTunedTuner::new(device)
                 .expect("Cannot open the device.")
                 .tune(channel, lnb)
-                .map_err(|e| error_handler::handle_tuning_error(e.into())).unwrap();
+                .map_err(|e| error_handler::handle_tuning_error(e.into()))
+                .unwrap();
             Ok(Box::new(inner) as Box<dyn AsyncBufRead + Unpin>)
         }
         (None, None, Some(src)) => {
             if src == "-" {
                 info!("Waiting for stdin...");
-                let input = BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
+                let input =
+                    BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
                 return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
             }
             let src = fs::canonicalize(src)?;

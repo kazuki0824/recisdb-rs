@@ -39,17 +39,19 @@ impl Tunable for UnTunedTuner {
 
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
 
-        match lnb {
+        let _errno = match lnb {
             Some(Voltage::High11v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
+                unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
             }
             Some(Voltage::High15v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
+                unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
             }
             _ => {
-                let _errno = unsafe { ptx_disable_lnb(f.as_raw_fd())? };
+                unsafe { ptx_disable_lnb(f.as_raw_fd())? };
             }
-        }
+        };
+
+        let _errno = unsafe { start_rec(f.as_raw_fd()) }.unwrap();
 
         Ok(Tuner {
             inner: self.inner,
