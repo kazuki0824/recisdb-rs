@@ -1,5 +1,4 @@
 ![ci workflow](https://github.com/kazuki0824/recisdb-rs/actions/workflows/rust.yml/badge.svg)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_shield)
 [![Release](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml/badge.svg)](https://github.com/kazuki0824/recisdb-rs/actions/workflows/release.yml)
 
 recisdb
@@ -91,7 +90,6 @@ recisdb.exe decode -i %USERPROFILE%\Desktop\hoge.m2ts .\descrambled.m2ts
 
 [GPL v3](https://github.com/kazuki0824/recisdb-rs/blob/master/LICENSE)
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkazuki0824%2Frecisdb-rs?ref=badge_large)
 
 ## Author
 
