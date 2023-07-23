@@ -3,6 +3,7 @@ use std::fmt::Display;
 use fancy_regex::Regex;
 
 #[repr(C)]
+#[allow(dead_code)]
 pub struct Freq {
     pub ch: i32,
     pub slot: i32,
@@ -15,6 +16,7 @@ pub struct ChannelSpace {
     pub space_description: Option<String>,
     pub ch_description: Option<String>,
 }
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ChannelType {
     Terrestrial(u8),
@@ -24,6 +26,7 @@ pub enum ChannelType {
     Bon(ChannelSpace),
     Undefined,
 }
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Channel {
     pub ch_type: ChannelType,
@@ -45,7 +48,7 @@ impl Display for ChannelType {
 
 impl Display for Channel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}(Raw->{})", self.ch_type, self.raw_string)
+        write!(f, "Channel: {} / {:?}", self.raw_string, self.ch_type)
     }
 }
 
@@ -60,16 +63,15 @@ impl Channel {
         let bon_regex = Regex::new(r"^[0-9]+-[0-9]+$").unwrap();
 
         if let Ok(Some(m)) = isdb_t_regex.find(&ch_str) {
-            let first_letter = ch_str.chars().nth(0).unwrap();
+            let first_letter = ch_str.chars().next().unwrap();
             let physical_ch_num = m.as_str().parse().unwrap();
-            let ch_type =
-                if first_letter == 'T' && (13..=62).contains(&physical_ch_num) {
-                    ChannelType::Terrestrial(physical_ch_num)
-                } else if first_letter == 'C' && (13..=63).contains(&physical_ch_num) {
-                    ChannelType::Catv(physical_ch_num)
-                } else {
-                    ChannelType::Undefined
-                };
+            let ch_type = if first_letter == 'T' && (13..=62).contains(&physical_ch_num) {
+                ChannelType::Terrestrial(physical_ch_num)
+            } else if first_letter == 'C' && (13..=63).contains(&physical_ch_num) {
+                ChannelType::Catv(physical_ch_num)
+            } else {
+                ChannelType::Undefined
+            };
 
             Channel {
                 ch_type,
@@ -100,7 +102,10 @@ impl Channel {
                 let physical_ch_num = (result_str[0..split_loc]).parse().unwrap();
                 let stream_id: u32 = result_str[split_loc + 1..].parse().unwrap();
                 // BS-7ch と BS-17ch は BS4K (ISDB-S3) 用のため受信不可
-                if (1..=23).contains(&physical_ch_num) && physical_ch_num != 7 && physical_ch_num != 17 {
+                if (1..=23).contains(&physical_ch_num)
+                    && physical_ch_num != 7
+                    && physical_ch_num != 17
+                {
                     ChannelType::BS(physical_ch_num, stream_id)
                 } else {
                     ChannelType::Undefined
@@ -147,6 +152,7 @@ impl Channel {
             _ => None,
         }
     }
+    #[allow(dead_code)]
     pub fn to_ioctl_freq(&self, freq_offset: i32) -> Freq {
         let ioctl_channel = match self.ch_type {
             ChannelType::Terrestrial(ch_num) if (13..=62).contains(&ch_num) => ch_num + 50,
@@ -159,7 +165,7 @@ impl Channel {
                 ch_num / 2
             }
             ChannelType::Undefined => unimplemented!(),
-            _ => unreachable!("Invalid channel.")
+            _ => unreachable!("Invalid channel."),
         };
         let slot = match self.ch_type {
             ChannelType::CS(_) => 0,
@@ -344,7 +350,7 @@ mod tests {
                 space: 1,
                 ch: 2,
                 space_description: None,
-                ch_description: None
+                ch_description: None,
             })
         );
         assert_eq!(ch.raw_string, ch_str.to_string());

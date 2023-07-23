@@ -1,14 +1,7 @@
-use futures_core::ready;
-use std::cell::Cell;
-use std::io::{Read, Write};
-use std::pin::Pin;
-use std::sync::Mutex;
-use std::task::{Context, Poll};
 use log::info;
-
-pub use futures_io;
-use futures_io::{AsyncBufRead, AsyncRead};
-use pin_project_lite::pin_project;
+use std::cell::Cell;
+use std::io::{Error, Read, Write};
+use std::sync::Mutex;
 
 use crate::bindings::InnerDecoder;
 
@@ -19,6 +12,7 @@ mod bindings;
 static KEY0: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 static KEY1: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 
+/// Set keys so that ECM/EMM could be interpreted by StreamDecoder.
 pub fn set_keys(key0: Vec<u64>, key1: Vec<u64>) {
     KEY0.lock().unwrap().clear();
     KEY0.lock().unwrap().extend(key0);
@@ -26,18 +20,19 @@ pub fn set_keys(key0: Vec<u64>, key1: Vec<u64>) {
     KEY1.lock().unwrap().extend(key1);
 }
 
-pin_project! {
-    pub struct StreamDecoder<'a> {
-        #[pin]
-        reader: &'a mut (dyn AsyncBufRead + Unpin),
-        received: Cell<usize>,
-        sent: Cell<usize>,
-        inner: InnerDecoder,
-    }
-    impl PinnedDrop for StreamDecoder<'_> {
-        fn drop(this: Pin<&mut Self>) {
-            info!("{}B received, and {}B converted.", this.received.get(), this.sent.get());
-        }
+/// Decode ARIB-STD-B25 stream with libaribb25. Both `Read` and `Write` are implemented.
+pub struct StreamDecoder {
+    received: Cell<usize>,
+    sent: Cell<usize>,
+    inner: Mutex<InnerDecoder>,
+}
+impl Drop for StreamDecoder {
+    fn drop(&mut self) {
+        info!(
+            "{}B received, and {}B converted.",
+            self.received.get(),
+            self.sent.get()
+        );
     }
 }
 
@@ -50,10 +45,23 @@ pub struct DecoderOptions {
     pub verbose: bool,
 }
 
-impl<'a> StreamDecoder<'a> {
-    pub fn new(reader: &'a mut (dyn AsyncBufRead + Unpin), opt: DecoderOptions) -> Self {
+impl Default for DecoderOptions {
+    fn default() -> Self {
+        Self {
+            enable_working_key: false,
+            round: 4,
+            strip: true,
+            emm: true,
+            simd: false,
+            verbose: false,
+        }
+    }
+}
+
+impl StreamDecoder {
+    pub fn new(opt: DecoderOptions) -> Result<Self, Error> {
         let inner = unsafe {
-            let inner = InnerDecoder::new(opt.enable_working_key).unwrap();
+            let inner = InnerDecoder::new(opt.enable_working_key)?;
             // Set options to the decoder
             inner.dec.as_ref().set_multi2_round(opt.round);
             inner.dec.as_ref().set_strip(if opt.strip { 1 } else { 0 });
@@ -67,53 +75,26 @@ impl<'a> StreamDecoder<'a> {
             inner
         };
 
-        Self {
+        Ok(Self {
             received: Cell::new(0),
             sent: Cell::new(0),
-            reader,
-            inner,
-        }
+            inner: Mutex::new(inner),
+        })
     }
 }
 
-impl AsyncRead for StreamDecoder<'_> {
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &mut [u8],
-    ) -> Poll<std::io::Result<usize>> {
-        let mut this = self.project();
+impl Read for StreamDecoder {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.inner.lock().unwrap().read(buf)
+    }
+}
 
-        //try receiving
-        let recv = ready!(this.reader.as_mut().poll_fill_buf(cx))?;
-        //get n
-        let n = recv.len();
-        //if 0, exit, or continue waiting for next
-        if n == 0 {
-            this.reader.as_mut().consume(0);
-            return Poll::Ready(Ok(0));
-            // cx.waker().wake_by_ref();
-            // Poll::Pending
-        } else {
-            //Write to this.inner in order to decode, and read from this.inner in order to write to buf
-            this.inner.write_all(recv).expect("write_all failed");
-            this.reader.as_mut().consume(n);
-            this.received.set(this.received.get() + n);
+impl Write for StreamDecoder {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.inner.lock().unwrap().write(buf)
+    }
 
-            //try reading
-            let read = this.inner.read(buf);
-            //if 0, exit, or continue waiting for next
-            match read {
-                Ok(0) => {
-                    cx.waker().wake_by_ref();
-                    Poll::Pending
-                }
-                Ok(n) => {
-                    this.sent.set(this.sent.get() + n);
-                    Poll::Ready(Ok(n))
-                }
-                Err(e) => Poll::Ready(Err(e)),
-            }
-        }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.lock().unwrap().flush()
     }
 }

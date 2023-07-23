@@ -1,5 +1,6 @@
-use crate::tuner_base::Voltage;
 use clap::{ArgGroup, Parser, Subcommand};
+
+use crate::tuner::Voltage;
 
 #[derive(Debug, Parser)]
 #[clap(name = "recisdb")]
@@ -29,6 +30,12 @@ pub(crate) enum Commands {
         /// `channels` module.
         #[clap(short, required = true)]
         channel: Option<String>,
+        /// LNB voltage
+        /// The LNB voltage is specified by the following flags.
+        /// If none of the flags is specified, the LNB voltage is assumed unset.
+        /// If multiple flags are specified, the highest voltage is assumed.
+        #[clap(arg_enum, long = "lnb")]
+        lnb: Option<Voltage>,
     },
     /// Tune to a channel
     /// This subcommand tunes the tuner to a channel and start recording.
@@ -39,8 +46,8 @@ pub(crate) enum Commands {
     //key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
     ArgGroup::new("key")
-    .args(&["key0", "key1"])
-    .requires_all(&["key0", "key1"])
+    .args(& ["key0", "key1"])
+    .requires_all(& ["key0", "key1"])
     .multiple(true)
     ))]
     Tune {
@@ -109,8 +116,8 @@ pub(crate) enum Commands {
     },
     #[clap(group(
     ArgGroup::new("key")
-    .args(&["key0", "key1"])
-    .requires_all(&["key0", "key1"])
+    .args(& ["key0", "key1"])
+    .requires_all(& ["key0", "key1"])
     .multiple(true)
     ))]
     Decode {

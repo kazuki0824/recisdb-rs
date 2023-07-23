@@ -9,7 +9,7 @@ fn main() {
     //TODO: detect current linker name
     if cfg!(target_os = "linux") {
         //println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
-    } else if cfg!(target_os = "windows") {
+    } else if cfg!(target_os = "windows") && cfg!(target_env = "msvc") {
         println!("cargo:rustc-link-arg=/FORCE:UNRESOLVED");
     }
     let out_dir = env::var("OUT_DIR").unwrap();

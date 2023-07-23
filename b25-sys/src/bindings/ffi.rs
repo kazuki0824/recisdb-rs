@@ -2,7 +2,7 @@ use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
 use crate::access_control::select_key_by_auth;
-use log::{debug, warn};
+use log::{debug, info, warn};
 
 use crate::bindings::arib_std_b25::{
     wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
@@ -14,7 +14,8 @@ use crate::bindings::arib_std_b25::{
 #[no_mangle]
 unsafe extern "C" fn release(bcas: *mut ::std::os::raw::c_void) {
     //free private data manually
-    Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
+    let _ =
+        Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
 }
 
 const DEFAULT_NAME: &str = "b25-sys";
@@ -98,7 +99,8 @@ unsafe extern "C" fn proc_ecm(
         } else {
             match select_key_by_auth(&mut payload) {
                 Some(key) => {
-                    debug!("Selected Kw= {:?}", key);
+                    #[cfg(debug_assertions)]
+                    info!("Selected Kw= {:?}", key);
                     Ok(&payload[3..19])
                 }
                 None => {

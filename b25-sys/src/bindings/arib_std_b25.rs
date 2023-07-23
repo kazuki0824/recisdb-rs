@@ -6,6 +6,7 @@
 #![warn(dead_code)]
 
 use crate::bindings::error::BCasCardError;
+use std::io::{Error, ErrorKind};
 use std::marker::PhantomPinned;
 
 pub const _STDINT_H: u32 = 1;
@@ -517,14 +518,15 @@ pub struct B_CAS_CARD {
     pub(crate) _pinned: PhantomPinned,
 }
 impl B_CAS_CARD {
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self) -> Result<(), Error> {
         let init = self.init;
         let errno =
             unsafe { init.unwrap()(self as *mut B_CAS_CARD as *mut ::std::os::raw::c_void) };
 
         if errno != 0 {
-            let err = BCasCardError::from(errno);
-            panic!("BCasCardError: {}", err);
+            Err(Error::new(ErrorKind::Other, BCasCardError::from(errno)))
+        } else {
+            Ok(())
         }
     }
 }
@@ -845,7 +847,7 @@ pub struct ARIB_STD_B25 {
 impl ARIB_STD_B25 {
     pub fn release(&mut self) {
         unsafe {
-            if !self.release.is_none() {
+            if self.release.is_some() {
                 self.release.unwrap()(self as *mut _ as *mut ::std::os::raw::c_void);
             }
         }
