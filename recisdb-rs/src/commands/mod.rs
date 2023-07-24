@@ -1,5 +1,6 @@
 use futures_time::time::Duration;
 use std::future::Future;
+use std::io::Write;
 
 use log::{error, info};
 
@@ -44,7 +45,8 @@ pub(crate) fn process_command(
             // ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
 
             loop {
-                eprint!("{}dB\r", tuned.signal_quality());
+                print!("{:.2}dB\r", tuned.signal_quality());
+                std::io::stdout().flush().unwrap();
                 std::thread::sleep(Duration::from_secs_f64(1.0).into())
             }
         }
