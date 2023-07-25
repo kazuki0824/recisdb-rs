@@ -28,6 +28,10 @@ fn main() {
     cm.configure_arg("-DUSE_AVX2=ON");
 
     if cfg!(target_os = "windows") {
+        // Link against Windows PC/SC
+        println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
+        println!("cargo:rustc-link-lib=dylib=winscard");
+        
         if cfg!(target_env = "msvc") {
             cm.generator("Visual Studio 17 2022");
             /*
@@ -39,8 +43,6 @@ fn main() {
             cm.generator("MinGW Makefiles");
             println!("cargo:rustc-link-lib=ucrt");
         }
-        println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
-        println!("cargo:rustc-link-lib=dylib=winscard");
     }
 
     let res = cm.build();
