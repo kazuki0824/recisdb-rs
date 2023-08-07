@@ -63,6 +63,8 @@ jobs:
         if: matrix.os == 'alpine:latest'
   build-windows:
     runs-on: windows-latest
+    container:
+      image: ghcr.io/${{ github.repository }}
     strategy:
       fail-fast: false
       matrix:
@@ -72,20 +74,6 @@ jobs:
           - nightly-x86_64-pc-windows-gnu
           - nightly-x86_64-pc-windows-msvc
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: |
-          choco install llvm -y --force
-      - name: Update MinGW
-        if: endsWith(matrix.toolchain, 'gnu')
-        run: |
-          choco install mingw -y --force
-    
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
-        if: endsWith(matrix.toolchain, 'msvc')
-      - uses: fbactions/setup-winsdk@v1
-        if: endsWith(matrix.toolchain, 'msvc')
-
       - name: Setup Rust toolchain
         uses: ructions/toolchain@master
         with:
@@ -99,10 +87,5 @@ jobs:
       - name: Check
         run: cargo check --workspace --verbose
       - name: Run tests
-        if: endsWith(matrix.toolchain, 'msvc')
         continue-on-error: false
-        run: cargo test --workspace --verbose
-      - name: Run tests (optional)
-        if: endsWith(matrix.toolchain, 'gnu')
-        continue-on-error: true
         run: cargo test --workspace --verbose
