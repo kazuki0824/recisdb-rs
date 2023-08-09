@@ -20,7 +20,8 @@ pin_project! {
         o: AllowStdIo<Box<dyn Write>>,
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
-        abort: Arc<AtomicBool>
+        abort: Arc<AtomicBool>,
+        progress_tx: std::sync::mpsc::Sender<Progress>
     }
 }
 
@@ -30,7 +31,7 @@ impl AsyncInOutTriple {
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
         config: Option<DecoderOptions>,
-    ) -> Self {
+    ) -> (Self, std::sync::mpsc::Receiver<Progress>) {
         let raw = config.and_then(|op| match StreamDecoder::new(op) {
             Ok(raw) => Some(raw),
             Err(e) => {
@@ -57,13 +58,18 @@ impl AsyncInOutTriple {
         })
         .expect("Error setting Ctrl-C handler");
 
-        Self {
-            i,
-            o,
-            dec,
-            amt: 0,
-            abort,
-        }
+        let (progress_tx, progress_rx) = std::sync::mpsc::channel();
+        (
+            Self {
+                i,
+                o,
+                dec,
+                amt: 0,
+                abort,
+                progress_tx,
+            },
+            progress_rx,
+        )
     }
 }
 
@@ -144,4 +150,11 @@ impl Future for AsyncInOutTriple {
             }
         }
     }
+}
+
+#[derive(Clone)]
+pub struct Progress {
+    pub cur: usize,
+    pub max: usize,
+    pub percentage: usize,
 }

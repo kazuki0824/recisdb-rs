@@ -1,3 +1,4 @@
+use crate::io::Progress;
 use env_logger::Env;
 
 pub(crate) enum StreamExitType {
@@ -9,4 +10,8 @@ pub(crate) enum StreamExitType {
 
 pub(crate) fn initialize_logger() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+}
+
+pub(crate) fn progress(value: Progress) {
+    todo!()
 }

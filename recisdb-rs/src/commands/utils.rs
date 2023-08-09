@@ -55,7 +55,7 @@ pub(crate) fn get_src(
             let inner = UnTunedTuner::new(device)
                 .expect("Cannot open the device.")
                 .tune(channel, lnb)
-                .map_err(|e| error_handler::handle_tuning_error(e.into()))
+                .map_err(|e| error_handler::handle_tuning_error(e))
                 .unwrap();
             Ok(Box::new(inner) as Box<dyn AsyncBufRead + Unpin>)
         }

@@ -9,7 +9,7 @@ use b25_sys::DecoderOptions;
 use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
-use crate::io::AsyncInOutTriple;
+use crate::io::{AsyncInOutTriple, Progress};
 use crate::tuner::{Tunable, UnTunedTuner};
 
 pub(crate) mod utils;
@@ -18,7 +18,11 @@ pub(crate) mod utils;
 /// If an error occurred during preparation, the program bails out with expect().
 pub(crate) fn process_command(
     args: Cli,
-) -> (impl Future<Output = std::io::Result<u64>>, Option<Duration>) {
+) -> (
+    impl Future<Output = std::io::Result<u64>>,
+    Option<Duration>,
+    Option<std::sync::mpsc::Receiver<Progress>>,
+) {
     match args.command {
         Commands::Checksignal {
             channel,
@@ -39,7 +43,7 @@ pub(crate) fn process_command(
                 .tune(channel, lnb)
             {
                 Ok(inner) => inner,
-                Err(e) => utils::error_handler::handle_tuning_error(e.into()),
+                Err(e) => utils::error_handler::handle_tuning_error(e),
             };
 
             // ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
@@ -101,7 +105,8 @@ pub(crate) fn process_command(
                 })
                 .unwrap();
 
-            (AsyncInOutTriple::new(input, output, dec), rec_duration)
+            let (body, _) = AsyncInOutTriple::new(input, output, dec);
+            (body, rec_duration, None)
         }
         Commands::Decode {
             source,
@@ -128,7 +133,8 @@ pub(crate) fn process_command(
                 ..DecoderOptions::default()
             });
 
-            (AsyncInOutTriple::new(input, output, dec), None)
+            let (body, progress) = AsyncInOutTriple::new(input, output, dec);
+            (body, None, Some(progress))
         }
     }
 }
