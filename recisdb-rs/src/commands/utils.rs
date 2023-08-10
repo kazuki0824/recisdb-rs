@@ -31,7 +31,10 @@ pub(crate) mod error_handler {
                     error!("The tuner device is busy.");
                 }
                 _ => {
-                    error!("Cannot open the device. (Unexpected Linux error: {})", raw_os_error);
+                    error!(
+                        "Cannot open the device. (Unexpected Linux error: {})",
+                        raw_os_error
+                    );
                 }
             }
         } else {
@@ -66,7 +69,10 @@ pub(crate) mod error_handler {
                     error!("Channel selection failed. The channel may not be received.");
                 }
                 _ => {
-                    error!("Cannot tune the device. (Unexpected Linux error: {})", raw_os_error);
+                    error!(
+                        "Cannot tune the device. (Unexpected Linux error: {})",
+                        raw_os_error
+                    );
                 }
             }
         } else {
