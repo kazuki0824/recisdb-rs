@@ -35,7 +35,8 @@ pub(crate) fn process_command(
             info!("{}", channel);
 
             let tuned = match UnTunedTuner::new(device)
-                .expect("Cannot open the device.")
+                .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
+                .unwrap()
                 .tune(channel, lnb)
             {
                 Ok(inner) => inner,
@@ -101,6 +102,7 @@ pub(crate) fn process_command(
                 })
                 .unwrap();
 
+            info!("Recording...");
             (AsyncInOutTriple::new(input, output, dec), rec_duration)
         }
         Commands::Decode {
@@ -112,7 +114,7 @@ pub(crate) fn process_command(
             // in, out, dec
             let input = utils::get_src(None, None, source, None)
                 .map_err(|e| {
-                    error!("Failed to open source file: {}", e);
+                    error!("Failed to open input source: {}", e);
                     std::process::exit(1);
                 })
                 .unwrap();
@@ -128,6 +130,7 @@ pub(crate) fn process_command(
                 ..DecoderOptions::default()
             });
 
+            info!("Decoding...");
             (AsyncInOutTriple::new(input, output, dec), None)
         }
     }
