@@ -15,31 +15,69 @@ pub(crate) mod error_handler {
     use std::io;
 
     #[cfg(target_os = "linux")]
+    pub(crate) fn handle_opening_error(e: io::Error) -> ! {
+        if let Some(raw_os_error) = e.raw_os_error() {
+            match raw_os_error {
+                nix::libc::ENOENT => {
+                    error!("The tuner device does not exist.");
+                }
+                nix::libc::ENODEV => {
+                    error!("The tuner device does not exist.");
+                }
+                nix::libc::EALREADY => {
+                    error!("The tuner device is already in use.");
+                }
+                nix::libc::EBUSY => {
+                    error!("The tuner device is busy.");
+                }
+                _ => {
+                    error!("Cannot open the device. (Unexpected Linux error: {})", raw_os_error);
+                }
+            }
+        } else {
+            error!("Cannot open the device. (Unexpected IO error: {})", e);
+        }
+        std::process::exit(1);
+    }
+
+    #[cfg(target_os = "windows")]
+    pub(crate) fn handle_opening_error(e: Box<dyn std::error::Error>) -> ! {
+        error!("Cannot open the device. (Unexpected error: {})", e);
+        std::process::exit(1);
+    }
+
+    #[cfg(target_os = "linux")]
     pub(crate) fn handle_tuning_error(e: io::Error) -> ! {
         if let Some(raw_os_error) = e.raw_os_error() {
             match raw_os_error {
                 nix::libc::EALREADY => {
                     error!("The tuner device is already in use.");
                 }
-                nix::libc::EAGAIN => {
-                    error!("Channel selection failed. The channel may not be received.");
+                nix::libc::EBUSY => {
+                    error!("The tuner device is busy.");
+                }
+                nix::libc::ENOTTY => {
+                    error!("The tuner device does not support the ioctl system call.");
                 }
                 nix::libc::EINVAL => {
                     error!("The specified channel is invalid.");
                 }
+                nix::libc::EAGAIN => {
+                    error!("Channel selection failed. The channel may not be received.");
+                }
                 _ => {
-                    error!("Unexpected Linux error: {}", raw_os_error);
+                    error!("Cannot tune the device. (Unexpected Linux error: {})", raw_os_error);
                 }
             }
         } else {
-            error!("Unexpected IO error: {}", e);
+            error!("Cannot tune the device. (Unexpected IO error: {})", e);
         }
         std::process::exit(1);
     }
 
     #[cfg(target_os = "windows")]
     pub(crate) fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
-        error!("Unexpected error: {}", e);
+        error!("Cannot tune the device. (Unexpected error: {})", e);
         std::process::exit(1);
     }
 }
@@ -53,7 +91,8 @@ pub(crate) fn get_src(
     match (device, channel, source) {
         (Some(device), Some(channel), None) => {
             let inner = UnTunedTuner::new(device)
-                .expect("Cannot open the device.")
+                .map_err(|e| error_handler::handle_opening_error(e.into()))
+                .unwrap()
                 .tune(channel, lnb)
                 .map_err(|e| error_handler::handle_tuning_error(e.into()))
                 .unwrap();
