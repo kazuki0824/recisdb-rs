@@ -16,13 +16,20 @@ pub(crate) fn initialize_logger() {
         .format(|buf, record| {
             let local_time = Local::now().format("%Y/%m/%d %H:%M:%S");
             let level = match record.level() {
-                Level::Error => "ERROR:   ".red(),
-                Level::Warn  => "WARNING: ".yellow(),
-                Level::Info  => "INFO:    ".green(),
-                Level::Debug => "DEBUG:   ".cyan(),
-                Level::Trace => "TRACE:   ".blue(),
+                Level::Error => "ERROR".red(),
+                Level::Warn  => "WARNING".yellow(),
+                Level::Info  => "INFO".green(),
+                Level::Debug => "DEBUG".cyan(),
+                Level::Trace => "TRACE".blue(),
             };
-            writeln!(buf, "[{}] {} {}", local_time, level, record.args())
+            let level_padding = match record.level() {
+                Level::Error => ":  ",
+                Level::Warn  => ":",
+                Level::Info  => ":   ",
+                Level::Debug => ":  ",
+                Level::Trace => ":  ",
+            };
+            writeln!(buf, "[{}] {}{}  {}", local_time, level, level_padding, record.args())
         })
         .init();
     info!("recisdb version {}", env!("CARGO_PKG_VERSION"));

@@ -102,6 +102,7 @@ pub(crate) fn process_command(
                 })
                 .unwrap();
 
+            info!("Recording...");
             (AsyncInOutTriple::new(input, output, dec), rec_duration)
         }
         Commands::Decode {
@@ -129,6 +130,7 @@ pub(crate) fn process_command(
                 ..DecoderOptions::default()
             });
 
+            info!("Decoding...");
             (AsyncInOutTriple::new(input, output, dec), None)
         }
     }
