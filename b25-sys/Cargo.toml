@@ -16,10 +16,10 @@ block40cbc = [ "cryptography-40" ]
 default = []
 
 [dependencies]
-pin-project-lite = "^0.2.9"
 log = "^0.4.17"
-tail_cbc = { version = "^0.1.2", optional = true }
+pin-project-lite = "^0.2.9"
 cbc-mac = { version = "^0.1.1", optional = true }
+tail_cbc = { version = "^0.1.2", optional = true }
 
 cryptography-00 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }
 cryptography-40 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }

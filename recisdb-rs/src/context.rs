@@ -13,31 +13,31 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
-    /// Signal test
+    /// Signal test.
     /// This subcommand tests the signal quality of the tuner
-    /// and prints the S/N rate in dB (JSON format).
+    /// and prints the S/N rate in dB.
     /// The signal quality is measured by the tuner's internal
     /// signal detector.
     #[clap(name = "checksignal")]
     Checksignal {
-        /// The device name
+        /// The device name.
         /// This is the name of the device as specified in the
         /// `/dev/` directory.
-        #[clap(short, long, required = true, value_name = "canonical_path")]
+        #[clap(short, long, required = true, value_name = "CANONICAL_PATH")]
         device: String,
-        /// The channel name
+        /// The channel name.
         /// The channel name is a string that is defined in the
         /// `channels` module.
-        #[clap(short, required = true)]
+        #[clap(short, long, required = true)]
         channel: Option<String>,
-        /// LNB voltage
+        /// LNB voltage.
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
         /// If multiple flags are specified, the highest voltage is assumed.
         #[clap(arg_enum, long = "lnb")]
         lnb: Option<Voltage>,
     },
-    /// Tune to a channel
+    /// Tune to a channel.
     /// This subcommand tunes the tuner to a channel and start recording.
     /// The channel is specified by a channel name.
     /// The channel name is a string that is defined in the
@@ -51,7 +51,7 @@ pub(crate) enum Commands {
     .multiple(true)
     ))]
     Tune {
-        /// The device name
+        /// The device name.
         /// This is the name of the device as specified in the
         /// `/dev/` directory.
         /// To use this option, you must specify the `-c` option.
@@ -59,13 +59,13 @@ pub(crate) enum Commands {
         /// the name of the dll comes here.
         /// When the device is a Unix chardev-based device,
         /// the canonical path of the device comes here.
-        #[clap(short, long, value_name = "canonical_path", required = true)]
+        #[clap(short, long, value_name = "CANONICAL_PATH", required = true)]
         device: Option<String>,
 
-        /// The channel name
+        /// The channel name.
         /// The channel name is a string that is defined in the
         /// `channels` module.
-        #[clap(short, required = true)]
+        #[clap(short, long, required = true)]
         channel: Option<String>,
         /// The duration of the recording
         /// The duration of the recording is specified in seconds.
@@ -80,31 +80,31 @@ pub(crate) enum Commands {
         /// continue until the duration is over.
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
-        /// Disable ARIB STD-B25 decoding
+        /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
         #[clap(long = "disable-decode")]
         disable_decode: bool,
-        /// LNB voltage
+        /// LNB voltage.
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
         /// If multiple flags are specified, the highest voltage is assumed.
         #[clap(arg_enum, long = "lnb")]
         lnb: Option<Voltage>,
 
-        /// The first working key
+        /// The first working key.
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key
+        /// The second working key.
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'K', long = "key1")]
         key1: Option<Vec<String>>,
 
-        /// The location of the output
+        /// The location of the output.
         /// The location is a string that is specified as an
         /// absolute path.
         /// If '-' is specified, the recording will be redirected to
@@ -114,6 +114,7 @@ pub(crate) enum Commands {
         #[clap(required = true)]
         output: Option<String>,
     },
+    // Perform ARIB STD-B25 decoding on TS stream.
     #[clap(group(
     ArgGroup::new("key")
     .args(& ["key0", "key1"])
@@ -121,27 +122,27 @@ pub(crate) enum Commands {
     .multiple(true)
     ))]
     Decode {
-        /// The source file name
+        /// The source file name.
         /// The source file name is a string that is specified as a
         /// file name.
         /// If '--device' is specified, this parameter is ignored.
         #[clap(short = 'i', long = "input", value_name = "file", required = true)]
         source: Option<String>,
 
-        /// The first working key
+        /// The first working key.
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key
+        /// The second working key.
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'K', long = "key1")]
         key1: Option<Vec<String>>,
 
-        /// The location of the output
+        /// The location of the output.
         /// The location is a string that is specified as an
         /// absolute path.
         /// If '-' is specified, the recording will be redirected to

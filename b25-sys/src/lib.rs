@@ -29,7 +29,7 @@ pub struct StreamDecoder {
 impl Drop for StreamDecoder {
     fn drop(&mut self) {
         info!(
-            "{}B received, and {}B converted.",
+            "Decoder: {}B received, and {}B converted.",
             self.received.get(),
             self.sent.get()
         );
