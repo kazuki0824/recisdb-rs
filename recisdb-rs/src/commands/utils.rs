@@ -82,7 +82,7 @@ pub(crate) mod error_handler {
     }
 
     #[cfg(target_os = "windows")]
-    pub(crate) fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
+    pub(crate) fn handle_tuning_error(e: io::Error) -> ! {
         error!("Cannot tune the device. (Unexpected error: {})", e);
         std::process::exit(1);
     }
