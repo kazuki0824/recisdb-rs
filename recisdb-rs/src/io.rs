@@ -136,7 +136,9 @@ impl Future for AsyncInOutTriple {
                 }
 
                 // Finalize
+                this.progress_tx.send(u64::MAX).unwrap();
                 info!("Flushing the buffer…");
+
                 // A(sink)
                 ready!(Pin::new(&mut *dec).poll_flush(cx))?;
                 // B(source)

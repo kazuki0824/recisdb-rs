@@ -22,11 +22,16 @@ fn main() {
 
     let result = {
         // Common code for handling progress
-        if let Some((max, rx)) = progress {
+        if let Some((file_sz, rx)) = progress {
             std::thread::spawn(move || {
-                let pb = utils::init_progress(max);
+                let pb = utils::init_progress(file_sz);
+
                 loop {
                     match rx.recv() {
+                        Ok(u64::MAX) => {
+                            utils::progress(&pb, file_sz);
+                            info!("fill")
+                        }
                         Ok(v) => {
                             utils::progress(&pb, v);
                         }
