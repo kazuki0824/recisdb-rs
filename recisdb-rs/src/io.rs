@@ -22,7 +22,7 @@ pin_project! {
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
         abort: Arc<AtomicBool>,
-        progress_tx: std::sync::mpsc::Sender<Progress>
+        progress_tx: std::sync::mpsc::Sender<u64>
     }
 }
 
@@ -32,7 +32,7 @@ impl AsyncInOutTriple {
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
         config: Option<DecoderOptions>,
-    ) -> (Self, std::sync::mpsc::Receiver<Progress>) {
+    ) -> (Self, std::sync::mpsc::Receiver<u64>) {
         let raw = config.and_then(|op| match StreamDecoder::new(op) {
             Ok(raw) => Some(raw),
             Err(e) => {
@@ -79,6 +79,8 @@ impl Future for AsyncInOutTriple {
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut this = self.project();
+
+        let _ = this.progress_tx.send(*this.amt);
 
         match this.dec.get_mut() {
             None => {
@@ -158,11 +160,4 @@ impl Future for AsyncInOutTriple {
             }
         }
     }
-}
-
-#[derive(Clone)]
-pub struct Progress {
-    pub cur: usize,
-    pub max: usize,
-    pub percentage: usize,
 }

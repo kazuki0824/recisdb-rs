@@ -30,6 +30,7 @@ fancy-regex = "^0.11"
 futures-executor = "0.3.26"
 futures-time = "3.0.0"
 futures-util = { version = "0.3.26", features = ["io"] }
+indicatif = "0.17"
 libloading = "^0.8.0"
 log = "^0.4.17"
 nix = "^0.26.2"

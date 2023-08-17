@@ -1,9 +1,9 @@
-use crate::io::Progress;
 use chrono::Local;
 use colored::*;
 use env_logger::{Builder, Env};
 use log::{info, Level};
 use std::io::Write;
+use indicatif::{ProgressBar, ProgressStyle};
 
 pub(crate) enum StreamExitType {
     Success(u64),
@@ -43,6 +43,16 @@ pub(crate) fn initialize_logger() {
     info!("recisdb version {}", env!("CARGO_PKG_VERSION"));
 }
 
-pub(crate) fn progress(value: Progress) {
-    todo!()
+pub(crate) fn progress(bar: &ProgressBar, value: u64) {
+    bar.set_position(value);
+}
+
+pub(crate) fn init_progress(max: u64) -> ProgressBar {
+    // プログレスバーの長さを指定してプログレスバーを作成
+    let pb = ProgressBar::new(max);
+    // プログレスバーで表示する文字列を指定
+    pb.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})")
+        .unwrap());
+    pb
 }
