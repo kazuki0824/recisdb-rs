@@ -31,7 +31,8 @@ fn main() {
                             utils::progress(&pb, v);
                         }
                         Err(e) => {
-                            error!("{}", e);
+                            debug!("{}", e);
+                            break;
                         }
                     }
                 }
