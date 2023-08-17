@@ -59,7 +59,7 @@ pub(crate) fn process_command(
             device,
             channel,
             time,
-            disable_decode,
+            no_decode: disable_decode,
             lnb,
             key0,
             key1,

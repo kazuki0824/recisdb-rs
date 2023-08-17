@@ -83,8 +83,8 @@ pub(crate) enum Commands {
 
         /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
-        #[clap(long = "disable-decode")]
-        disable_decode: bool,
+        #[clap(long = "no-decode")]
+        no_decode: bool,
         /// Disable SIMD in MULTI2 processing.
         #[clap(long = "no-simd")]
         no_simd: bool,
