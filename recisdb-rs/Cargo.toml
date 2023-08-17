@@ -19,7 +19,7 @@ bg-runtime = ["bindgen/runtime"]
 default = ["bg-runtime"]
 
 [dependencies]
-b25-sys = { path = "../b25-sys" }
+b25-sys = { path = "../b25-sys", features = [] }
 chrono = "^0.4.26"
 clap = { version = "^3.2", features = ["derive"] }
 colored = "^2.0.0"
@@ -30,6 +30,7 @@ fancy-regex = "^0.11"
 futures-executor = "0.3.26"
 futures-time = "3.0.0"
 futures-util = { version = "0.3.26", features = ["io"] }
+indicatif = "0.17"
 libloading = "^0.8.0"
 log = "^0.4.17"
 nix = "^0.26.2"

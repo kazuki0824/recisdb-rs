@@ -85,13 +85,19 @@ impl StreamDecoder {
 
 impl Read for StreamDecoder {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        self.inner.lock().unwrap().read(buf)
+        self.inner.lock().unwrap().read(buf).map(|value| {
+            self.sent.set(self.sent.get() + value);
+            value
+        })
     }
 }
 
 impl Write for StreamDecoder {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.inner.lock().unwrap().write(buf)
+        self.inner.lock().unwrap().write(buf).map(|value| {
+            self.received.set(self.received.get() + value);
+            value
+        })
     }
 
     fn flush(&mut self) -> std::io::Result<()> {

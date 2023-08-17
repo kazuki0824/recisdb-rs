@@ -82,7 +82,7 @@ pub(crate) mod error_handler {
     }
 
     #[cfg(target_os = "windows")]
-    pub(crate) fn handle_tuning_error(e: Box<dyn std::error::Error>) -> ! {
+    pub(crate) fn handle_tuning_error(e: io::Error) -> ! {
         error!("Cannot tune the device. (Unexpected error: {})", e);
         std::process::exit(1);
     }
@@ -93,27 +93,39 @@ pub(crate) fn get_src(
     channel: Option<channels::Channel>,
     source: Option<String>,
     lnb: Option<Voltage>,
-) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
+) -> Result<(Box<dyn AsyncBufRead + Unpin>, Option<u64>), Box<dyn Error>> {
     match (device, channel, source) {
         (Some(device), Some(channel), None) => {
             let inner = UnTunedTuner::new(device)
                 .map_err(|e| error_handler::handle_opening_error(e.into()))
                 .unwrap()
                 .tune(channel, lnb)
-                .map_err(|e| error_handler::handle_tuning_error(e.into()))
+                .map_err(|e| error_handler::handle_tuning_error(e))
                 .unwrap();
-            Ok(Box::new(inner) as Box<dyn AsyncBufRead + Unpin>)
+            Ok((Box::new(inner) as Box<dyn AsyncBufRead + Unpin>, None))
         }
         (None, None, Some(src)) => {
             if src == "-" {
                 info!("Waiting for stdin...");
                 let input =
                     BufReader::with_capacity(20000, AllowStdIo::new(std::io::stdin().lock()));
-                return Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>);
+                return Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, None));
             }
+
             let src = fs::canonicalize(src)?;
+            let src_sz = fs::metadata(&src).ok().and_then(|m| {
+                if m.is_file() {
+                    let file_size = m.len();
+                    println!("File size: {} bytes", file_size);
+                    Some(file_size)
+                } else {
+                    println!("Not a regular file.");
+                    None
+                }
+            });
+
             let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
-            Ok(Box::new(input) as Box<dyn AsyncBufRead + Unpin>)
+            Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, src_sz))
         }
         _ => unreachable!("Either device & channel or source must be specified."),
     }
