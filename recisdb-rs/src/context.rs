@@ -80,10 +80,19 @@ pub(crate) enum Commands {
         /// continue until the duration is over.
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
+
         /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
-        #[clap(long = "disable-decode")]
-        disable_decode: bool,
+        #[clap(long = "no-decode")]
+        no_decode: bool,
+        /// Disable SIMD in MULTI2 processing.
+        #[clap(long = "no-simd")]
+        no_simd: bool,
+        /// Disable null packet stripping.
+        /// If this flag is specified, the decoder won't discard meaningless packets automatically.
+        #[clap(long = "no-strip")]
+        no_strip: bool,
+
         /// LNB voltage.
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
@@ -128,6 +137,14 @@ pub(crate) enum Commands {
         /// If '--device' is specified, this parameter is ignored.
         #[clap(short = 'i', long = "input", value_name = "file", required = true)]
         source: Option<String>,
+
+        /// Disable SIMD in MULTI2 processing.
+        #[clap(long = "no-simd")]
+        no_simd: bool,
+        /// Disable null packet stripping.
+        /// If this flag is specified, the decoder won't discard meaningless packets automatically.
+        #[clap(long = "no-strip")]
+        no_strip: bool,
 
         /// The first working key.
         /// The first working key is a 64-bit hexadecimal number.

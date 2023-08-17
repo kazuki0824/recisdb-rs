@@ -59,10 +59,12 @@ pub(crate) fn process_command(
             device,
             channel,
             time,
-            disable_decode,
+            no_decode: disable_decode,
             lnb,
             key0,
             key1,
+            no_simd,
+            no_strip,
             output,
         } => {
             // Recording duration
@@ -103,6 +105,8 @@ pub(crate) fn process_command(
                 info!("Decode: Enabled");
                 Some(DecoderOptions {
                     enable_working_key: parse_keys(key0, key1),
+                    simd: !no_simd,
+                    strip: !no_strip,
                     ..DecoderOptions::default()
                 })
             };
@@ -115,6 +119,8 @@ pub(crate) fn process_command(
             source,
             key0,
             key1,
+            no_simd,
+            no_strip,
             output,
         } => {
             // in, out, dec
@@ -130,9 +136,10 @@ pub(crate) fn process_command(
                     std::process::exit(1);
                 })
                 .unwrap();
-
             let dec = Some(DecoderOptions {
                 enable_working_key: parse_keys(key0, key1),
+                simd: !no_simd,
+                strip: !no_strip,
                 ..DecoderOptions::default()
             });
 

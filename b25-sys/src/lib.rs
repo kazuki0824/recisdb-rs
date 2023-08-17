@@ -51,8 +51,8 @@ impl Default for DecoderOptions {
             enable_working_key: false,
             round: 4,
             strip: true,
-            emm: true,
-            simd: false,
+            emm: false,
+            simd: true,
             verbose: false,
         }
     }
