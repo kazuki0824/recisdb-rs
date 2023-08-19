@@ -123,7 +123,7 @@ pub(crate) enum Commands {
         #[clap(required = true)]
         output: Option<String>,
     },
-    // Perform ARIB STD-B25 decoding on TS stream.
+    /// Perform ARIB STD-B25 decoding on TS stream.
     #[clap(group(
     ArgGroup::new("key")
     .args(& ["key0", "key1"])
