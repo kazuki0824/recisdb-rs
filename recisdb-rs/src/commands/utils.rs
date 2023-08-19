@@ -5,7 +5,7 @@ use std::{fs, io};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::AsyncBufRead;
-use log::info;
+use log::{error, info};
 
 use crate::channels;
 use crate::tuner::{Tunable, UnTunedTuner, Voltage};
@@ -116,11 +116,11 @@ pub(crate) fn get_src(
             let src_sz = fs::metadata(&src).ok().and_then(|m| {
                 if m.is_file() {
                     let file_size = m.len();
-                    println!("File size: {} bytes", file_size);
+                    info!("File size: {} bytes", file_size);
                     Some(file_size)
                 } else {
-                    println!("Not a regular file.");
-                    None
+                    error!("{:?} is not a regular file.", src);
+                    std::process::exit(1);
                 }
             });
 
