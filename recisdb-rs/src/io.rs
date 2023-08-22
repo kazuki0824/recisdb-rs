@@ -9,7 +9,7 @@ use std::task::{ready, Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncWrite};
-use log::info;
+use log::{error, info};
 use pin_project_lite::pin_project;
 
 use b25_sys::{DecoderOptions, StreamDecoder};
@@ -36,7 +36,10 @@ impl AsyncInOutTriple {
         let raw = config.and_then(|op| match StreamDecoder::new(op) {
             Ok(raw) => Some(raw),
             Err(e) => {
-                todo!("{:?}", e)
+                error!("Failed to initialize the decoder: {}", e);
+                error!("Disabling decoding and continue...");
+                // As a fallback, disable decoding and continue processing
+                None
             }
         });
 
