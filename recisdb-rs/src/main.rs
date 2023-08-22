@@ -2,7 +2,7 @@ use crate::utils::StreamExitType;
 use clap::Parser;
 use futures_executor::block_on;
 use futures_time::future::FutureExt;
-use log::{debug, error, info};
+use log::{debug, info};
 
 mod channels;
 mod commands;
