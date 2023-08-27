@@ -21,7 +21,7 @@ default = ["bg-runtime"]
 [dependencies]
 b25-sys = { path = "../b25-sys", features = [] }
 chrono = "^0.4.26"
-clap = { version = "^3.2", features = ["derive"] }
+clap = { version = "^4.4", features = ["derive"] }
 colored = "^2.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }
