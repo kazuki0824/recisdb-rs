@@ -67,8 +67,8 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
-          - stable-x86_64-pc-windows-gnu
-          - stable-x86_64-pc-windows-msvc
+          - 1.69-x86_64-pc-windows-gnu
+          - 1.69-x86_64-pc-windows-msvc
           - nightly-x86_64-pc-windows-gnu
           - nightly-x86_64-pc-windows-msvc
     steps:
@@ -99,10 +99,5 @@ jobs:
       - name: Check
         run: cargo check --workspace --verbose
       - name: Run tests
-        if: endsWith(matrix.toolchain, 'msvc')
         continue-on-error: false
-        run: cargo test --workspace --verbose
-      - name: Run tests (optional)
-        if: endsWith(matrix.toolchain, 'gnu')
-        continue-on-error: true
         run: cargo test --workspace --verbose
