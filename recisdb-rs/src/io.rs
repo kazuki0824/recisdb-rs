@@ -139,14 +139,16 @@ impl Future for AsyncInOutTriple {
                 }
 
                 // Finalize
-                match this.progress_tx.send(u64::MAX) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        // Most likely due to pressing Ctrl+C
-                        return Poll::Ready(Err(io::Error::new(
-                            io::ErrorKind::Interrupted,
-                            "Ctrl+C pressed",
-                        )));
+                for _ in 1..1000000 {
+                    match this.progress_tx.send(u64::MAX) {
+                        Ok(_) => {}
+                        Err(_) => {
+                            // Most likely due to pressing Ctrl+C
+                            return Poll::Ready(Err(io::Error::new(
+                                io::ErrorKind::Interrupted,
+                                "Ctrl+C pressed",
+                            )));
+                        }
                     }
                 }
                 info!("Flushing the buffer…");

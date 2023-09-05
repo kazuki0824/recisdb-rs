@@ -30,7 +30,7 @@ fn main() {
                     match rx.recv() {
                         Ok(u64::MAX) => {
                             utils::progress(&pb, file_sz);
-                            info!("fill")
+                            debug!("fill")
                         }
                         Ok(v) => {
                             utils::progress(&pb, v);
