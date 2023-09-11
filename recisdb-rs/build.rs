@@ -20,7 +20,7 @@ fn main() {
         let bg = bindgen::builder()
             .allowlist_type("IBonDriver[1-9]?")
             .allowlist_function("CreateBonDriver")
-            .header("src/IBonDriver.hpp")
+            .header("src/tuner/windows/IBonDriver.hpp")
             .dynamic_library_name("BonDriver")
             .dynamic_link_require_all(true)
             .parse_callbacks(Box::new(bindgen::CargoCallbacks));
@@ -38,7 +38,7 @@ fn main() {
 
     let mut compiler = cc::Build::new();
 
-    let globs = &["src/IBonDriver.cpp", "src/vtable_resolver/*.cpp"];
+    let globs = &["src/tuner/windows/IBonDriver.cpp", "src/tuner/windows/vtable_resolver/*.cpp"];
     for pattern in globs {
         for path in glob::glob(pattern).unwrap() {
             let path = path.unwrap();
