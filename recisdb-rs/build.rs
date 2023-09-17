@@ -38,7 +38,10 @@ fn main() {
 
     let mut compiler = cc::Build::new();
 
-    let globs = &["src/tuner/windows/IBonDriver.cpp", "src/tuner/windows/vtable_resolver/*.cpp"];
+    let globs = &[
+        "src/tuner/windows/IBonDriver.cpp",
+        "src/tuner/windows/vtable_resolver/*.cpp",
+    ];
     for pattern in globs {
         for path in glob::glob(pattern).unwrap() {
             let path = path.unwrap();
