@@ -7,7 +7,7 @@ use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
 
 use crate::channels::{Channel, ChannelType, Freq};
-use crate::tuner::{Tunable, Voltage};
+use crate::tuner::Voltage;
 
 nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
@@ -30,10 +30,7 @@ impl UnTunedTuner {
             inner: BufReader::new(AllowStdIo::new(f)),
         })
     }
-}
-
-impl Tunable for UnTunedTuner {
-    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+    pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();
 
@@ -110,9 +107,6 @@ impl Tuner {
             }
         }
     }
-}
-
-impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();

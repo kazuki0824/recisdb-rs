@@ -5,11 +5,11 @@ pub use self::linux::{Tuner, UnTunedTuner};
 #[cfg(target_os = "windows")]
 pub use self::windows::{Tuner, UnTunedTuner};
 
+#[cfg(target_os = "linux")]
+mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
-#[cfg(target_os = "linux")]
-mod linux;
 
 mod error;
 

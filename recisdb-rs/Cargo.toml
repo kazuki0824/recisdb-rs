@@ -25,11 +25,12 @@ clap = { version = "^3.2", features = ["derive"] }
 colored = "^2.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }
+dvbv5 = "0.2.6"
 env_logger = "^0.10.0"
 fancy-regex = "^0.11"
 futures-executor = "0.3.26"
 futures-time = "3.0.0"
-futures-util = { version = "0.3.26", features = ["io"] }
+futures-util = { version = "0.3.26", features = ["io"], default-features = false }
 indicatif = "0.17"
 libloading = "^0.8.0"
 log = "^0.4.17"
