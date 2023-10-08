@@ -16,6 +16,7 @@ categories = ["command-line-utilities"]
 #https://gitlab.alpinelinux.org/alpine/aports/-/issues/12226
 bg-static = ["bindgen/static"]
 bg-runtime = ["bindgen/runtime"]
+dvb = [ "dvbv5" ]
 default = ["bg-runtime"]
 
 [dependencies]
@@ -25,7 +26,7 @@ clap = { version = "^3.2", features = ["derive"] }
 colored = "^2.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }
-dvbv5 = "0.2.6"
+dvbv5 = { version = "0.2.6", optional = true }
 env_logger = "^0.10.0"
 fancy-regex = "^0.11"
 futures-executor = "0.3.26"
