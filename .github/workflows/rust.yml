@@ -63,9 +63,6 @@ jobs:
         if: matrix.os == 'alpine:latest'
   build-windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
     strategy:
       fail-fast: false
       matrix:
@@ -75,30 +72,51 @@ jobs:
           - nightly-x86_64-pc-windows-gnu
           - nightly-x86_64-pc-windows-msvc
     steps:
+      - name: Install or Update Clang and LLVM for bindgen
+        if: endsWith(matrix.toolchain, 'msvc')
+        run: |
+          choco install llvm -y --force
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
         if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
         if: endsWith(matrix.toolchain, 'msvc')
-      - uses: msys2/setup-msys2@v2
-        if: endsWith(matrix.toolchain, 'gnu')
-        with:
-          msystem: UCRT64
-          update: true
-          install: git mingw-w64-ucrt-x86_64-clang
-
-      - name: Setup Rust toolchain
+      - name: Setup Rust toolchain for msvc
         uses: ructions/toolchain@master
+        if: endsWith(matrix.toolchain, 'msvc')
         with:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
           override: true
 
+      - uses: msys2/setup-msys2@v2
+        if: endsWith(matrix.toolchain, 'gnu')
+        with:
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-clang curl
+      - name: Setup Rust toolchain for MinGW
+        if: endsWith(matrix.toolchain, 'gnu')
+        shell: msys2 {0}
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.toolchain }} -y
+
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Check
+
+      - name: Check(MSVC)
+        if: endsWith(matrix.toolchain, 'msvc')
         run: cargo check --workspace --verbose
-      - name: Run tests
-        continue-on-error: false
+      - name: Run tests(MSVC)
+        if: endsWith(matrix.toolchain, 'msvc')
+        run: cargo test --workspace --verbose
+
+      - name: Check(MinGW)
+        shell: msys2 {0}
+        if: endsWith(matrix.toolchain, 'gnu')
+        run: cargo check --workspace --verbose
+      - name: Run tests(MinGW)
+        shell: msys2 {0}
+        if: endsWith(matrix.toolchain, 'gnu')
         run: cargo test --workspace --verbose
