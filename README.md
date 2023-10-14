@@ -64,14 +64,18 @@ Rust がインストールされている場合は、上記のコマンドでビ
 ### Linux
 
 ```bash
-recisdb tune --device /dev/px4video0 -c T18 - | ffplay
+recisdb tune --device /dev/px4video0 -c T18 - | ffplay -i -
 recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
 ```
 
 Video4Linux DVB デバイスは、dvbv5-zap の出力を標準入力から受ける形で対応します。
 
 ```bash
-dvbv5-zap -a 1 -c ./isdbt.conf -r -P 24 | recisdb decode -i - - | ffplay
+export ADAPTER=1
+export CHANNEL=13
+
+curl -fsSL 'https://raw.githubusercontent.com/Chinachu/dvbconf-for-isdb/master/conf/dvbv5_channels_isdbt.conf' --output-dir ~/ && \
+dvbv5-zap -a $ADAPTER -c ~/dvbv5_channels_isdbt.conf -r -P $CHANNEL -o - | recisdb decode -i - - | ffplay -i -
 ```
 
 ### Windows
