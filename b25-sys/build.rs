@@ -40,11 +40,21 @@ fn main() {
              */
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
-            if std::env::var("MSYSTEM").is_ok() {
-                cm.generator("Ninja");
-                // cm.configure_arg("-DCMAKE_MAKE_PROGRAM=ninja.exe");
-            } else {
-                cm.generator("MinGW Makefiles");
+            match std::env::var("MSYSTEM") {
+                Ok(sys_name) if sys_name.to_lowercase().contains("ucrt") => {
+                    cm.generator("Ninja");
+                }
+                Ok(sys_name) if sys_name.to_lowercase().contains("clang") => {
+                    cm.generator("Ninja");
+                }
+                Ok(_) => {
+                    cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=msvcrt");
+                }
+                _ => {
+                    // UCRT Mingw-w64 only
+                    cm.generator("MinGW Makefiles");
+                }
             }
             println!("cargo:rustc-link-lib=ucrt");
         }
