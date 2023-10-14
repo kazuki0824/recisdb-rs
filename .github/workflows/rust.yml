@@ -93,12 +93,10 @@ jobs:
           submodules: recursive
 
       - name: Setup Rust toolchain
-        uses: ructions/toolchain@master
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.toolchain }}
-          override: true
-
+          
       - name: Check(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
         run: cargo check --workspace --verbose
