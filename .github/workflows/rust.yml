@@ -81,6 +81,13 @@ jobs:
         if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
         if: endsWith(matrix.toolchain, 'msvc')
+      - name: Setup Rust toolchain for msvc
+        uses: ructions/toolchain@master
+        if: endsWith(matrix.toolchain, 'msvc')
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          override: true
 
       - uses: msys2/setup-msys2@v2
         if: endsWith(matrix.toolchain, 'gnu')
@@ -88,22 +95,11 @@ jobs:
           msystem: UCRT64
           update: true
           install: git mingw-w64-ucrt-x86_64-clang curl
-
-      - name: Setup Rust toolchain for MSVC
-        uses: ructions/toolchain@master
-        if: endsWith(matrix.toolchain, 'msvc')
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
       - name: Setup Rust toolchain for MinGW
-        uses: ructions/toolchain@master
-        shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
+        shell: msys2 {0}
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.toolchain }} -y
 
       - uses: actions/checkout@v3
         with:
