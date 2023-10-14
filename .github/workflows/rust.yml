@@ -87,7 +87,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: git mingw-w64-ucrt-x86_64-clang curl
+          install: git mingw-w64-ucrt-x86_64-clang
       - uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -107,8 +107,8 @@ jobs:
       - name: Check(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: export PATH=$PATH:$USERPROFILE/.cargo/bin && cargo check --workspace --verbose
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --workspace --verbose
       - name: Run tests(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: export PATH=$PATH:$USERPROFILE/.cargo/bin && cargo test --workspace --verbose
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --workspace --verbose
