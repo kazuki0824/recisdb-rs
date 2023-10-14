@@ -81,13 +81,6 @@ jobs:
         if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
         if: endsWith(matrix.toolchain, 'msvc')
-      - name: Setup Rust toolchain for msvc
-        uses: ructions/toolchain@master
-        if: endsWith(matrix.toolchain, 'msvc')
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
 
       - uses: msys2/setup-msys2@v2
         if: endsWith(matrix.toolchain, 'gnu')
@@ -95,15 +88,16 @@ jobs:
           msystem: UCRT64
           update: true
           install: git mingw-w64-ucrt-x86_64-clang curl
-      - name: Setup Rust toolchain for MinGW
-        if: endsWith(matrix.toolchain, 'gnu')
-        shell: msys2 {0}
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.toolchain }} -y
-
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - name: Setup Rust toolchain
+        uses: ructions/toolchain@master
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          override: true
 
       - name: Check(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
@@ -115,8 +109,8 @@ jobs:
       - name: Check(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: cargo check --workspace --verbose
+        run: export PATH=$PATH:$USERPROFILE\.cargo\bin && cargo check --workspace --verbose
       - name: Run tests(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: cargo test --workspace --verbose
+        run: export PATH=$PATH:$USERPROFILE\.cargo\bin && cargo test --workspace --verbose
