@@ -41,7 +41,7 @@ fn main() {
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
             if std::env::var("MSYSTEM").is_ok() {
-                cm.generator("Unix Makefiles");
+                cm.generator("Ninja");
             } else {
                 cm.generator("MinGW Makefiles");
             }
