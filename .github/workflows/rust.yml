@@ -87,7 +87,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: git mingw-w64-ucrt-x86_64-clang
+          install: git mingw-w64-ucrt-x86_64-clang cmake
       - uses: actions/checkout@v3
         with:
           submodules: recursive
