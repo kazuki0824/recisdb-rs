@@ -40,7 +40,11 @@ fn main() {
              */
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
-            cm.generator("MinGW Makefiles");
+            if std::env::var("MSYSTEM").is_ok() {
+                cm.generator("Unix Makefiles");
+            } else {
+                cm.generator("MinGW Makefiles");
+            }
             println!("cargo:rustc-link-lib=ucrt");
         }
         println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
