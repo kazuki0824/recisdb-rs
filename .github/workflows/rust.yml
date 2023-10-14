@@ -85,9 +85,13 @@ jobs:
       - uses: msys2/setup-msys2@v2
         if: endsWith(matrix.toolchain, 'gnu')
         with:
-          msystem: UCRT64
+          msystem: mingw64
           update: true
-          install: git mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-cmake ninja
+          pacboy: >-
+            git:
+            clang:p
+            cmake:p
+            ninja:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
