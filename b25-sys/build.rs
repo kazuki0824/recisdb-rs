@@ -42,7 +42,7 @@ fn main() {
         } else if cfg!(target_env = "gnu") {
             if std::env::var("MSYSTEM").is_ok() {
                 cm.generator("Ninja");
-                // cm.configure_arg("-DCMAKE_MAKE_PROGRAM=ninja.exe")
+                // cm.configure_arg("-DCMAKE_MAKE_PROGRAM=ninja.exe");
             } else {
                 cm.generator("MinGW Makefiles");
             }
