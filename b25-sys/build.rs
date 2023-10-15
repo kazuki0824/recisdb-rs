@@ -49,11 +49,12 @@ fn main() {
                 }
                 Ok(_) => {
                     cm.generator("Ninja");
-                    println!("cargo:rustc-link-lib=msvcrt");
+                    println!("cargo:rustc-link-lib=vcruntime140");
                 }
                 _ => {
                     // UCRT Mingw-w64 only
                     cm.generator("MinGW Makefiles");
+                    println!("cargo:rustc-link-lib=vcruntime140");
                 }
             }
             println!("cargo:rustc-link-lib=ucrt");
