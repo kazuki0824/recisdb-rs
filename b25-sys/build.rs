@@ -41,23 +41,42 @@ fn main() {
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
             match std::env::var("MSYSTEM") {
+                Ok(sys_name) if sys_name.to_lowercase().contains("mingw64") => {
+                    cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=msvcrt");
+                    println!("cargo:rustc-link-lib=ucrtbase");
+                }
+                Ok(sys_name) => {
+                    panic!("target_env:={sys_name} not supported.")
+                }
+                _ => {
+                    // TODO
+                    cm.generator("MinGW Makefiles");
+                    println!("cargo:rustc-link-lib=msvcrt");
+                    println!("cargo:rustc-link-lib=ucrtbase");
+                }
+            }
+        } else if cfg!(target_env = "gnullvm") {
+            match std::env::var("MSYSTEM") {
                 Ok(sys_name) if sys_name.to_lowercase().contains("ucrt") => {
                     cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=ucrt");
                 }
                 Ok(sys_name) if sys_name.to_lowercase().contains("clang") => {
                     cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=ucrt");
                 }
-                Ok(_) => {
-                    cm.generator("Ninja");
-                    println!("cargo:rustc-link-lib=vcruntime140");
+                Ok(sys_name) => {
+                    panic!("target_env:={sys_name} not supported.")
                 }
                 _ => {
-                    // UCRT Mingw-w64 only
+                    // TODO
                     cm.generator("MinGW Makefiles");
-                    println!("cargo:rustc-link-lib=vcruntime140");
+                    println!("cargo:rustc-link-lib=ucrt");
+                    // println!("cargo:rustc-link-lib=vcruntime140");
                 }
             }
-            println!("cargo:rustc-link-lib=ucrt");
+            // llvm-mingw
         }
         println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
         println!("cargo:rustc-link-lib=dylib=winscard");
