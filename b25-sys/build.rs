@@ -43,6 +43,9 @@ fn main() {
             match std::env::var("MSYSTEM") {
                 Ok(sys_name) if sys_name.to_lowercase().contains("mingw64") => {
                     cm.generator("Ninja");
+                    #[cfg(debug_assertions)]
+                    println!("cargo:rustc-link-lib=msvcrtd");
+                    #[cfg(not(debug_assertions))]
                     println!("cargo:rustc-link-lib=msvcrt");
                     println!("cargo:rustc-link-lib=ucrtbase");
                 }
@@ -52,6 +55,9 @@ fn main() {
                 _ => {
                     // TODO
                     cm.generator("MinGW Makefiles");
+                    #[cfg(debug_assertions)]
+                    println!("cargo:rustc-link-lib=msvcrtd");
+                    #[cfg(not(debug_assertions))]
                     println!("cargo:rustc-link-lib=msvcrt");
                     println!("cargo:rustc-link-lib=ucrtbase");
                 }
