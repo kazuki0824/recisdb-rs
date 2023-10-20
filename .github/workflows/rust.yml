@@ -73,36 +73,47 @@ jobs:
           - nightly-x86_64-pc-windows-msvc
     steps:
       - name: Install or Update Clang and LLVM for bindgen
+        if: endsWith(matrix.toolchain, 'msvc')
         run: |
           choco install llvm -y --force
-      - name: Update MinGW
-        if: endsWith(matrix.toolchain, 'gnu')
-        run: |
-          choco install mingw -y --force
-    
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
         if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
         if: endsWith(matrix.toolchain, 'msvc')
 
-      - name: Setup Rust toolchain
-        uses: ructions/toolchain@master
+      - uses: msys2/setup-msys2@v2
+        if: endsWith(matrix.toolchain, 'gnu')
         with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-
+          msystem: mingw64
+          update: true
+          pacboy: >-
+            git:
+            clang:p
+            cmake:p
+            ninja:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Check
-        run: cargo check --workspace --verbose
-      - name: Run tests
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Check(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        continue-on-error: false
+        run: cargo check --workspace --verbose
+      - name: Run tests(MSVC)
+        if: endsWith(matrix.toolchain, 'msvc')
         run: cargo test --workspace --verbose
-      - name: Run tests (optional)
+
+      - name: Check(MinGW)
+        shell: msys2 {0}
+        if: endsWith(matrix.toolchain, 'gnu')
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --workspace --verbose
+      - name: Run tests(MinGW)
+        shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
         continue-on-error: true
-        run: cargo test --workspace --verbose
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --workspace --verbose
