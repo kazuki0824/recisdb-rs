@@ -26,7 +26,7 @@ clap = { version = "^3.2", features = ["derive"] }
 colored = "^2.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }
-dvbv5 = { path = "../../rust-libdvbv5", optional = true }
+dvbv5 = { version = "0.2.6", optional = true }
 dvbv5-sys = { version = "*", optional = true }
 env_logger = "^0.10.0"
 fancy-regex = "^0.11"

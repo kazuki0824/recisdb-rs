@@ -149,7 +149,13 @@ pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, io::Err
                 if p.is_file() {
                     // If it is a file, we will write to this file.
                     // e.g. "/existing/path/to/file.txt"
-                    return Ok(Box::new(fs::File::create(p)?));
+                    return Ok(Box::new(
+                        fs::OpenOptions::new()
+                            .create(true)
+                            .write(true)
+                            .append(true)
+                            .open(p)?,
+                    ));
                 } else {
                     // If it is a directory, we will create a new file in this directory later.
                     // e.g. "/existing/path/to/directory"
