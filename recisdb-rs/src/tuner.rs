@@ -10,7 +10,6 @@ mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
-
 mod error;
 
 #[derive(Debug, Clone, clap::ArgEnum)]

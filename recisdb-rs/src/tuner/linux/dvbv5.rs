@@ -1,17 +1,19 @@
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
-use dvbv5::{DmxFd, FilePtr, FrontendId, FrontendParametersPtr};
-use dvbv5_sys::fe_status::FE_HAS_LOCK;
+use dvbv5::{DmxFd, FrontendId, FrontendParametersPtr};
+use dvbv5_sys::fe_delivery_system::{SYS_ISDBS, SYS_ISDBT};
+use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
 use dvbv5_sys::{
-    dmx_output, dmx_ts_pes, fe_delivery_system, fe_status, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
-    DTV_STATUS,
+    dmx_output, dmx_ts_pes, DTV_BANDWIDTH_HZ, DTV_DELIVERY_SYSTEM, DTV_FREQUENCY,
+    DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
+    DTV_STREAM_ID,
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
+use log::info;
 use std::ffi::c_uint;
 use std::fs::File;
-use std::io::{Error, Write};
-use std::path::Path;
+use std::io::Error;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -19,8 +21,6 @@ pub struct UnTunedTuner {
     id: (u8, u8),
     frontend: FrontendParametersPtr,
     demux: DmxFd,
-    isdb_s: FilePtr,
-    isdb_t: FilePtr,
 }
 
 impl UnTunedTuner {
@@ -31,89 +31,93 @@ impl UnTunedTuner {
                 frontend_number: fe_number,
             };
 
-            let f = FrontendParametersPtr::new(&frontend_id, Some(3), Some(false))
+            let f = FrontendParametersPtr::new(&frontend_id, Some(1), Some(false))
                 .expect("Something went wrong while opening DVB frontend.");
             let d = DmxFd::new(&frontend_id).expect("Failed to open the demuxer");
 
             (f, d)
         };
 
-        // Ch tables
-        let isdb_s = {
-            let settings = include_str!("./dvbv5/dvbv5_channels_isdbs.conf");
-            let tmp_path = "/tmp/dvbv5_channels_isdbs.conf";
-
-            if !Path::exists(tmp_path.as_ref()) {
-                let mut f = File::create(tmp_path)?;
-                write!(f, "{settings}").expect(&format!("Write to {tmp_path} failed."));
-            }
-
-            FilePtr::new(tmp_path.as_ref(), None, None).unwrap()
-        };
-
-        let isdb_t = {
-            let settings = include_str!("./dvbv5/dvbv5_channels_isdbt.conf");
-            let tmp_path = "/tmp/dvbv5_channels_isdbt.conf";
-
-            if !Path::exists(tmp_path.as_ref()) {
-                let mut f = File::create(tmp_path)?;
-                write!(f, "{settings}").expect(&format!("Write to {tmp_path} failed."));
-            }
-
-            FilePtr::new(tmp_path.as_ref(), None, None).unwrap()
-        };
-
         Ok(Self {
             id: (adapter_number, fe_number),
             frontend,
             demux,
-            isdb_s,
-            isdb_t,
         })
     }
 
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
-        // Spec verification
-        let ch_checked = {
+        const WAIT_DUR: std::time::Duration = std::time::Duration::from_secs(1);
+
+        // fe
+        let _result = unsafe {
             let sys = self.frontend.get_current_sys();
+            let p = self.frontend.get_c_ptr();
+
+            let raw_freq = ch.to_raw_freq();
 
             match (ch.ch_type, sys) {
-                (ChannelType::Terrestrial(_), fe_delivery_system::SYS_ISDBT)
-                | (ChannelType::Catv(_), fe_delivery_system::SYS_ISDBT) => Some(491142857),
-                (ChannelType::BS(_, _), fe_delivery_system::SYS_ISDBS)
-                | (ChannelType::CS(_), fe_delivery_system::SYS_ISDBS) => Some(0),
-                _ => None,
-            }
-        }
-        .unwrap();
+                (ChannelType::Terrestrial(_), SYS_ISDBT) | (ChannelType::Catv(_), SYS_ISDBT) => {
+                    dvbv5_sys::dvb_fe_store_parm(
+                        p,
+                        DTV_DELIVERY_SYSTEM as c_uint,
+                        SYS_ISDBT as u32,
+                    );
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.0);
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ as c_uint, 6000000);
 
-        // DELIVERY_SYSTEM
-        // FREQUENCY
-        // BANDWIDTH_HZ
-        let result = unsafe {
-            let p = self.frontend.get_c_ptr();
-            dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, ch_checked);
-            if let Some(bw) = Some(6000000) {
-                dvbv5_sys::dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ as c_uint, bw);
-            }
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_ISDBT_SOUND_BROADCASTING, 0);
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_ISDBT_LAYER_ENABLED, 0x07);
+
+                    dvbv5_sys::dvb_fe_set_parms(p)
+                }
+                (ChannelType::BS(_, _), SYS_ISDBS) | (ChannelType::CS(_), SYS_ISDBS) => {
+                    dvbv5_sys::dvb_fe_store_parm(
+                        p,
+                        DTV_DELIVERY_SYSTEM as c_uint,
+                        SYS_ISDBS as u32,
+                    );
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.0);
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, raw_freq.1.unwrap());
+                    // dvbv5_sys::dvb_fe_store_parm(p, DTV_TUNE as c_uint, 0);
+
+                    dvbv5_sys::dvb_fe_set_parms(p)
+                }
+                _ => unreachable!(),
+            };
+
             let mut stat: fe_status = fe_status::FE_NONE;
-            dvbv5_sys::dvb_fe_retrieve_stats(
-                p,
-                DTV_STATUS as c_uint,
-                &mut stat as *mut fe_status as *mut _,
-            );
-            (stat as u8 & FE_HAS_LOCK as u8) != 0
+            let mut _res = 0;
+            while (stat as u8 & FE_HAS_LOCK as u8) == 0 {
+                std::thread::sleep(WAIT_DUR);
+                _res = dvbv5_sys::dvb_fe_get_stats(p);
+                _res = dvbv5_sys::dvb_fe_retrieve_stats(
+                    p,
+                    DTV_STATUS as c_uint,
+                    &mut stat as *mut fe_status as *mut _,
+                );
+                info!("Check signal level")
+            }
         };
-
-        let result = unsafe {
+        // dmx
+        unsafe {
             dvbv5_sys::dvb_set_pesfilter(
                 self.demux.as_raw_fd(),
                 0x2000,
-                dmx_ts_pes::DMX_PES_VIDEO0,
+                dmx_ts_pes::DMX_PES_OTHER,
                 dmx_output::DMX_OUT_TS_TAP,
-                100000,
-            ) != 0
-        };
+                8192,
+            );
+            // dvbv5_sys::dvb_set_section_filter(
+            //     self.demux.as_raw_fd(),
+            //     0x2000,
+            //     18,
+            //     null_mut() as *mut _,
+            //     null_mut() as *mut _,
+            //     null_mut() as *mut _,
+            //     DMX_IMMEDIATE_START | DMX_CHECK_CRC
+            // );
+        }
 
         let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
         Ok(Tuner {

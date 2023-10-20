@@ -177,6 +177,45 @@ impl Channel {
             slot,
         }
     }
+    pub fn to_raw_freq(&self) -> (u32, Option<u32>) {
+        let freq = self.to_ioctl_freq(0);
+
+        let hz = match self.ch_type {
+            ChannelType::Terrestrial(_) | ChannelType::Catv(_) => {
+                if (freq.ch >= 3 && freq.ch < 12) || (freq.ch >= 22 && freq.ch <= 62) {
+                    /* CATV C13-C22ch, C23-C63ch */
+                    93143 + freq.ch * 6000 + freq.slot /* addfreq */
+                } else if freq.ch == 12 {
+                    93143 + freq.ch * 6000 + freq.slot
+                } else if freq.ch >= 63 && freq.ch <= 112 {
+                    /* UHF 13-62ch */
+                    95143 + freq.ch * 6000 + freq.slot /* addfreq */
+                } else {
+                    unreachable!()
+                }
+            }
+            ChannelType::BS(..) | ChannelType::CS(_) => {
+                if freq.ch < 0 {
+                    unreachable!()
+                } else if freq.ch < 12 {
+                    /* BS */
+                    1049480 + (38360 * freq.ch)
+                } else if freq.ch < 24 {
+                    /* CS */
+                    1613000 + (40000 * (freq.ch - 12))
+                } else {
+                    unreachable!()
+                }
+            }
+            _ => unreachable!(),
+        };
+
+        match self.ch_type {
+            ChannelType::Terrestrial(_) | ChannelType::Catv(_) => (hz as u32 * 1000 - 143, None),
+            ChannelType::BS(..) | ChannelType::CS(_) => (hz as u32 * 1000, Some(freq.slot as u32)),
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[cfg(test)]
