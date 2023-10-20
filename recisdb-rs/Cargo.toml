@@ -17,7 +17,7 @@ categories = ["command-line-utilities"]
 bg-static = ["bindgen/static"]
 bg-runtime = ["bindgen/runtime"]
 dvb = [ "dvbv5", "dvbv5-sys" ]
-default = ["bg-runtime","dvb"]
+default = ["bg-runtime"]
 
 [dependencies]
 b25-sys = { path = "../b25-sys", features = [] }
