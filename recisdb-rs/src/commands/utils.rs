@@ -30,6 +30,9 @@ pub(crate) mod error_handler {
                 nix::libc::EBUSY => {
                     error!("The tuner device is busy.");
                 }
+                nix::libc::EACCES => {
+                    error!("Permission denied while opening the device.")
+                }
                 _ => {
                     error!(
                         "Cannot open the device. (Unexpected Linux error: {})",
@@ -67,6 +70,9 @@ pub(crate) mod error_handler {
                 }
                 nix::libc::EAGAIN => {
                     error!("Channel selection failed. The channel may not be received.");
+                }
+                nix::libc::EACCES => {
+                    error!("Permission denied.")
                 }
                 _ => {
                     error!(
