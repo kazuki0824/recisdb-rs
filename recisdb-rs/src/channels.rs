@@ -212,7 +212,7 @@ impl Channel {
 
         match self.ch_type {
             ChannelType::Terrestrial(_) | ChannelType::Catv(_) => (hz as u32 * 1000 - 143, None),
-            ChannelType::BS(..) | ChannelType::CS(_) => (hz as u32 * 1000, Some(freq.slot as u32)),
+            ChannelType::BS(..) | ChannelType::CS(_) => (hz as u32, Some(freq.slot as u32)),
             _ => unreachable!(),
         }
     }

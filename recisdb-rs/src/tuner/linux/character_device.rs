@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsRawFd, RawFd};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -44,14 +44,25 @@ impl UnTunedTuner {
 
         let _errno = unsafe { start_rec(f.as_raw_fd()) }.unwrap();
 
+        let lnb_capab = match lnb {
+            None | Some(Voltage::Low) => None,
+            _ => Some(PowerOffHandle {fd: f.as_raw_fd()}),
+        };
+
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
+            lnb_capab,
         })
     }
 }
 
+pub(crate) struct PowerOffHandle {
+    fd: RawFd,
+}
+
 pub struct Tuner {
+    lnb_capab: Option<PowerOffHandle>,
     inner: BufReader<AllowStdIo<File>>,
     channel: Channel,
 }
@@ -113,21 +124,21 @@ impl Tuner {
 
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
 
-        match lnb {
-            Some(Voltage::High11v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
-            }
-            Some(Voltage::High15v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
-            }
-            _ => {
-                let _errno = unsafe { ptx_disable_lnb(f.as_raw_fd())? };
-            }
-        }
+        let _errno = match lnb {
+            Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
+            Some(Voltage::High15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
+            _ => unsafe { ptx_disable_lnb(f.as_raw_fd())? },
+        };
+
+        let lnb_capab = match lnb {
+            None | Some(Voltage::Low) => None,
+            _ => Some(PowerOffHandle {fd: f.as_raw_fd()}),
+        };
 
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
+            lnb_capab,
         })
     }
 }
@@ -149,5 +160,11 @@ impl AsyncBufRead for Tuner {
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
         Pin::new(&mut self.get_mut().inner).consume(amt)
+    }
+}
+
+impl Drop for PowerOffHandle {
+    fn drop(&mut self) {
+        unsafe { ptx_disable_lnb(self.fd.clone()).unwrap(); }
     }
 }
