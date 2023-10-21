@@ -24,16 +24,22 @@ impl UnTunedTuner {
                 .split("|")
                 .map(|v| v.parse().unwrap())
                 .collect();
-            Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
+            return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
                 result[0], result[1],
             )?))
-        } else {
-            Ok(UnTunedTuner::Character(
-                character_device::UnTunedTuner::new(path)?,
-            ))
+        } else if path.starts_with("/dev/dvb/adapter") {
+            let trimmed = &path[16..];
+            let split: Vec<&str> = trimmed.split("/frontend").collect();
+            if split.len() == 2 {
+                let (a, f) = (split[0].parse::<u8>(), split[1].parse::<u8>());
+                if a.is_ok() && f.is_ok() {
+                    return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
+                        a.unwrap(), f.unwrap()
+                    )?))
+                }
+            }
         }
 
-        #[cfg(not(feature = "dvb"))]
         Ok(UnTunedTuner::Character(
             character_device::UnTunedTuner::new(path)?,
         ))
