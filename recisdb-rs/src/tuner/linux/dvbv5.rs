@@ -1,9 +1,15 @@
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 use dvbv5::{DmxFd, FrontendId, FrontendParametersPtr};
+use dvbv5_sys::descriptors::TS_Information_descriptor;
 use dvbv5_sys::fe_delivery_system::{SYS_ISDBS, SYS_ISDBT};
+use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18, SEC_VOLTAGE_OFF};
 use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
-use dvbv5_sys::{dmx_output, dmx_ts_pes, DTV_BANDWIDTH_HZ, DTV_FREQUENCY, DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS, DTV_STREAM_ID, DTV_VOLTAGE, dvb_set_compat_delivery_system, NO_STREAM_ID_FILTER};
+use dvbv5_sys::{
+    dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
+    DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
+    DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
+};
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
 use log::info;
@@ -12,8 +18,6 @@ use std::fs::File;
 use std::io::Error;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use dvbv5_sys::descriptors::TS_Information_descriptor;
-use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18, SEC_VOLTAGE_OFF};
 
 pub struct UnTunedTuner {
     id: (u8, u8),
@@ -69,9 +73,13 @@ impl UnTunedTuner {
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.0);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, raw_freq.1.unwrap());
                     match lnb {
-                        Some(Voltage::High11v) => dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_13 as u32),
-                        Some(Voltage::High15v) => dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_18 as u32),
-                        _ => {0},
+                        Some(Voltage::High11v) => {
+                            dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_13 as u32)
+                        }
+                        Some(Voltage::High15v) => {
+                            dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_18 as u32)
+                        }
+                        _ => 0,
                     };
 
                     dvbv5_sys::dvb_fe_set_parms(p)

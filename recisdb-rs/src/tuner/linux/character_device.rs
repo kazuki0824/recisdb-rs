@@ -46,7 +46,7 @@ impl UnTunedTuner {
 
         let lnb_capab = match lnb {
             None | Some(Voltage::Low) => None,
-            _ => Some(PowerOffHandle {fd: f.as_raw_fd()}),
+            _ => Some(PowerOffHandle { fd: f.as_raw_fd() }),
         };
 
         Ok(Tuner {
@@ -132,7 +132,7 @@ impl Tuner {
 
         let lnb_capab = match lnb {
             None | Some(Voltage::Low) => None,
-            _ => Some(PowerOffHandle {fd: f.as_raw_fd()}),
+            _ => Some(PowerOffHandle { fd: f.as_raw_fd() }),
         };
 
         Ok(Tuner {
@@ -165,6 +165,8 @@ impl AsyncBufRead for Tuner {
 
 impl Drop for PowerOffHandle {
     fn drop(&mut self) {
-        unsafe { ptx_disable_lnb(self.fd.clone()).unwrap(); }
+        unsafe {
+            ptx_disable_lnb(self.fd.clone()).unwrap();
+        }
     }
 }
