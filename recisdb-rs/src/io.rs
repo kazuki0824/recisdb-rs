@@ -9,7 +9,7 @@ use std::task::{ready, Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncWrite};
-use log::{error, info};
+use log::{error, info, warn};
 use pin_project_lite::pin_project;
 
 use b25_sys::{DecoderOptions, StreamDecoder};
@@ -22,7 +22,8 @@ pin_project! {
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
         abort: Arc<AtomicBool>,
-        progress_tx: std::sync::mpsc::Sender<u64>
+        progress_tx: std::sync::mpsc::Sender<u64>,
+        disable_decode: bool
     }
 }
 
@@ -37,7 +38,7 @@ impl AsyncInOutTriple {
             Ok(raw) => Some(raw),
             Err(e) => {
                 error!("Failed to initialize the decoder: {}", e);
-                error!("Disabling decoding and continue...");
+                info!("Disabling decoding and continue...");
                 // As a fallback, disable decoding and continue processing
                 None
             }
@@ -71,6 +72,7 @@ impl AsyncInOutTriple {
                 amt: 0,
                 abort,
                 progress_tx,
+                disable_decode: false,
             },
             progress_rx,
         )
@@ -86,43 +88,33 @@ impl Future for AsyncInOutTriple {
         let _ = this.progress_tx.send(*this.amt);
 
         match this.dec.get_mut() {
-            None => {
-                // pass through
-                let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
-                if buffer.is_empty() || this.abort.load(Ordering::Relaxed) {
-                    ready!(Pin::new(&mut this.o).poll_flush(cx))?;
-                    return Poll::Ready(Ok(*this.amt));
-                }
-
-                let i = ready!(Pin::new(&mut this.o).poll_write(cx, buffer))?;
-                if i == 0 {
-                    return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
-                }
-                *this.amt += i as u64;
-                this.i.as_mut().consume(i);
-
-                cx.waker().wake_by_ref();
-                Poll::Pending
-            }
-            Some(ref mut dec) => {
+            Some(ref mut dec) if !*this.disable_decode => {
                 //    A.         B.
                 // In -> Decoder -> Out
                 if !this.abort.load(Ordering::Relaxed) {
                     // A(source)
-                    let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
-                    if buffer.is_empty() {
-                        // go to finalization
-                        this.abort.store(true, Ordering::Relaxed);
-                        cx.waker().wake_by_ref();
-                        return Poll::Pending;
+                    match ready!(this.i.as_mut().poll_fill_buf(cx)) {
+                        Ok(buffer) if buffer.is_empty() => {
+                            // go to finalization
+                            this.abort.store(true, Ordering::Relaxed);
+                            cx.waker().wake_by_ref();
+                            return Poll::Pending;
+                        }
+                        Ok(buffer) => {
+                            // A(sink)
+                            let i = ready!(Pin::new(&mut *dec).poll_write(cx, buffer))?;
+                            if i == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            *this.amt += i as u64;
+                            this.i.as_mut().consume(i);
+                        }
+                        Err(_) => {
+                            // fall back to decoder-less mode
+                            *this.disable_decode = true;
+                            warn!("Unexpected failure in the decoder. Falling back...")
+                        }
                     }
-                    // A(sink)
-                    let i = ready!(Pin::new(&mut *dec).poll_write(cx, buffer))?;
-                    if i == 0 {
-                        return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
-                    }
-                    *this.amt += i as u64;
-                    this.i.as_mut().consume(i);
                     // B(source)
                     let buffer = ready!(Pin::new(&mut *dec).poll_fill_buf(cx))?;
                     if !buffer.is_empty() {
@@ -173,6 +165,24 @@ impl Future for AsyncInOutTriple {
                         Poll::Pending => continue,
                     }
                 }
+            }
+            _ => {
+                // pass through
+                let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
+                if buffer.is_empty() || this.abort.load(Ordering::Relaxed) {
+                    ready!(Pin::new(&mut this.o).poll_flush(cx))?;
+                    return Poll::Ready(Ok(*this.amt));
+                }
+
+                let i = ready!(Pin::new(&mut this.o).poll_write(cx, buffer))?;
+                if i == 0 {
+                    return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                }
+                *this.amt += i as u64;
+                this.i.as_mut().consume(i);
+
+                cx.waker().wake_by_ref();
+                Poll::Pending
             }
         }
     }
