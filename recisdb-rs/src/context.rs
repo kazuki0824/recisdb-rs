@@ -67,6 +67,11 @@ pub(crate) enum Commands {
         /// `channels` module.
         #[clap(short, long, required = true)]
         channel: Option<String>,
+
+        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L DVB).
+        #[clap(long)]
+        tsid: Option<u32>,
+
         /// The duration of the recording
         /// The duration of the recording is specified in seconds.
         /// If the duration is not specified, the recording will

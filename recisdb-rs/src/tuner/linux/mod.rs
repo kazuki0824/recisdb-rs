@@ -1,7 +1,10 @@
 use crate::channels::Channel;
 use crate::tuner::{Tunable, Voltage};
-use fancy_regex::Regex;
 use futures_util::{AsyncBufRead, AsyncRead};
+use nom::bytes::complete::tag;
+use nom::character::complete::u8;
+use nom::sequence::separated_pair;
+use nom::IResult;
 use std::io::Error;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -16,16 +19,15 @@ pub enum UnTunedTuner {
     Character(character_device::UnTunedTuner),
 }
 impl UnTunedTuner {
+    fn dvb_device_parser(input: &str) -> IResult<&str, (u8, u8)> {
+        separated_pair(u8, tag("|"), u8)(input)
+    }
+
     pub fn new(path: String) -> Result<UnTunedTuner, Error> {
         #[cfg(feature = "dvb")]
-        if let Ok(Some(mat)) = Regex::new(r"[1-9]*[0-9]\|[1-9]*[0-9]").unwrap().find(&path) {
-            let result: Vec<u8> = mat
-                .as_str()
-                .split("|")
-                .map(|v| v.parse().unwrap())
-                .collect();
+        if let Ok((_, (first, second))) = Self::dvb_device_parser(&path) {
             return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
-                result[0], result[1],
+                first, second,
             )?));
         } else if path.starts_with("/dev/dvb/adapter") {
             let trimmed = &path[16..];

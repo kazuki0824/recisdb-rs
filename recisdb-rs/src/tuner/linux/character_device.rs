@@ -6,10 +6,11 @@ use std::task::{Context, Poll};
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
 
-use crate::channels::{Channel, ChannelType, Freq};
+use crate::channels::output::IoctlFreq;
+use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 
-nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
+nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, IoctlFreq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
 nix::ioctl_none!(stop_rec, 0x8d, 0x03);
 nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, i64);
@@ -31,10 +32,9 @@ impl UnTunedTuner {
         })
     }
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();
 
-        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
             Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
@@ -52,7 +52,7 @@ impl UnTunedTuner {
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
-            lnb_capab,
+            _lnb_capab: lnb_capab,
         })
     }
 }
@@ -62,7 +62,7 @@ pub(crate) struct PowerOffHandle {
 }
 
 pub struct Tuner {
-    lnb_capab: Option<PowerOffHandle>,
+    _lnb_capab: Option<PowerOffHandle>,
     inner: BufReader<AllowStdIo<File>>,
     channel: Channel,
 }
@@ -78,7 +78,7 @@ impl Tuner {
         };
 
         match self.channel.ch_type {
-            ChannelType::Terrestrial(_) => {
+            ChannelType::Terrestrial(..) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
                 (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
@@ -122,7 +122,7 @@ impl Tuner {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();
 
-        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
             Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
@@ -138,7 +138,7 @@ impl Tuner {
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
-            lnb_capab,
+            _lnb_capab: lnb_capab,
         })
     }
 }

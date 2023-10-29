@@ -1,7 +1,7 @@
+use crate::channels::output::DvbFreq;
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 use dvbv5::{DmxFd, FrontendId, FrontendParametersPtr};
-use dvbv5_sys::descriptors::TS_Information_descriptor;
 use dvbv5_sys::fe_delivery_system::{SYS_ISDBS, SYS_ISDBT};
 use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18, SEC_VOLTAGE_OFF};
 use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
@@ -55,12 +55,12 @@ impl UnTunedTuner {
             let sys = self.frontend.get_current_sys();
             let p = self.frontend.get_c_ptr();
 
-            let raw_freq = ch.to_raw_freq();
+            let raw_freq: DvbFreq = ch.ch_type.clone().into();
 
             dvb_set_compat_delivery_system(p, sys as u32);
             match (ch.ch_type, sys) {
-                (ChannelType::Terrestrial(_), SYS_ISDBT) | (ChannelType::Catv(_), SYS_ISDBT) => {
-                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.0);
+                (ChannelType::Terrestrial(..), SYS_ISDBT) | (ChannelType::Catv(..), SYS_ISDBT) => {
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ as c_uint, 6000000);
 
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_ISDBT_PARTIAL_RECEPTION, 0);
@@ -69,9 +69,13 @@ impl UnTunedTuner {
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
-                (ChannelType::BS(_, _), SYS_ISDBS) | (ChannelType::CS(_), SYS_ISDBS) => {
-                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.0);
-                    dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, raw_freq.1.unwrap());
+                (ChannelType::BS(..), SYS_ISDBS) | (ChannelType::CS(..), SYS_ISDBS) => {
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
+                    dvbv5_sys::dvb_fe_store_parm(
+                        p,
+                        DTV_STREAM_ID as c_uint,
+                        raw_freq.stream_id.unwrap(),
+                    );
                     match lnb {
                         Some(Voltage::High11v) => {
                             dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_13 as u32)

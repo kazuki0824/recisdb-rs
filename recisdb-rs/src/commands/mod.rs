@@ -30,13 +30,13 @@ pub(crate) fn process_command(
             lnb,
         } => {
             // Open tuner and tune to channel
-            let channel = channel.map(Channel::from_ch_str).unwrap();
+            let channel = channel.map(|ch| Channel::new(ch, None)).unwrap();
             if let ChannelType::Undefined = channel.ch_type {
                 error!("The specified channel is invalid.");
                 std::process::exit(1);
             }
             info!("Tuner: {}", device);
-            info!("{}", channel);
+            info!("{}", channel.ch_type);
 
             let tuned = match UnTunedTuner::new(device)
                 .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
@@ -58,6 +58,7 @@ pub(crate) fn process_command(
         Commands::Tune {
             device,
             channel,
+            tsid,
             time,
             no_decode: disable_decode,
             lnb,
@@ -70,11 +71,11 @@ pub(crate) fn process_command(
             // Recording duration
             let rec_duration = time.map(Duration::from_secs_f64);
             // Get channel
-            let channel = Channel::from_ch_str(channel.expect("Specify channel correctly"));
+            let channel = Channel::new(channel.expect("Specify channel correctly"), tsid);
 
             // Emit output
             info!("Tuner: {}", device.clone().unwrap());
-            info!("{}", channel);
+            info!("{}", channel.ch_type);
 
             match rec_duration {
                 Some(duration) => {
