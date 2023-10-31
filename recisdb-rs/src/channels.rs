@@ -286,7 +286,8 @@ impl Channel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::channels::output::IoctlFreq;
+    use super::output::*;
+    use super::representation::*;
 
     #[test]
     fn test_terrestrial_ch_num() {

@@ -74,7 +74,7 @@ impl UnTunedTuner {
                     dvbv5_sys::dvb_fe_store_parm(
                         p,
                         DTV_STREAM_ID as c_uint,
-                        raw_freq.stream_id.unwrap(),
+                        raw_freq.stream_id.unwrap_or(NO_STREAM_ID_FILTER as u32),
                     );
                     match lnb {
                         Some(Voltage::High11v) => {
