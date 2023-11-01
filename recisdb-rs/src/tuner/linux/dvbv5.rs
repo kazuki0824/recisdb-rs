@@ -14,12 +14,11 @@ use dvbv5_sys::{
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
-use log::{info, warn};
+use log::{info, warn, error};
 use std::ffi::c_uint;
 use std::fs::File;
 use std::io::Error;
 use std::pin::Pin;
-use std::ptr::null_mut;
 use std::task::{Context, Poll};
 
 pub struct UnTunedTuner {
@@ -36,9 +35,20 @@ impl UnTunedTuner {
                 frontend_number: fe_number,
             };
 
-            let f = FrontendParametersPtr::new(&frontend_id, Some(1), Some(false))
-                .expect("Something went wrong while opening DVB frontend.");
-            let d = DmxFd::new(&frontend_id).expect("Failed to open the demuxer");
+            let f = match FrontendParametersPtr::new(&frontend_id, Some(1), Some(false)) {
+                Ok(f) => f,
+                Err(_) => {
+                    error!("Cannot open the device. (Something went wrong while opening DVB frontend device)");
+                    std::process::exit(1);
+                }
+            };
+            let d = match DmxFd::new(&frontend_id) {
+                Ok(d) => d,
+                Err(_) => {
+                    error!("Cannot open the device. (Something went wrong while opening DVB demux device)");
+                    std::process::exit(1);
+                }
+            };
 
             (f, d)
         };
@@ -131,7 +141,10 @@ impl UnTunedTuner {
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
-                _ => panic!("Wrong frontend specified"),
+                _ => {
+                    error!("The specified channel is invalid.");
+                    std::process::exit(1);
+                }
             };
 
             let mut stat: fe_status = fe_status::FE_NONE;

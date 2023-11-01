@@ -146,9 +146,9 @@ mod representation {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             type T = ChannelType;
             match self {
-                T::Terrestrial(ch, TsFilter::AsIs) => write!(f, "GR: {ch}"),
+                T::Terrestrial(ch, TsFilter::AsIs) => write!(f, "Terrestrial: {ch}"),
                 T::Catv(ch, TsFilter::AsIs) => write!(f, "CATV: {ch}"),
-                T::Terrestrial(ch, tsid) => write!(f, "GR: {} (TS Filter={:?})", ch, tsid),
+                T::Terrestrial(ch, tsid) => write!(f, "Terrestrial: {} (TS Filter={:?})", ch, tsid),
                 T::Catv(ch, tsid) => write!(f, "CATV: {} (TS Filter={:?})", ch, tsid),
                 T::BS(ch, tsid) => write!(f, "BS: {}, {:?}", ch, tsid),
                 T::CS(ch, tsid) => write!(f, "CS: {}, {:?}", ch, tsid),
