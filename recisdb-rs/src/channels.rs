@@ -92,7 +92,7 @@ pub mod output {
                 ChannelType::BS(_, TsFilter::AsIs) | ChannelType::CS(_, TsFilter::AsIs) => None,
                 ChannelType::BS(_, TsFilter::AbsTsId(id))
                 | ChannelType::CS(_, TsFilter::AbsTsId(id)) => Some(id),
-                ChannelType::BS(_, TsFilter::RelTsNum(id)) => unimplemented!("NIT scan required."),
+                ChannelType::BS(_, TsFilter::RelTsNum(id)) if id < 12 => Some(id as u32),
                 _ => unreachable!(),
             };
 
@@ -173,6 +173,10 @@ pub struct Channel {
 }
 
 impl Channel {
+    pub fn get_raw_ch_name(&self) -> &str {
+        self.raw_string.as_str()
+    }
+
     pub fn new(ch_str: impl Into<String>, override_stream_id: Option<u32>) -> Self {
         let raw_string = ch_str.into();
 
@@ -285,9 +289,9 @@ impl Channel {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::output::*;
     use super::representation::*;
+    use super::*;
 
     #[test]
     fn test_terrestrial_ch_num() {
@@ -331,17 +335,17 @@ mod tests {
 
         let ch_str = "C13";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::Catv(13, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::Catv(13, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "C23";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::Catv(23, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::Catv(23, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "C63";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::Catv(63, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::Catv(63, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "C64";
@@ -417,7 +421,7 @@ mod tests {
 
         let ch_str = "CS2";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::CS(2, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::CS(2, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS03";
@@ -427,12 +431,12 @@ mod tests {
 
         let ch_str = "CS04";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::CS(4, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::CS(4, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS24";
         let ch = Channel::new(ch_str, None);
-        assert_eq!(ch.ch_type, ChannelType::CS(24, TsFilter::AsIs));
+        assert_eq!(ch.ch_type, ChannelType::CS(24, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
         let ch_str = "CS25";

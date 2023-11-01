@@ -1,14 +1,16 @@
+mod table;
+
 use crate::channels::output::DvbFreq;
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 use dvbv5::{DmxFd, FrontendId, FrontendParametersPtr};
 use dvbv5_sys::fe_delivery_system::{SYS_ISDBS, SYS_ISDBT};
-use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18, SEC_VOLTAGE_OFF};
+use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18};
 use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
 use dvbv5_sys::{
-    dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
-    DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
-    DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
+    dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DMX_CHECK_CRC, DMX_IMMEDIATE_START,
+    DTV_BANDWIDTH_HZ, DTV_FREQUENCY, DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION,
+    DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS, DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
@@ -17,6 +19,7 @@ use std::ffi::c_uint;
 use std::fs::File;
 use std::io::Error;
 use std::pin::Pin;
+use std::ptr::null_mut;
 use std::task::{Context, Poll};
 
 pub struct UnTunedTuner {
@@ -58,7 +61,7 @@ impl UnTunedTuner {
             let raw_freq: DvbFreq = ch.ch_type.clone().into();
 
             dvb_set_compat_delivery_system(p, sys as u32);
-            match (ch.ch_type, sys) {
+            match (&ch.ch_type, sys) {
                 (ChannelType::Terrestrial(..), SYS_ISDBT) | (ChannelType::Catv(..), SYS_ISDBT) => {
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ as c_uint, 6000000);
@@ -71,11 +74,40 @@ impl UnTunedTuner {
                 }
                 (ChannelType::BS(..), SYS_ISDBS) | (ChannelType::CS(..), SYS_ISDBS) => {
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
-                    dvbv5_sys::dvb_fe_store_parm(
-                        p,
-                        DTV_STREAM_ID as c_uint,
-                        raw_freq.stream_id.unwrap_or(NO_STREAM_ID_FILTER as u32),
-                    );
+                    let id = match raw_freq.stream_id {
+                        Some(id) if id < 12 => {
+                            // TODO: use NIT
+                            unsafe {
+                                dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, 0);
+                                dvbv5_sys::dvb_set_pesfilter(
+                                    self.demux.as_raw_fd(),
+                                    0x0010,
+                                    dmx_ts_pes::DMX_PES_OTHER,
+                                    dmx_output::DMX_OUT_TS_TAP,
+                                    8192,
+                                );
+                                dvbv5_sys::dvb_set_section_filter(
+                                    self.demux.as_raw_fd(),
+                                    0x2000,
+                                    18,
+                                    null_mut() as *mut _,
+                                    null_mut() as *mut _,
+                                    null_mut() as *mut _,
+                                    DMX_IMMEDIATE_START, // | DMX_CHECK_CRC
+                                );
+                            }
+
+                            dvbv5_sys::dvb_dmx_stop(self.demux.as_raw_fd());
+
+                            let (s, _) = table::get_tsid_tables();
+                            table::seek(s, ch.get_raw_ch_name())
+                                .unwrap_or(NO_STREAM_ID_FILTER as u32)
+                        }
+
+                        Some(id) => id,
+                        _ => NO_STREAM_ID_FILTER as u32,
+                    };
+                    dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, id);
                     match lnb {
                         Some(Voltage::High11v) => {
                             dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_13 as u32)
@@ -113,15 +145,15 @@ impl UnTunedTuner {
                 dmx_output::DMX_OUT_TS_TAP,
                 8192,
             );
-            // dvbv5_sys::dvb_set_section_filter(
-            //     self.demux.as_raw_fd(),
-            //     0x2000,
-            //     18,
-            //     null_mut() as *mut _,
-            //     null_mut() as *mut _,
-            //     null_mut() as *mut _,
-            //     DMX_IMMEDIATE_START | DMX_CHECK_CRC
-            // );
+            dvbv5_sys::dvb_set_section_filter(
+                self.demux.as_raw_fd(),
+                0x2000,
+                18,
+                null_mut() as *mut _,
+                null_mut() as *mut _,
+                null_mut() as *mut _,
+                DMX_IMMEDIATE_START | DMX_CHECK_CRC,
+            );
         }
 
         let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
