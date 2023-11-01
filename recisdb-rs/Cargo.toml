@@ -43,7 +43,7 @@ pin-project-lite = "0.2.9"
 
 [build-dependencies]
 bindgen = { version = "0.68.1", default_features = false }
-cargo-deb = "1.38.1"
+cargo-deb = "2.0.0"
 cc = "1.0.70"
 glob = "0.3"
 
