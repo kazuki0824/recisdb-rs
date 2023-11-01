@@ -157,7 +157,8 @@ impl UnTunedTuner {
                     DTV_STATUS as c_uint,
                     &mut stat as *mut fe_status as *mut _,
                 );
-                info!("Check signal level")
+                // TODO: ISDB-T で受信できない (放送されてない) チャンネルの場合はここが永遠にループしてしまうので、どこかでタイムアウト処理なりを入れるべきだろう
+                info!("Checking signal level...");
             }
         };
         // dmx

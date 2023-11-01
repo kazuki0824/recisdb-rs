@@ -60,16 +60,20 @@ pub mod output {
         fn from(value: ChannelType) -> Self {
             let freq: IoctlFreq = value.clone().into();
 
-            let hz = match &value {
-                ChannelType::Terrestrial(..) | ChannelType::Catv(..) => {
-                    if (freq.ch >= 3 && freq.ch < 12) || (freq.ch >= 22 && freq.ch <= 62) {
-                        /* CATV C13-C22ch, C23-C63ch */
-                        93143 + freq.ch * 6000 + freq.slot /* addfreq */
-                    } else if freq.ch == 12 {
-                        93143 + freq.ch * 6000 + freq.slot
-                    } else if freq.ch >= 63 && freq.ch <= 112 {
-                        /* UHF 13-62ch */
-                        95143 + freq.ch * 6000 + freq.slot /* addfreq */
+            let hz: u32 = match &value {
+                ChannelType::Terrestrial(ch_num, ..) => {
+                    /* UHF 13-62ch */
+                    let ch_num = *ch_num as u32;
+                    473142857 + (ch_num - 13) * 6000000
+                }
+                ChannelType::Catv(ch_num, ..) => {
+                    /* CATV C13-C22ch */
+                    let ch_num = *ch_num as u32;
+                    if ch_num >= 13 && ch_num <= 22 {
+                        111142857 + (ch_num - 13) * 6000000
+                    /* CATV C23-C63ch */
+                    } else if ch_num >= 23 && ch_num <= 63 {
+                        225142857 + (ch_num - 23) * 6000000
                     } else {
                         unreachable!()
                     }
@@ -79,10 +83,10 @@ pub mod output {
                         unreachable!()
                     } else if freq.ch < 12 {
                         /* BS */
-                        1049480 + (38360 * freq.ch)
+                        (1049480 + (38360 * freq.ch)) as u32
                     } else if freq.ch < 24 {
                         /* CS */
-                        1613000 + (40000 * (freq.ch - 12))
+                        (1613000 + (40000 * (freq.ch - 12))) as u32
                     } else {
                         unreachable!()
                     }
@@ -106,7 +110,7 @@ pub mod output {
             };
 
             Self {
-                freq_hz: hz as u32,
+                freq_hz: hz,
                 stream_id,
             }
         }
