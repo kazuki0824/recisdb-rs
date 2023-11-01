@@ -30,6 +30,9 @@ pub(crate) mod error_handler {
                 nix::libc::EBUSY => {
                     error!("The tuner device is busy.");
                 }
+                nix::libc::EACCES => {
+                    error!("Permission denied while opening the device.")
+                }
                 _ => {
                     error!(
                         "Cannot open the device. (Unexpected Linux error: {})",
@@ -67,6 +70,9 @@ pub(crate) mod error_handler {
                 }
                 nix::libc::EAGAIN => {
                     error!("Channel selection failed. The channel may not be received.");
+                }
+                nix::libc::EACCES => {
+                    error!("Permission denied.")
                 }
                 _ => {
                     error!(
@@ -143,7 +149,13 @@ pub(crate) fn get_output(path: Option<String>) -> Result<Box<dyn Write>, io::Err
                 if p.is_file() {
                     // If it is a file, we will write to this file.
                     // e.g. "/existing/path/to/file.txt"
-                    return Ok(Box::new(fs::File::create(p)?));
+                    return Ok(Box::new(
+                        fs::OpenOptions::new()
+                            .create(true)
+                            .write(true)
+                            .append(true)
+                            .open(p)?,
+                    ));
                 } else {
                     // If it is a directory, we will create a new file in this directory later.
                     // e.g. "/existing/path/to/directory"

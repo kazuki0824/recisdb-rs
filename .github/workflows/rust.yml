@@ -27,11 +27,11 @@ jobs:
     container:
       image: ${{ matrix.os }}
     steps:
-      - name: Install PCSC, git, build-essential, cmake, wget, clang, pkg-config
+      - name: Install PCSC, udev, dvbv5, git, build-essential, cmake, wget, clang, pkg-config
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install build-essential cmake libpcsclite-dev git wget clang pkg-config -qy
+          apt-get install build-essential cmake libpcsclite-dev libdvbv5-dev libudev-dev git wget clang pkg-config -qy
         if: matrix.os != 'alpine:latest'
       - name: Install PCSC, git, alpine-sdk, cmake, clang
         run: apk add --update alpine-sdk cmake pcsc-lite-dev git clang-static llvm-dev
@@ -49,14 +49,14 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Build
-        run: cargo build --workspace --verbose
+      - name: Check
+        run: cargo check --workspace --verbose -F dvb
         if: matrix.os != 'alpine:latest'
-      - name: Build
-        run: cargo build --workspace --verbose --no-default-features -F bg-static
+      - name: Check
+        run: cargo check --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
       - name: Run tests
-        run: cargo test --workspace --verbose
+        run: cargo test --workspace --verbose -F dvb
         if: matrix.os != 'alpine:latest'
       - name: Run tests
         run: cargo test --workspace --verbose --no-default-features -F bg-static

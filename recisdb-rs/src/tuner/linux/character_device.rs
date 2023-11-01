@@ -1,15 +1,16 @@
 use std::fs::File;
-use std::os::fd::AsRawFd;
+use std::os::fd::{AsRawFd, RawFd};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
 
-use crate::channels::{Channel, ChannelType, Freq};
-use crate::tuner::{Tunable, Voltage};
+use crate::channels::output::IoctlFreq;
+use crate::channels::{Channel, ChannelType};
+use crate::tuner::Voltage;
 
-nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, Freq);
+nix::ioctl_write_ptr!(set_ch, 0x8d, 0x01, IoctlFreq);
 nix::ioctl_none!(start_rec, 0x8d, 0x02);
 nix::ioctl_none!(stop_rec, 0x8d, 0x03);
 nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, i64);
@@ -30,31 +31,38 @@ impl UnTunedTuner {
             inner: BufReader::new(AllowStdIo::new(f)),
         })
     }
-}
-
-impl Tunable for UnTunedTuner {
-    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
+    pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         let f = self.inner.get_ref().get_ref();
 
-        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
-            Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
-            Some(Voltage::High15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
+            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
+            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(f.as_raw_fd())? },
         };
 
         let _errno = unsafe { start_rec(f.as_raw_fd()) }.unwrap();
 
+        let lnb_capab = match lnb {
+            None | Some(Voltage::Low) => None,
+            _ => Some(PowerOffHandle { fd: f.as_raw_fd() }),
+        };
+
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
+            _lnb_capab: lnb_capab,
         })
     }
 }
 
+pub(crate) struct PowerOffHandle {
+    fd: RawFd,
+}
+
 pub struct Tuner {
+    _lnb_capab: Option<PowerOffHandle>,
     inner: BufReader<AllowStdIo<File>>,
     channel: Channel,
 }
@@ -70,7 +78,7 @@ impl Tuner {
         };
 
         match self.channel.ch_type {
-            ChannelType::Terrestrial(_) => {
+            ChannelType::Terrestrial(..) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
                 (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
@@ -110,30 +118,27 @@ impl Tuner {
             }
         }
     }
-}
-
-impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
         const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();
 
-        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.to_ioctl_freq(OFFSET_K_HZ))? };
+        let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
-        match lnb {
-            Some(Voltage::High11v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? };
-            }
-            Some(Voltage::High15v) => {
-                let _errno = unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? };
-            }
-            _ => {
-                let _errno = unsafe { ptx_disable_lnb(f.as_raw_fd())? };
-            }
-        }
+        let _errno = match lnb {
+            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
+            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
+            _ => unsafe { ptx_disable_lnb(f.as_raw_fd())? },
+        };
+
+        let lnb_capab = match lnb {
+            None | Some(Voltage::Low) => None,
+            _ => Some(PowerOffHandle { fd: f.as_raw_fd() }),
+        };
 
         Ok(Tuner {
             inner: self.inner,
             channel: ch,
+            _lnb_capab: lnb_capab,
         })
     }
 }
@@ -155,5 +160,13 @@ impl AsyncBufRead for Tuner {
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
         Pin::new(&mut self.get_mut().inner).consume(amt)
+    }
+}
+
+impl Drop for PowerOffHandle {
+    fn drop(&mut self) {
+        unsafe {
+            ptx_disable_lnb(self.fd.clone()).unwrap();
+        }
     }
 }

@@ -1,4 +1,5 @@
 use clap::{ArgGroup, Parser, Subcommand};
+use clap_num::maybe_hex;
 
 use crate::tuner::Voltage;
 
@@ -43,7 +44,7 @@ pub(crate) enum Commands {
     /// The channel name is a string that is defined in the
     /// `channels` module.
     /// The recording directory is passed as an argument.
-    //key0 and key1 are optional, but if they are specified, they must be specified together
+    // key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
     ArgGroup::new("key")
     .args(& ["key0", "key1"])
@@ -67,6 +68,11 @@ pub(crate) enum Commands {
         /// `channels` module.
         #[clap(short, long, required = true)]
         channel: Option<String>,
+
+        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L DVB).
+        #[clap(long, value_parser=maybe_hex::<u32>)]
+        tsid: Option<u32>,
+
         /// The duration of the recording
         /// The duration of the recording is specified in seconds.
         /// If the duration is not specified, the recording will
@@ -100,13 +106,13 @@ pub(crate) enum Commands {
         #[clap(arg_enum, long = "lnb")]
         lnb: Option<Voltage>,
 
-        /// The first working key.
+        /// The first working key (only available w/ "crypto" feature).
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key.
+        /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
@@ -146,13 +152,13 @@ pub(crate) enum Commands {
         #[clap(long = "no-strip")]
         no_strip: bool,
 
-        /// The first working key.
+        /// The first working key (only available w/ "crypto" feature).
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
         #[clap(short = 'k', long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key.
+        /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
