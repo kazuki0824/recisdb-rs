@@ -16,13 +16,15 @@ categories = ["command-line-utilities"]
 #https://gitlab.alpinelinux.org/alpine/aports/-/issues/12226
 bg-static = ["bindgen/static"]
 bg-runtime = ["bindgen/runtime"]
+crypto = [ "b25-sys/block00cbc", "b25-sys/block40cbc" ]
 dvb = [ "dvbv5", "dvbv5-sys" ]
-default = ["bg-runtime"]
+default = [ "bg-runtime" ]
 
 [dependencies]
-b25-sys = { path = "../b25-sys", features = [] }
+b25-sys = { path = "../b25-sys" }
 chrono = "^0.4.26"
 clap = { version = "^3.2", features = ["derive"] }
+clap-num = "1"
 colored = "^2.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }

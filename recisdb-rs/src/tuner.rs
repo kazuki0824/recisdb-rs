@@ -14,8 +14,8 @@ mod error;
 
 #[derive(Debug, Clone, clap::ArgEnum)]
 pub enum Voltage {
-    High11v,
-    High15v,
+    _11v,
+    _15v,
     Low,
 }
 

@@ -37,8 +37,8 @@ impl UnTunedTuner {
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
-            Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
-            Some(Voltage::High15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
+            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
+            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(f.as_raw_fd())? },
         };
 
@@ -125,8 +125,8 @@ impl Tuner {
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
-            Some(Voltage::High11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
-            Some(Voltage::High15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
+            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 1)? },
+            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(f.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(f.as_raw_fd())? },
         };
 
