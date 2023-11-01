@@ -90,6 +90,7 @@ fn main() {
 
     let res = cm.build();
     println!("cargo:rustc-link-search=native={}/lib", res.display());
+    println!("cargo:rustc-link-search=native={}/lib64", res.display());
 
     // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");
