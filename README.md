@@ -36,8 +36,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```bash
 git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
-sudo apt install -y build-essential cmake clang libpcsclite-dev pkg-config
-cargo build --release
+sudo apt install -y build-essential cmake clang libpcsclite-dev pkg-config libdvbv5-dev
+cargo build -F dvb --release
 sudo cp -a target/release/recisdb /usr/local/bin
 ```
 
@@ -51,12 +51,14 @@ Rust がインストールされている場合は、上記のコマンドでビ
 - `decode` `-i [ <input_path> | - ] [ <output_path> | - ]`
 - `checksignal` `-c <channel> -device <device>`
 
-チャンネルは以下のように、物理チャンネルで指定します。
+チャンネルは以下のような記法で、物理チャンネルで指定します。
 
+- -c 24 (地上波: 24ch)
 - -c T24 (地上波: 24ch)
 - -c T60 (地上波: 60ch: 通常地上波は 52ch までだが、CATV のコミュニティチャンネルでは 62ch まで使われていることがある)
 - -c C30 (CATV: 30ch)
-- -c BS01_0 (BS: BS01/TS0)
+- -c BS1_0 (BS: BS01/TS0)
+- -c BS03 --tsid 16433 (BS: BS03/TS1(TSID=0x4031))
 - -c BS23_3 (BS: BS23/TS3)
 - -c CS02 (CS: ND02)
 - -c CS24 (CS: ND24)
@@ -64,19 +66,19 @@ Rust がインストールされている場合は、上記のコマンドでビ
 ### Linux
 
 ```bash
-recisdb tune --device /dev/px4video0 -c T18 - | ffplay -i -
-recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts
+recisdb checksignal --device /dev/px4video2 -c T18  # キャラクタデバイスをオープンし、地上波 18ch を選局
+recisdb tune --device /dev/px4video0 -c BS3_1 --lnb low - | ffplay -i -  # キャラクタデバイスをオープンし、BS3 の相対TS番号 1 を選局（LNB なし）
+recisdb tune --device /dev/dvb/adapter2/frontend0 -c BS03_1 --lnb low - | ffplay -i -  # DVB デバイスをオープンし、BS3 の相対TS番号 1 を選局
+recisdb tune --device "2|0" -c BS3 --tsid 0x4031 --lnb low - | ffplay -i -  # 略記法で DVB デバイスをオープンし、BS3 の TSID=0x4031 を選局（LNB なし）
+recisdb decode -i $HOME/hoge.m2ts ./descrambled.m2ts  # ローカルに置かれたファイルのスクランブル解除
 ```
 
-Video4Linux DVB デバイスは、dvbv5-zap の出力を標準入力から受ける形で対応します。
+フィーチャーフラグ`dvb`を有効にすると、DVBデバイスでの録画がサポートされます。  
+DVB 版ドライバをお使いの場合、BS のみ V4L-DVB ドライバの API 仕様上選局時に TSID を明示的に指定する必要があるため、recisdb には BS の各スロットごとの TSID がハードコードされています。
+DVB 版ドライバでは、チューナの TMCC 情報へのアクセス手段がなく、このような制約が発生します。   
+そのため、今後 BS の帯域再編が行われた場合、recisdb 本体を更新する必要があります。
+可能であれば、BS の選局時に相対 TS 番号を利用でき、ハードコードされた TSID に依存しない chardev 版ドライバへの切り替えをおすすめします。
 
-```bash
-export ADAPTER=1
-export CHANNEL=13
-
-curl -fsSL 'https://raw.githubusercontent.com/Chinachu/dvbconf-for-isdb/master/conf/dvbv5_channels_isdbt.conf' --output-dir ~/ && \
-dvbv5-zap -a $ADAPTER -c ~/dvbv5_channels_isdbt.conf -r -P $CHANNEL -o - | recisdb decode -i - - | ffplay -i -
-```
 
 ### Windows
 
