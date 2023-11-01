@@ -4,6 +4,7 @@ use log::{error, warn};
 
 pub mod output {
     use crate::channels::representation::{ChannelType, TsFilter};
+    use log::error;
 
     #[repr(C)]
     #[allow(dead_code)]
@@ -27,7 +28,10 @@ pub mod output {
                     ch_num / 2
                 }
 
-                ChannelType::Bon(_) => unimplemented!(),
+                ChannelType::BonCh(_) | ChannelType::BonChSpace(_) => {
+                    error!("{:?} is not supported in Linux.", value);
+                    std::process::exit(-1)
+                }
                 _ => unreachable!("Invalid channel."),
             };
             let slot = match value {
@@ -83,7 +87,12 @@ pub mod output {
                         unreachable!()
                     }
                 }
-                _ => unreachable!(),
+
+                ChannelType::BonCh(_) | ChannelType::BonChSpace(_) => {
+                    error!("{:?} is not supported in Linux.", value);
+                    std::process::exit(-1)
+                }
+                _ => unreachable!("Invalid channel."),
             };
 
             let stream_id = match value {
@@ -128,7 +137,8 @@ mod representation {
         Catv(u8, TsFilter),
         BS(u8, TsFilter),
         CS(u8, TsFilter),
-        Bon(ChannelSpace),
+        BonCh(u8),
+        BonChSpace(ChannelSpace),
         Undefined,
     }
 
@@ -142,7 +152,8 @@ mod representation {
                 T::Catv(ch, tsid) => write!(f, "CATV: {} (TS Filter={:?})", ch, tsid),
                 T::BS(ch, tsid) => write!(f, "BS: {}, {:?}", ch, tsid),
                 T::CS(ch, tsid) => write!(f, "CS: {}, {:?}", ch, tsid),
-                T::Bon(ChannelSpace { ch, space, .. }) => {
+                T::BonCh(ch) => write!(f, "BonDriver: Ch={ch}"),
+                T::BonChSpace(ChannelSpace { ch, space, .. }) => {
                     write!(f, "BonDriver: Ch={ch}, Space={space}")
                 }
                 _ => write!(f, "Undefined"),
@@ -173,6 +184,7 @@ pub struct Channel {
 }
 
 impl Channel {
+    #[allow(unused)]
     pub fn get_raw_ch_name(&self) -> &str {
         self.raw_string.as_str()
     }
@@ -181,7 +193,7 @@ impl Channel {
         let raw_string = ch_str.into();
 
         let ch_type = if let Ok(val) = raw_string.parse::<u8>() {
-            ChannelType::Terrestrial(val, AsIs)
+            ChannelType::BonCh(val)
         } else {
             // Parse
             match parser::get_result(&raw_string) {
@@ -225,7 +237,7 @@ impl Channel {
                     }
                 }
                 _ => match parser::parse_integer_pair(&raw_string) {
-                    Ok((_, (first, second))) => ChannelType::Bon(ChannelSpace {
+                    Ok((_, (first, second))) => ChannelType::BonChSpace(ChannelSpace {
                         space: first,
                         ch: second,
                         space_description: None,
@@ -268,7 +280,7 @@ impl Channel {
                     assert_range(2, 24, ch)
                 }
             }
-            ChannelType::Bon(_) => true,
+            ChannelType::BonChSpace(_) => true,
             _ => false,
         };
 
@@ -456,7 +468,7 @@ mod tests {
         let ch = Channel::new(ch_str, None);
         assert_eq!(
             ch.ch_type,
-            ChannelType::Bon(ChannelSpace {
+            ChannelType::BonChSpace(ChannelSpace {
                 space: 1,
                 ch: 2,
                 space_description: None,
