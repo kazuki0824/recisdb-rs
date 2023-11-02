@@ -158,6 +158,7 @@ impl UnTunedTuner {
                     &mut stat as *mut fe_status as *mut _,
                 );
                 // TODO: ISDB-T で受信できない (放送されてない) チャンネルの場合はここが永遠にループしてしまうので、どこかでタイムアウト処理なりを入れるべきだろう
+                // あとこのログ自体の表現も適切ではないので、適切な文言に変えるべき (もしくは廃止する)
                 info!("Checking signal level...");
             }
         };
