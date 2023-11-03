@@ -25,7 +25,7 @@ pin_project! {
             //Release the decoder instance
             unsafe {
                 if let Some(cas) = this.get_mut().cas.take() {
-                   cas.release.unwrap()(cas.as_ref() as *const B_CAS_CARD as *mut ::std::os::raw::c_void);
+                    drop(cas)
                 }
             }
 

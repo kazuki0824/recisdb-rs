@@ -546,7 +546,7 @@ fn bindgen_test_layout_B_CAS_ECM_RESULT() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct B_CAS_CARD {
     pub private_data: *mut ::std::os::raw::c_void,
     pub release: ::std::option::Option<unsafe extern "C" fn(bcas: *mut ::std::os::raw::c_void)>,
@@ -601,6 +601,13 @@ impl B_CAS_CARD {
         }
     }
 }
+
+impl Drop for B_CAS_CARD {
+    fn drop(&mut self) {
+        unsafe { self.release.unwrap()(self as *mut B_CAS_CARD as *mut ::std::os::raw::c_void) }
+    }
+}
+
 #[test]
 fn bindgen_test_layout_B_CAS_CARD() {
     const UNINIT: ::std::mem::MaybeUninit<B_CAS_CARD> = ::std::mem::MaybeUninit::uninit();
