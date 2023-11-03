@@ -10,7 +10,7 @@ use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
 use dvbv5_sys::{
     dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
     DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
-    DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
+    DTV_STAT_CNR, DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
@@ -194,7 +194,19 @@ pub struct Tuner {
 
 pub enum TunedDvbInternalState {
     Locked,
-    NitScan
+    NitScan,
+}
+
+impl Tuner {
+    pub fn signal_quality(&self) -> f64 {
+        let p = self.inner.frontend.get_c_ptr();
+        unsafe {
+            let mut stat = 0u32;
+            dvbv5_sys::dvb_fe_get_stats(p);
+            dvbv5_sys::dvb_fe_retrieve_stats(p, DTV_STAT_CNR as c_uint, &mut stat as *mut _);
+            stat as f64 / 655.35
+        }
+    }
 }
 
 impl AsyncRead for Tuner {
