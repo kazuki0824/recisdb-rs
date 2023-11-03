@@ -79,23 +79,23 @@ Rust をインストールしたら、上記のコマンドで recisdb をビル
 
 recisdb には、3 つのサブコマンドがあります。
 
+`recisdb checksignal` : チャンネルを選局し、信号レベル (dB) を確認します。
 ```bash
 recisdb checksignal [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL>
-```
-
-`recisdb checksignal` : チャンネルを選局し、信号レベル (dB) を確認します。
-
-```bash
-recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
-```
+```  
 
 `recisdb tune` : チャンネルを選局し、指定された出力先に受信した TS データを書き出します。
+```bash
+recisdb tune [OPTIONS] --device <CANONICAL_PATH> -k --channel <CHANNEL> <OUTPUT>
+```
+> [!NOTE]  
+> ** v1.2.0 から `-k` オプションが追加されました。 **  
+> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了せずにデコーダーなしで処理を続行します。  
 
+`recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 ```bash
 recisdb decode [OPTIONS] --input <file> <OUTPUT>
 ```
-
-`recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 
 詳しいオプションは `recisdb --help` / `recisdb <SUBCOMMAND> --help` を参照してください。
 
@@ -132,8 +132,8 @@ recisdb decode [OPTIONS] --input <file> <OUTPUT>
 Linux では、キャラクタデバイス (chardev) または DVBv5 デバイスを指定して選局します。
 
 > [!NOTE]  
-> **DVBv5 デバイスのサポートは v1.2.0 から追加されたものです。**  
-> v1.1.0 以前のバージョンでは、DVBv5 デバイスを操作することはできません。
+> **DVB デバイスのサポートは v1.2.0 から追加されたものです。**  
+> v1.1.0 以前のバージョンでは、DVB デバイスを操作することはできません。
 
 > [!WARNING]  
 > **DVB 版ドライバ利用時のみ、BS の選局にはスロット番号 (相対 TS 番号) ではなく、recisdb 本体にハードコードされた各スロットと TSID の対照表が利用されます。**  
