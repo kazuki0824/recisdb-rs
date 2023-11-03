@@ -98,6 +98,10 @@ pub(crate) enum Commands {
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
 
+        /// Continue on error when the decoding failed while processing.
+        #[clap(short = 'k', long)]
+        continue_on_error: bool,
+
         /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
         #[clap(long = "no-decode")]
@@ -121,13 +125,13 @@ pub(crate) enum Commands {
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'k', long = "key0")]
+        #[clap(long = "key0")]
         key0: Option<Vec<String>>,
         /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'K', long = "key1")]
+        #[clap(long = "key1")]
         key1: Option<Vec<String>>,
 
         /// The location of the output.
@@ -167,13 +171,13 @@ pub(crate) enum Commands {
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'k', long = "key0")]
+        #[clap(long = "key0")]
         key0: Option<Vec<String>>,
         /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'K', long = "key1")]
+        #[clap(long = "key1")]
         key1: Option<Vec<String>>,
 
         /// The location of the output.

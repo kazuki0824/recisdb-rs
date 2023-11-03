@@ -21,7 +21,7 @@ pin_project! {
         o: AllowStdIo<Box<dyn Write>>,
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
-        abandon_decoder: bool,
+        abandon_decoder: Option<bool>,
         abort: Arc<AtomicBool>,
         progress_tx: std::sync::mpsc::Sender<u64>,
     }
@@ -33,14 +33,18 @@ impl AsyncInOutTriple {
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
         config: Option<DecoderOptions>,
+        continue_on_error: bool,
     ) -> (Self, std::sync::mpsc::Receiver<u64>) {
         let raw = config.and_then(|op| match StreamDecoder::new(op) {
             Ok(raw) => Some(raw),
-            Err(e) => {
+            Err(e) if continue_on_error => {
                 error!("Failed to initialize the decoder. ({})", e);
                 info!("Disabling decoding and continue...");
                 // As a fallback, disable decoding and continue processing
                 None
+            }
+            Err(e) => {
+                todo!("{}", e) // early return
             }
         });
 
@@ -72,7 +76,7 @@ impl AsyncInOutTriple {
                 amt: 0,
                 abort,
                 progress_tx,
-                abandon_decoder: false,
+                abandon_decoder: if continue_on_error { Some(false) } else { None },
             },
             progress_rx,
         )
@@ -88,7 +92,7 @@ impl Future for AsyncInOutTriple {
         let _ = this.progress_tx.send(*this.amt);
 
         match this.dec.get_mut() {
-            Some(ref mut dec) if !*this.abandon_decoder => {
+            Some(ref mut dec) if !this.abandon_decoder.unwrap_or(false) => {
                 //    A.         B.
                 // In -> Decoder -> Out
                 if !this.abort.load(Ordering::Relaxed) {
@@ -107,12 +111,13 @@ impl Future for AsyncInOutTriple {
                                 *this.amt += i as u64;
                                 this.i.as_mut().consume(i);
                             }
-                            Err(e) => {
+                            Err(e) if this.abandon_decoder.is_some() => {
                                 // Enable bypassing a decoder
-                                *this.abandon_decoder = true;
+                                *this.abandon_decoder = Some(true);
                                 error!("Unexpected failure in the decoder({}).", e);
                                 warn!("Falling back to decoder-less mode...")
                             }
+                            Err(e) => return Poll::Ready(Err(e)),
                         }
                     }
 

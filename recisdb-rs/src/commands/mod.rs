@@ -73,6 +73,7 @@ pub(crate) fn process_command(
             no_simd,
             no_strip,
             output,
+            continue_on_error,
         } => {
             // Get channel
             let channel = channel.map(|ch| Channel::new(ch, tsid)).unwrap();
@@ -124,7 +125,7 @@ pub(crate) fn process_command(
                 })
             };
 
-            let (body, _) = AsyncInOutTriple::new(input, output, dec);
+            let (body, _) = AsyncInOutTriple::new(input, output, dec, continue_on_error);
             info!("Recording...");
             (body, rec_duration, None)
         }
@@ -156,7 +157,7 @@ pub(crate) fn process_command(
                 ..DecoderOptions::default()
             });
 
-            let (body, progress) = AsyncInOutTriple::new(input, output, dec);
+            let (body, progress) = AsyncInOutTriple::new(input, output, dec, false);
             info!("Decoding...");
             (body, None, input_sz.map(|sz| (sz, progress)))
         }
