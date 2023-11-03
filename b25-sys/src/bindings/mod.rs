@@ -23,10 +23,8 @@ pin_project! {
     impl PinnedDrop for InnerDecoder {
         fn drop(this: Pin<&mut Self>) {
             //Release the decoder instance
-            unsafe {
-                if let Some(cas) = this.get_mut().cas.take() {
-                    drop(cas)
-                }
+            if let Some(cas) = this.get_mut().cas.take() {
+                drop(cas)
             }
 
             debug!("InnerDecoder has been released.")
