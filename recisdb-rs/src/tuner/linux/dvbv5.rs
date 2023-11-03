@@ -14,7 +14,7 @@ use dvbv5_sys::{
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
-use log::{info, warn, error};
+use log::{error, info, warn};
 use std::ffi::c_uint;
 use std::fs::File;
 use std::io::Error;
@@ -160,9 +160,9 @@ impl UnTunedTuner {
 
                 if counter > 5 {
                     info!("frontend doesn't lock");
-                    break
+                    break;
                 } else {
-                    counter+=1;
+                    counter += 1;
                 }
             }
         };

@@ -85,9 +85,7 @@ impl AsyncRead for Tuner {
     ) -> Poll<std::io::Result<usize>> {
         match self.get_mut() {
             #[cfg(feature = "dvb")]
-            Tuner::DvbV5(_) => {
-                todo!()
-            }
+            Tuner::DvbV5(inner) => Pin::new(inner).poll_read(cx, buf),
             Tuner::Character(inner) => Pin::new(inner).poll_read(cx, buf),
         }
     }

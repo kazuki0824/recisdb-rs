@@ -37,7 +37,11 @@ pub(crate) fn process_command(
                 std::process::exit(1);
             }
             info!("Tuner: {}", device);
-            info!("Channel: {} / {}", channel.get_raw_ch_name(), channel.ch_type);
+            info!(
+                "Channel: {} / {}",
+                channel.get_raw_ch_name(),
+                channel.ch_type
+            );
 
             // Open tuner and tune to channel
             let tuned = match UnTunedTuner::new(device)
@@ -77,7 +81,11 @@ pub(crate) fn process_command(
                 std::process::exit(1);
             }
             info!("Tuner: {}", device.clone().unwrap());
-            info!("Channel: {} / {}", channel.get_raw_ch_name(), channel.ch_type);
+            info!(
+                "Channel: {} / {}",
+                channel.get_raw_ch_name(),
+                channel.ch_type
+            );
 
             // Recording duration
             let rec_duration = time.map(Duration::from_secs_f64);
