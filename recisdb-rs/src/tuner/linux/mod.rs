@@ -59,15 +59,23 @@ impl Tuner {
     pub fn signal_quality(&self) -> f64 {
         match self {
             #[cfg(feature = "dvb")]
-            Tuner::DvbV5(_) => {
-                todo!()
-            }
+            Tuner::DvbV5(inner) => inner.
             Tuner::Character(inner) => inner.signal_quality(),
         }
     }
 }
 
 impl Tunable for UnTunedTuner {
+    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
+        match self {
+            #[cfg(feature = "dvb")]
+            UnTunedTuner::DvbV5(inner) => Ok(Tuner::DvbV5(inner.tune(ch, lnb)?)),
+            UnTunedTuner::Character(inner) => Ok(Tuner::Character(inner.tune(ch, lnb)?)),
+        }
+    }
+}
+
+impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
         match self {
             #[cfg(feature = "dvb")]

@@ -180,6 +180,7 @@ impl UnTunedTuner {
         let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
         Ok(Tuner {
             inner: self,
+            state: TunedDvbInternalState::Locked,
             stream: BufReader::new(AllowStdIo::new(f)),
         })
     }
@@ -187,7 +188,13 @@ impl UnTunedTuner {
 
 pub struct Tuner {
     inner: UnTunedTuner,
+    state: TunedDvbInternalState,
     stream: BufReader<AllowStdIo<File>>,
+}
+
+pub enum TunedDvbInternalState {
+    Locked,
+    NitScan
 }
 
 impl AsyncRead for Tuner {
