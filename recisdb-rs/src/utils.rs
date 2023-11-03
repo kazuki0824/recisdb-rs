@@ -1,8 +1,11 @@
+#[allow(unused_imports)]
 use chrono::Local;
+#[allow(unused_imports)]
 use colored::*;
 use env_logger::{Builder, Env};
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{info, Level};
+use log::info;
+#[allow(unused_imports)]
 use std::io::Write;
 
 pub(crate) enum StreamExitType {
@@ -13,22 +16,26 @@ pub(crate) enum StreamExitType {
 }
 
 pub(crate) fn initialize_logger() {
+    #[cfg(debug_assertions)]
+    Builder::from_env(Env::default().default_filter_or("info")).init();
+
+    #[cfg(debug_assertions)]
     Builder::from_env(Env::default().default_filter_or("info"))
         .format(|buf, record| {
             let local_time = Local::now().format("%Y/%m/%d %H:%M:%S");
             let level = match record.level() {
-                Level::Error => "ERROR".red(),
-                Level::Warn => "WARNING".yellow(),
-                Level::Info => "INFO".green(),
-                Level::Debug => "DEBUG".cyan(),
-                Level::Trace => "TRACE".blue(),
+                log::Level::Error => "ERROR".red(),
+                log::Level::Warn => "WARNING".yellow(),
+                log::Level::Info => "INFO".green(),
+                log::Level::Debug => "DEBUG".cyan(),
+                log::Level::Trace => "TRACE".blue(),
             };
             let level_padding = match record.level() {
-                Level::Error => ":  ",
-                Level::Warn => ":",
-                Level::Info => ":   ",
-                Level::Debug => ":  ",
-                Level::Trace => ":  ",
+                log::Level::Error => ":  ",
+                log::Level::Warn => ":",
+                log::Level::Info => ":   ",
+                log::Level::Debug => ":  ",
+                log::Level::Trace => ":  ",
             };
             writeln!(
                 buf,
