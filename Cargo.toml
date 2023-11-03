@@ -1,5 +1,10 @@
 [workspace]
+resolver = "2"
 members = [
   "b25-sys",
   "recisdb-rs"
 ]
+
+[patch.crates-io]
+dvbv5 = { git = "https://gitlab.com/kazuki08241/rust-libdvbv5.git", branch = "make-fd-ptr-public" }
+dvbv5-sys = { git = "https://gitlab.com/kazuki08241/rust-libdvbv5-sys.git", branch = "fix/latest-bindgen-unaligned-access" }

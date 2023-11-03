@@ -40,8 +40,49 @@ fn main() {
              */
             cm.profile("Release");
         } else if cfg!(target_env = "gnu") {
-            cm.generator("MinGW Makefiles");
-            println!("cargo:rustc-link-lib=ucrt");
+            match std::env::var("MSYSTEM") {
+                Ok(sys_name) if sys_name.to_lowercase().contains("mingw64") => {
+                    cm.generator("Ninja");
+                    #[cfg(debug_assertions)]
+                    println!("cargo:rustc-link-lib=msvcrtd");
+                    #[cfg(not(debug_assertions))]
+                    println!("cargo:rustc-link-lib=msvcrt");
+                    println!("cargo:rustc-link-lib=ucrtbase");
+                }
+                Ok(sys_name) => {
+                    panic!("target_env:={sys_name} not supported.")
+                }
+                _ => {
+                    // TODO
+                    cm.generator("MinGW Makefiles");
+                    #[cfg(debug_assertions)]
+                    println!("cargo:rustc-link-lib=msvcrtd");
+                    #[cfg(not(debug_assertions))]
+                    println!("cargo:rustc-link-lib=msvcrt");
+                    println!("cargo:rustc-link-lib=ucrtbase");
+                }
+            }
+        } else if cfg!(target_env = "gnullvm") {
+            match std::env::var("MSYSTEM") {
+                Ok(sys_name) if sys_name.to_lowercase().contains("ucrt") => {
+                    cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=ucrt");
+                }
+                Ok(sys_name) if sys_name.to_lowercase().contains("clang") => {
+                    cm.generator("Ninja");
+                    println!("cargo:rustc-link-lib=ucrt");
+                }
+                Ok(sys_name) => {
+                    panic!("target_env:={sys_name} not supported.")
+                }
+                _ => {
+                    // TODO
+                    cm.generator("MinGW Makefiles");
+                    println!("cargo:rustc-link-lib=ucrt");
+                    // println!("cargo:rustc-link-lib=vcruntime140");
+                }
+            }
+            // llvm-mingw
         }
         println!("cargo:rustc-link-search=native=C:\\Windows\\System32");
         println!("cargo:rustc-link-lib=dylib=winscard");
@@ -49,6 +90,7 @@ fn main() {
 
     let res = cm.build();
     println!("cargo:rustc-link-search=native={}/lib", res.display());
+    println!("cargo:rustc-link-search=native={}/lib64", res.display());
 
     // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");

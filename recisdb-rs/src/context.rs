@@ -1,4 +1,5 @@
 use clap::{ArgGroup, Parser, Subcommand};
+use clap_num::maybe_hex;
 
 use crate::tuner::Voltage;
 
@@ -23,13 +24,24 @@ pub(crate) enum Commands {
         /// The device name.
         /// This is the name of the device as specified in the
         /// `/dev/` directory.
-        #[clap(short, long, required = true, value_name = "CANONICAL_PATH")]
+        /// To use this option, you must specify the `-c` option.
+        /// When the device is a BonDriver-based device,
+        /// the name of the dll comes here.
+        /// When the device is a Unix chardev-based device,
+        /// the canonical path of the device comes here.
+        #[clap(short, long, value_name = "CANONICAL_PATH", required = true)]
         device: String,
+
         /// The channel name.
         /// The channel name is a string that is defined in the
         /// `channels` module.
         #[clap(short, long, required = true)]
         channel: Option<String>,
+
+        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L DVB).
+        #[clap(long, value_parser=maybe_hex::<u32>)]
+        tsid: Option<u32>,
+
         /// LNB voltage.
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
@@ -43,7 +55,7 @@ pub(crate) enum Commands {
     /// The channel name is a string that is defined in the
     /// `channels` module.
     /// The recording directory is passed as an argument.
-    //key0 and key1 are optional, but if they are specified, they must be specified together
+    // key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
     ArgGroup::new("key")
     .args(& ["key0", "key1"])
@@ -67,6 +79,11 @@ pub(crate) enum Commands {
         /// `channels` module.
         #[clap(short, long, required = true)]
         channel: Option<String>,
+
+        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L DVB).
+        #[clap(long, value_parser=maybe_hex::<u32>)]
+        tsid: Option<u32>,
+
         /// The duration of the recording
         /// The duration of the recording is specified in seconds.
         /// If the duration is not specified, the recording will
@@ -80,6 +97,10 @@ pub(crate) enum Commands {
         /// continue until the duration is over.
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
+
+        /// Continue on error when the decoding failed while processing.
+        #[clap(short = 'k', long)]
+        continue_on_error: bool,
 
         /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
@@ -100,17 +121,17 @@ pub(crate) enum Commands {
         #[clap(arg_enum, long = "lnb")]
         lnb: Option<Voltage>,
 
-        /// The first working key.
+        /// The first working key (only available w/ "crypto" feature).
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'k', long = "key0")]
+        #[clap(long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key.
+        /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'K', long = "key1")]
+        #[clap(long = "key1")]
         key1: Option<Vec<String>>,
 
         /// The location of the output.
@@ -146,17 +167,17 @@ pub(crate) enum Commands {
         #[clap(long = "no-strip")]
         no_strip: bool,
 
-        /// The first working key.
+        /// The first working key (only available w/ "crypto" feature).
         /// The first working key is a 64-bit hexadecimal number.
         /// If the first working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'k', long = "key0")]
+        #[clap(long = "key0")]
         key0: Option<Vec<String>>,
-        /// The second working key.
+        /// The second working key (only available w/ "crypto" feature).
         /// The second working key is a 64-bit hexadecimal number.
         /// If the second working key is not specified, this subcommand
         /// will not decode ECM.
-        #[clap(short = 'K', long = "key1")]
+        #[clap(long = "key1")]
         key1: Option<Vec<String>>,
 
         /// The location of the output.

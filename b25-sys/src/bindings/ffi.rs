@@ -2,7 +2,7 @@ use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
 use crate::access_control::select_key_by_auth;
-use log::{debug, info, warn};
+use log::{info, warn};
 
 use crate::bindings::arib_std_b25::{
     wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,

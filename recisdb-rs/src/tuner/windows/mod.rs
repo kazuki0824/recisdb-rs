@@ -1,4 +1,5 @@
 use std::io;
+use std::io::ErrorKind;
 use std::mem::ManuallyDrop;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -107,20 +108,23 @@ impl UnTunedTuner {
 impl Tunable for UnTunedTuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
         // Tune
-        if let Some(phy_ch) = ch.try_get_physical_num() {
-            self.inner.get_ref().interface.SetChannel(phy_ch)?;
-        } else if let ChannelType::Bon(space) = ch.clone().ch_type {
-            self.inner
+        match &ch.ch_type {
+            ChannelType::BonCh(phy_ch) => self.inner.get_ref().interface.SetChannel(*phy_ch)?,
+            ChannelType::BonChSpace(space) => self
+                .inner
                 .get_ref()
                 .interface
-                .SetChannelBySpace(space.space, space.ch)?;
+                .SetChannelBySpace(space.space, space.ch)?,
+            other => {
+                return Err(io::Error::new(
+                    ErrorKind::Other,
+                    format!("{:?} is not supported in Windows.", other),
+                ))
+            }
         }
 
         // LNB
-        if matches!(
-            (&ch.ch_type, lnb),
-            (ChannelType::BS(..) | ChannelType::CS(_), Some(_))
-        ) {
+        if lnb.is_some() {
             self.inner.get_ref().interface.SetLnbPower(1).unwrap();
         }
 
@@ -133,26 +137,25 @@ impl Tunable for UnTunedTuner {
 
 pub struct Tuner {
     inner: BufReader<BonDriverInner>,
+    #[allow(unused)]
     ch: Channel,
 }
 
 impl Tunable for Tuner {
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, io::Error> {
         // Tune
-        if let Some(phy_ch) = ch.try_get_physical_num() {
-            self.inner.get_ref().interface.SetChannel(phy_ch)?;
-        } else if let ChannelType::Bon(space) = ch.clone().ch_type {
-            self.inner
+        match &ch.ch_type {
+            ChannelType::BonCh(phy_ch) => self.inner.get_ref().interface.SetChannel(*phy_ch)?,
+            ChannelType::BonChSpace(space) => self
+                .inner
                 .get_ref()
                 .interface
-                .SetChannelBySpace(space.space, space.ch)?;
+                .SetChannelBySpace(space.space, space.ch)?,
+            _ => {}
         }
 
         // LNB
-        if matches!(
-            (&ch.ch_type, lnb),
-            (ChannelType::BS(..) | ChannelType::CS(_), Some(_))
-        ) {
+        if lnb.is_some() {
             self.inner.get_ref().interface.SetLnbPower(1).unwrap();
         }
 
