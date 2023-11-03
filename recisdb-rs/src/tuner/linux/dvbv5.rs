@@ -10,16 +10,15 @@ use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
 use dvbv5_sys::{
     dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
     DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
-    DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
+    DTV_STAT_CNR, DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
-use log::{info, warn};
+use log::{error, info, warn};
 use std::ffi::c_uint;
 use std::fs::File;
 use std::io::Error;
 use std::pin::Pin;
-use std::ptr::null_mut;
 use std::task::{Context, Poll};
 
 pub struct UnTunedTuner {
@@ -36,9 +35,20 @@ impl UnTunedTuner {
                 frontend_number: fe_number,
             };
 
-            let f = FrontendParametersPtr::new(&frontend_id, Some(1), Some(false))
-                .expect("Something went wrong while opening DVB frontend.");
-            let d = DmxFd::new(&frontend_id).expect("Failed to open the demuxer");
+            let f = match FrontendParametersPtr::new(&frontend_id, Some(1), Some(false)) {
+                Ok(f) => f,
+                Err(_) => {
+                    error!("Cannot open the device. (Something went wrong while opening DVB frontend device)");
+                    std::process::exit(1);
+                }
+            };
+            let d = match DmxFd::new(&frontend_id) {
+                Ok(d) => d,
+                Err(_) => {
+                    error!("Cannot open the device. (Something went wrong while opening DVB demux device)");
+                    std::process::exit(1);
+                }
+            };
 
             (f, d)
         };
@@ -131,11 +141,14 @@ impl UnTunedTuner {
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
-                _ => panic!("Wrong frontend specified"),
+                _ => {
+                    error!("The specified channel is invalid.");
+                    std::process::exit(1);
+                }
             };
 
             let mut stat: fe_status = fe_status::FE_NONE;
-            let mut _res = 0;
+            let (mut _res, mut counter) = (0, 0);
             while (stat as u8 & FE_HAS_LOCK as u8) == 0 {
                 std::thread::sleep(WAIT_DUR);
                 _res = dvbv5_sys::dvb_fe_get_stats(p);
@@ -144,7 +157,13 @@ impl UnTunedTuner {
                     DTV_STATUS as c_uint,
                     &mut stat as *mut fe_status as *mut _,
                 );
-                info!("Check signal level")
+
+                if counter > 5 {
+                    info!("frontend doesn't lock");
+                    break;
+                } else {
+                    counter += 1;
+                }
             }
         };
         // dmx
@@ -161,6 +180,7 @@ impl UnTunedTuner {
         let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
         Ok(Tuner {
             inner: self,
+            state: TunedDvbInternalState::Locked,
             stream: BufReader::new(AllowStdIo::new(f)),
         })
     }
@@ -168,7 +188,25 @@ impl UnTunedTuner {
 
 pub struct Tuner {
     inner: UnTunedTuner,
+    state: TunedDvbInternalState,
     stream: BufReader<AllowStdIo<File>>,
+}
+
+pub enum TunedDvbInternalState {
+    Locked,
+    NitScan,
+}
+
+impl Tuner {
+    pub fn signal_quality(&self) -> f64 {
+        let p = self.inner.frontend.get_c_ptr();
+        unsafe {
+            let mut stat = 0u32;
+            dvbv5_sys::dvb_fe_get_stats(p);
+            dvbv5_sys::dvb_fe_retrieve_stats(p, DTV_STAT_CNR as c_uint, &mut stat as *mut _);
+            stat as f64 / 655.35
+        }
+    }
 }
 
 impl AsyncRead for Tuner {

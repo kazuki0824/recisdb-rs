@@ -119,7 +119,6 @@ impl Tuner {
         }
     }
     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        const OFFSET_K_HZ: i32 = 0; // TODO: Investigate offset more
         let f = self.inner.get_ref().get_ref();
 
         let _errno = unsafe { set_ch(f.as_raw_fd(), &ch.ch_type.clone().into())? };

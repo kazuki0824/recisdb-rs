@@ -24,13 +24,24 @@ pub(crate) enum Commands {
         /// The device name.
         /// This is the name of the device as specified in the
         /// `/dev/` directory.
-        #[clap(short, long, required = true, value_name = "CANONICAL_PATH")]
+        /// To use this option, you must specify the `-c` option.
+        /// When the device is a BonDriver-based device,
+        /// the name of the dll comes here.
+        /// When the device is a Unix chardev-based device,
+        /// the canonical path of the device comes here.
+        #[clap(short, long, value_name = "CANONICAL_PATH", required = true)]
         device: String,
+
         /// The channel name.
         /// The channel name is a string that is defined in the
         /// `channels` module.
         #[clap(short, long, required = true)]
         channel: Option<String>,
+
+        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L DVB).
+        #[clap(long, value_parser=maybe_hex::<u32>)]
+        tsid: Option<u32>,
+
         /// LNB voltage.
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.

@@ -42,7 +42,6 @@ pub struct DecoderOptions {
     pub strip: bool,
     pub emm: bool,
     pub simd: bool,
-    pub verbose: bool,
 }
 
 impl Default for DecoderOptions {
@@ -53,7 +52,6 @@ impl Default for DecoderOptions {
             strip: true,
             emm: false,
             simd: true,
-            verbose: false,
         }
     }
 }
@@ -70,8 +68,6 @@ impl StreamDecoder {
                 .dec
                 .as_ref()
                 .set_simd_mode(if opt.simd { 1 } else { 0 });
-
-            // TODO: Verbose mode and power control is not implemented yet.
             inner
         };
 

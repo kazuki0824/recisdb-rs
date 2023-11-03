@@ -59,9 +59,7 @@ impl Tuner {
     pub fn signal_quality(&self) -> f64 {
         match self {
             #[cfg(feature = "dvb")]
-            Tuner::DvbV5(_) => {
-                todo!()
-            }
+            Tuner::DvbV5(inner) => inner.signal_quality(),
             Tuner::Character(inner) => inner.signal_quality(),
         }
     }
@@ -76,6 +74,16 @@ impl Tunable for UnTunedTuner {
         }
     }
 }
+// TODO:
+// impl Tunable for Tuner {
+//     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
+//         match self {
+//             #[cfg(feature = "dvb")]
+//             UnTunedTuner::DvbV5(inner) => Ok(Tuner::DvbV5(inner.tune(ch, lnb)?)),
+//             UnTunedTuner::Character(inner) => Ok(Tuner::Character(inner.tune(ch, lnb)?)),
+//         }
+//     }
+// }
 
 impl AsyncRead for Tuner {
     fn poll_read(
@@ -85,9 +93,7 @@ impl AsyncRead for Tuner {
     ) -> Poll<std::io::Result<usize>> {
         match self.get_mut() {
             #[cfg(feature = "dvb")]
-            Tuner::DvbV5(_) => {
-                todo!()
-            }
+            Tuner::DvbV5(inner) => Pin::new(inner).poll_read(cx, buf),
             Tuner::Character(inner) => Pin::new(inner).poll_read(cx, buf),
         }
     }
