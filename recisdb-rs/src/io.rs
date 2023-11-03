@@ -21,9 +21,9 @@ pin_project! {
         o: AllowStdIo<Box<dyn Write>>,
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
+        abandon_decoder: bool,
         abort: Arc<AtomicBool>,
         progress_tx: std::sync::mpsc::Sender<u64>,
-        disable_decode: bool
     }
 }
 
@@ -37,7 +37,7 @@ impl AsyncInOutTriple {
         let raw = config.and_then(|op| match StreamDecoder::new(op) {
             Ok(raw) => Some(raw),
             Err(e) => {
-                error!("Failed to initialize the decoder: {}", e);
+                error!("Failed to initialize the decoder. ({})", e);
                 info!("Disabling decoding and continue...");
                 // As a fallback, disable decoding and continue processing
                 None
@@ -72,7 +72,7 @@ impl AsyncInOutTriple {
                 amt: 0,
                 abort,
                 progress_tx,
-                disable_decode: false,
+                abandon_decoder: false,
             },
             progress_rx,
         )
@@ -88,33 +88,34 @@ impl Future for AsyncInOutTriple {
         let _ = this.progress_tx.send(*this.amt);
 
         match this.dec.get_mut() {
-            Some(ref mut dec) if !*this.disable_decode => {
+            Some(ref mut dec) if !*this.abandon_decoder => {
                 //    A.         B.
                 // In -> Decoder -> Out
                 if !this.abort.load(Ordering::Relaxed) {
                     // A(source)
-                    match ready!(this.i.as_mut().poll_fill_buf(cx)) {
-                        Ok(buffer) if buffer.is_empty() => {
-                            // go to finalization
-                            this.abort.store(true, Ordering::Relaxed);
-                            cx.waker().wake_by_ref();
-                            return Poll::Pending;
-                        }
-                        Ok(buffer) => {
-                            // A(sink)
-                            let i = ready!(Pin::new(&mut *dec).poll_write(cx, buffer))?;
-                            if i == 0 {
-                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                    let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
+                    if buffer.is_empty() {
+                        // go to finalization
+                        this.abort.store(true, Ordering::Relaxed);
+                        cx.waker().wake_by_ref();
+                        return Poll::Pending;
+                    } else {
+                        // A(sink)
+                        match ready!(Pin::new(&mut *dec).poll_write(cx, buffer)) {
+                            Ok(0) => return Poll::Ready(Err(io::ErrorKind::WriteZero.into())),
+                            Ok(i) => {
+                                *this.amt += i as u64;
+                                this.i.as_mut().consume(i);
                             }
-                            *this.amt += i as u64;
-                            this.i.as_mut().consume(i);
-                        }
-                        Err(_) => {
-                            // fall back to decoder-less mode
-                            *this.disable_decode = true;
-                            warn!("Unexpected failure in the decoder. Falling back...")
+                            Err(e) => {
+                                // Enable bypassing a decoder
+                                *this.abandon_decoder = true;
+                                error!("Unexpected failure in the decoder({}).", e);
+                                warn!("Falling back to decoder-less mode...")
+                            }
                         }
                     }
+
                     // B(source)
                     let buffer = ready!(Pin::new(&mut *dec).poll_fill_buf(cx))?;
                     if !buffer.is_empty() {
