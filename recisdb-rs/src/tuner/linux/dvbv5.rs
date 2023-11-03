@@ -148,7 +148,7 @@ impl UnTunedTuner {
             };
 
             let mut stat: fe_status = fe_status::FE_NONE;
-            let mut _res = 0;
+            let (mut _res, mut counter) = (0, 0);
             while (stat as u8 & FE_HAS_LOCK as u8) == 0 {
                 std::thread::sleep(WAIT_DUR);
                 _res = dvbv5_sys::dvb_fe_get_stats(p);
@@ -157,9 +157,13 @@ impl UnTunedTuner {
                     DTV_STATUS as c_uint,
                     &mut stat as *mut fe_status as *mut _,
                 );
-                // TODO: ISDB-T で受信できない (放送されてない) チャンネルの場合はここが永遠にループしてしまうので、どこかでタイムアウト処理なりを入れるべきだろう
-                // あとこのログ自体の表現も適切ではないので、適切な文言に変えるべき (もしくは廃止する)
-                info!("Checking signal level...");
+
+                if counter > 5 {
+                    info!("frontend doesn't lock");
+                    break
+                } else {
+                    counter+=1;
+                }
             }
         };
         // dmx
