@@ -43,21 +43,6 @@ rm ./recisdb_1.1.0_arm64.deb
 
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
-## Build
-
-recisdb をビルドするには Rust が必要です。  
-Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
-
-> [!NOTE]  
-> 以下のコマンドは Ubuntu でのインストール方法です。
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-上記のコマンドで Rustup をインストールできます。  
-Rustup をインストールするだけで、Rust とビルドに必要なツールチェインが同時にインストールされます。
-
 ```bash
 git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
@@ -192,6 +177,21 @@ recisdb.exe tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 recorded.m2ts
 # スクランブル解除されていない %USERPROFILE%\Desktop\scrambled.m2ts をスクランブル解除し、descrambled.m2ts に保存
 recisdb.exe decode -i %USERPROFILE%\Desktop\scrambled.m2ts .\descrambled.m2ts
 ```
+
+## Build
+
+recisdb をビルドするには Rust が必要です。  
+Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
+
+> [!NOTE]  
+> 以下のコマンドは Ubuntu でのインストール方法です。
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+上記のコマンドで Rustup をインストールできます。  
+Rustup をインストールするだけで、Rust とビルドに必要なツールチェインが同時にインストールされます。
 
 ## Licence
 
