@@ -12,7 +12,7 @@ mod windows;
 
 mod error;
 
-#[derive(Debug, Clone, clap::ArgEnum)]
+#[derive(Debug, Clone, clap::ValueEnum)]
 pub enum Voltage {
     _11v,
     _15v,

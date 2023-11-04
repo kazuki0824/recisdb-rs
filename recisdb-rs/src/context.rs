@@ -46,7 +46,7 @@ pub(crate) enum Commands {
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
         /// If multiple flags are specified, the highest voltage is assumed.
-        #[clap(arg_enum, long = "lnb")]
+        #[clap(value_enum, long = "lnb")]
         lnb: Option<Voltage>,
     },
     /// Tune to a channel.
@@ -118,7 +118,7 @@ pub(crate) enum Commands {
         /// The LNB voltage is specified by the following flags.
         /// If none of the flags is specified, the LNB voltage is assumed unset.
         /// If multiple flags are specified, the highest voltage is assumed.
-        #[clap(arg_enum, long = "lnb")]
+        #[clap(value_enum, long = "lnb")]
         lnb: Option<Voltage>,
 
         /// The first working key (only available w/ "crypto" feature).
