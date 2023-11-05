@@ -98,9 +98,9 @@ pub(crate) enum Commands {
         #[clap(short, long, value_name = "seconds")]
         time: Option<f64>,
 
-        /// Continue on error when the decoding failed while processing.
-        #[clap(short = 'k', long)]
-        continue_on_error: bool,
+        /// Exit if the decoding fails while processing.
+        #[clap(short = 'e', long)]
+        exit_on_card_error: bool,
 
         /// Disable ARIB STD-B25 decoding.
         /// If this flag is specified, ARIB STD-B25 decoding is not performed.
