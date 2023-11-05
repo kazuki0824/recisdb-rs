@@ -2,10 +2,11 @@ use futures_time::time::Duration;
 use std::future::Future;
 use std::io::Write;
 
-use log::{error, info};
+use log::{error, info, warn};
 
 use b25_sys::DecoderOptions;
 
+use crate::channels::representation::TsFilter;
 use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
@@ -27,11 +28,13 @@ pub(crate) fn process_command(
         Commands::Checksignal {
             channel,
             device,
-            tsid,
             lnb,
         } => {
             // Get channel
-            let channel = channel.map(|ch| Channel::new(ch, tsid)).unwrap();
+            let channel = channel.map(|ch| Channel::new(ch, None)).unwrap();
+            if let ChannelType::BS(_, TsFilter::RelTsNum(num)) = channel.ch_type {
+                warn!("The specified relative TS num '_{}' has no effect.", num)
+            }
             if let ChannelType::Undefined = channel.ch_type {
                 error!("The specified channel is invalid.");
                 std::process::exit(1);

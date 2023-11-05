@@ -41,10 +41,6 @@ pub(crate) enum Commands {
         #[clap(short, long, required = true)]
         channel: Option<String>,
 
-        /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L-DVB).
-        #[clap(long, value_parser=maybe_hex::<u32>)]
-        tsid: Option<u32>,
-
         /// LNB voltage.
         /// If none, the LNB voltage is assumed unset.{n}
         #[clap(value_enum, long = "lnb")]
