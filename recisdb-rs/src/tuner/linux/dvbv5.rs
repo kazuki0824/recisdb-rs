@@ -157,10 +157,11 @@ impl UnTunedTuner {
                     DTV_STATUS as c_uint,
                     &mut stat as *mut fe_status as *mut _,
                 );
+                info!("Checking for the frontend lock...");
 
                 if counter > 5 {
-                    info!("frontend doesn't lock");
-                    break;
+                    error!("No signal.");
+                    std::process::exit(-1)
                 } else {
                     counter += 1;
                 }
