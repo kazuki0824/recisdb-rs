@@ -6,7 +6,9 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches:
+      - 'master'
+      - 'release-candidates/**'
   workflow_dispatch:
 
 env:
@@ -115,5 +117,4 @@ jobs:
       - name: Run tests(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        continue-on-error: true
         run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --workspace --verbose
