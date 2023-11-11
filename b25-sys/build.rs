@@ -11,6 +11,9 @@ fn prep_cmake() -> cmake::Config {
     }
 
     if cfg!(windows) {
+        if cfg!(target_env = "gnullvm") {
+            unimplemented!("tier3 gnullvm")
+        }
         match (cfg!(target_env = "gnu"), std::env::var("MSYSTEM")) {
             (false, _) => {
                 cm.generator("Visual Studio 17 2022");

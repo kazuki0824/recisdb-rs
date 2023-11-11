@@ -6,7 +6,9 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches:
+      - 'master'
+      - 'release-candidates/**'
   workflow_dispatch:
 
 env:
