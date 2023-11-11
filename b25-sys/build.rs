@@ -49,6 +49,7 @@ fn main() {
     if cfg!(windows) {
         let res = prep_cmake().build();
         println!("cargo:rustc-link-search=native={}/lib", res.display());
+        println!("cargo:rustc-link-lib=dylib=winscard");
     } else if cfg!(target_os = "linux") {
         if pc.probe("libpcsclite").is_err() {
             panic!()
@@ -61,5 +62,4 @@ fn main() {
             println!("cargo:rustc-link-search=native={}/lib64", res.display());
         }
     }
-    println!("cargo:rustc-link-lib=dylib=winscard");
 }
