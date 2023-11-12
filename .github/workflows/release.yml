@@ -29,6 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: create_release
     strategy:
+      fail-fast: true
       matrix:
         image:
           - ubuntu
@@ -50,7 +51,7 @@ jobs:
         with:
           context: .github/workflows/
           tags: ${{ matrix.image }}:build
-          build-args: IMAGE=${{ matrix.image }}:20.04
+          build-args: IMAGE=${{ matrix.image }}:22.04
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
           load: true
@@ -68,7 +69,7 @@ jobs:
     runs-on: windows-latest
     needs: create_release
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         arch:
           - x86_64-pc-windows-msvc
