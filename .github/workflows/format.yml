@@ -12,6 +12,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  textlint:
+    # https://zenn.dev/miyuush/articles/97b3f2fee0f7c5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Install textlint
+        run: >
+          npm install --save-dev
+          textlint
+          textlint-rule-preset-smarthr
+          textlint-rule-prh
+          textlint-filter-rule-allowlist
+
+      - name: Install dependent module
+        run: npm install
+
+      - name: Execute textlint
+        run: npx textlint "**/*.md"
+
   build:
     runs-on: ubuntu-latest
 

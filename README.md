@@ -59,11 +59,12 @@ recisdb checksignal [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL>
 
 `recisdb tune` : チャンネルを選局し、指定された出力先に受信した TS データを書き出します。
 ```bash
-recisdb tune [OPTIONS] --device <CANONICAL_PATH> -k --channel <CHANNEL> <OUTPUT>
+recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 ```
 > [!NOTE]  
-> ** v1.2.0 から `-k` オプションが追加されました。 **  
-> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了せずにデコーダーなしで処理を続行します。  
+> ** v1.2.0 から `-e` オプションが追加されました。 **  
+> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
+> 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
 
 `recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 ```bash

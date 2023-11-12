@@ -1,0 +1,24 @@
+{
+    "rules": {
+        "preset-smarthr": {
+            "sentence-length": {
+                max: 150
+            }
+        },
+        "prh": {
+            "rulePaths": [
+                "dict/prh.yml",
+                "dict/WEB+DB_PRESS.yml"
+            ]
+        },
+   },
+    "filters": {
+        "allowlist": {
+            "allow": [
+                "/http(.+):embed:cite/",    (1)
+                "/.+👀/",                   (2)
+                "/.+🐱/"                    (3)
+            ]
+        }
+    }
+}
