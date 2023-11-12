@@ -49,7 +49,9 @@ fn main() {
         }
     }
 
-    compiler.cpp(true).warnings(false);
-
-    compiler.compile("BonDriver_dynamic_cast_ffi");
+    compiler
+        .cpp(true)
+        .warnings(false)
+        .static_crt(true)
+        .compile("BonDriver_dynamic_cast_ffi");
 }

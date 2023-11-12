@@ -36,11 +36,10 @@ fn prep_cmake() -> cmake::Config {
     // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");
 
-    #[cfg(debug_assertions)]
-    cm.profile("Debug");
     #[cfg(not(debug_assertions))]
     cm.profile("Release");
 
+    cm.static_crt(true);
     cm
 }
 
@@ -55,8 +54,6 @@ fn main() {
             panic!()
         }
         if pc.probe("libaribb25").is_err() {
-            // Staticaly link against libaribb25.so or aribb25.lib.
-        } else {
             let res = prep_cmake().build();
             println!("cargo:rustc-link-search=native={}/lib", res.display());
             println!("cargo:rustc-link-search=native={}/lib64", res.display());
