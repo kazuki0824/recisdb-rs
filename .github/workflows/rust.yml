@@ -52,17 +52,10 @@ jobs:
           toolchain: stable
           override: true
       - name: Check
-        run: cargo check --workspace --verbose -F dvb
-        if: matrix.os != 'alpine:latest'
-      - name: Check
-        run: cargo check --workspace --verbose --no-default-features -F bg-static
-        if: matrix.os == 'alpine:latest'
+        run: RUSTFLAGS="-C target-feature=+crt-static" cargo check --workspace --verbose -F dvb
       - name: Run tests
-        run: cargo test --workspace --verbose -F dvb
-        if: matrix.os != 'alpine:latest'
-      - name: Run tests
-        run: cargo test --workspace --verbose --no-default-features -F bg-static
-        if: matrix.os == 'alpine:latest'
+        run: RUSTFLAGS="-C target-feature=+crt-static" cargo test --workspace --verbose -F dvb
+
   build-windows:
     runs-on: windows-latest
     strategy:
@@ -105,10 +98,14 @@ jobs:
 
       - name: Check(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        run: cargo check --workspace --verbose
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo check --workspace --verbose
       - name: Run tests(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        run: cargo test --workspace --verbose
+        run:|
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo test --workspace --verbose
 
       - name: Check(MinGW)
         shell: msys2 {0}

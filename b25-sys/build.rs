@@ -39,7 +39,7 @@ fn prep_cmake() -> cmake::Config {
     #[cfg(not(debug_assertions))]
     cm.profile("Release");
 
-    cm.static_crt(true);
+    cm.static_crt(cfg!(target_feature = "+crt-static"));
     cm
 }
 
