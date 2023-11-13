@@ -5,12 +5,6 @@
                 max: 150
             }
         },
-        "prh": {
-            "rulePaths": [
-                "dict/prh.yml",
-                "dict/WEB+DB_PRESS.yml"
-            ]
-        },
    },
     "filters": {
         "allowlist": {
