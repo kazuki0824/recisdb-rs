@@ -57,7 +57,7 @@ jobs:
           load: true
       - name: Create deb packages
         run: |
-          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'
+          docker run --rm -i -e RUSTFLAGS="-C target-feature=+crt-static" -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'
       - name: Upload deb package to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
@@ -95,7 +95,9 @@ jobs:
         with:
           submodules: recursive
       - name: Build
-        run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo build --workspace --verbose --release --target ${{ matrix.arch }}
       - name: Upload exe to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
