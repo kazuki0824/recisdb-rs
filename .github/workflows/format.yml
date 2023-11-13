@@ -20,12 +20,8 @@ jobs:
       - uses: actions/setup-node@v2
 
       - name: Install textlint
-        run: >
-          npm install --save-dev
-          textlint
-          textlint-rule-preset-smarthr
-          textlint-rule-prh
-          textlint-filter-rule-allowlist
+        run: |
+          npm install --save-dev textlint textlint-rule-preset-smarthr textlint-rule-prh textlint-filter-rule-allowlist
 
       - name: Install dependent module
         run: npm install
