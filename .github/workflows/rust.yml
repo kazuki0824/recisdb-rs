@@ -103,7 +103,7 @@ jobs:
           cargo check --workspace --verbose
       - name: Run tests(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        run:|
+        run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo test --workspace --verbose
 
