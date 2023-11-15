@@ -52,6 +52,5 @@ fn main() {
     compiler
         .cpp(true)
         .warnings(false)
-        .static_crt(cfg!(target_feature = "+crt-static"))
         .compile("BonDriver_dynamic_cast_ffi");
 }

@@ -7,7 +7,7 @@ fn prep_cmake() -> cmake::Config {
     // Enable AVX2 for x64
     // NEON SIMD is also supported, but not all ARM SoCs support it, so build without it.
     if cfg!(target_arch = "x86_64") {
-        cm.configure_arg("-DUSE_AVX2=ON");
+        cm.define("USE_AVX2", "OFF");
     }
 
     if cfg!(windows) {
@@ -36,10 +36,7 @@ fn prep_cmake() -> cmake::Config {
     // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");
 
-    #[cfg(not(debug_assertions))]
     cm.profile("Release");
-
-    cm.static_crt(cfg!(target_feature = "+crt-static"));
     cm
 }
 
