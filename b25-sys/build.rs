@@ -17,6 +17,9 @@ fn prep_cmake() -> cmake::Config {
         match (cfg!(target_env = "gnu"), std::env::var("MSYSTEM")) {
             (false, _) => {
                 cm.generator("Visual Studio 17 2022");
+
+                #[cfg(target_feature = "crt-static")]
+                cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
             }
             (true, Ok(sys_name)) if sys_name.to_lowercase().contains("mingw") => {
                 cm.generator("Ninja");
