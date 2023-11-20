@@ -7,7 +7,7 @@ fn prep_cmake() -> cmake::Config {
     // Enable AVX2 for x64
     // NEON SIMD is also supported, but not all ARM SoCs support it, so build without it.
     if cfg!(target_arch = "x86_64") {
-        cm.define("USE_AVX2", "OFF");
+        cm.define("USE_AVX2", "ON");
     }
 
     if cfg!(windows) {
