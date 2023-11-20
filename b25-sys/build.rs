@@ -47,7 +47,7 @@ fn main() {
     // Check feat
     #[cfg(all(
         feature = "prioritized_card_reader",
-        feature = "block00cbc",
+        any(feature = "block00cbc", feature = "block40cbc")
     ))]
     compile_error!(
         "features `crate/prioritized_card_reader` and `crate/block**cbc` are mutually exclusive"
