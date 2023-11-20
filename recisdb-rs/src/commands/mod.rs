@@ -67,6 +67,7 @@ pub(crate) fn process_command(
         Commands::Tune {
             device,
             channel,
+            card,
             tsid,
             time,
             no_decode: disable_decode,
@@ -78,6 +79,14 @@ pub(crate) fn process_command(
             output,
             exit_on_card_error,
         } => {
+            // Card reader
+            if let Some(name) = card {
+                #[cfg(not(feature = "prioritized_card_reader"))]
+                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+
+                b25_sys::set_card_reader_name(&name);
+            }
+
             // Get channel
             let channel = channel.map(|ch| Channel::new(ch, tsid)).unwrap();
             if let ChannelType::Undefined = channel.ch_type {
@@ -134,12 +143,21 @@ pub(crate) fn process_command(
         }
         Commands::Decode {
             source,
+            card,
             key0,
             key1,
             no_simd,
             no_strip,
             output,
         } => {
+            // Card reader
+            if let Some(name) = card {
+                #[cfg(not(feature = "prioritized_card_reader"))]
+                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+
+                b25_sys::set_card_reader_name(&name);
+            }
+
             // in, out, dec
             let (input, input_sz) = utils::get_src(None, None, source, None)
                 .map_err(|e| {

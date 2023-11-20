@@ -18,7 +18,8 @@ bg-static = ["bindgen/static"]
 bg-runtime = ["bindgen/runtime"]
 crypto = [ "b25-sys/block00cbc", "b25-sys/block40cbc" ]
 dvb = [ "dvbv5", "dvbv5-sys" ]
-default = [ "bg-runtime" ]
+prioritized_card_reader = [ "b25-sys/prioritized_card_reader" ]
+default = [ "bg-runtime", "prioritized_card_reader" ]
 
 [dependencies]
 b25-sys = { path = "../b25-sys" }

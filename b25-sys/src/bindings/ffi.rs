@@ -1,7 +1,7 @@
 use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
-use crate::access_control::select_key_by_auth;
+use crate::access_control::select_key_by_mac;
 use log::{info, warn};
 
 use crate::bindings::arib_std_b25::{
@@ -97,7 +97,7 @@ unsafe extern "C" fn proc_ecm(
         if size < 19 {
             Err(())
         } else {
-            match select_key_by_auth(&mut payload) {
+            match select_key_by_mac(&mut payload) {
                 Some(key) => {
                     #[cfg(debug_assertions)]
                     info!("Selected Kw= {:?}", key);

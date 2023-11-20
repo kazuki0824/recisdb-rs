@@ -44,6 +44,15 @@ fn prep_cmake() -> cmake::Config {
 }
 
 fn main() {
+    // Check feat
+    #[cfg(all(
+        feature = "prioritized_card_reader",
+        feature = "block00cbc",
+    ))]
+    compile_error!(
+        "features `crate/prioritized_card_reader` and `crate/block**cbc` are mutually exclusive"
+    );
+
     let pc = pkg_config::Config::new();
     if cfg!(windows) {
         let res = prep_cmake().build();
@@ -53,7 +62,7 @@ fn main() {
         if pc.probe("libpcsclite").is_err() {
             panic!()
         }
-        if pc.probe("libaribb25").is_err() {
+        if pc.probe("libaribb25").is_err() || cfg!(feature = "prioritized_card_reader") {
             let res = prep_cmake().build();
             println!("cargo:rustc-link-search=native={}/lib", res.display());
             println!("cargo:rustc-link-search=native={}/lib64", res.display());

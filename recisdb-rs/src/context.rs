@@ -80,6 +80,11 @@ pub(crate) enum Commands {
         #[clap(short, long, required = true)]
         channel: Option<String>,
 
+        /// The card reader name.
+        #[cfg(feature = "prioritized_card_reader")]
+        #[clap(long)]
+        card: Option<String>,
+
         /// Override the transport stream ID(TSID) to obtain the stream (especially in ISDB-S w/ V4L-DVB).
         #[clap(long, value_parser=maybe_hex::<u32>)]
         tsid: Option<u32>,
@@ -164,6 +169,11 @@ pub(crate) enum Commands {
         /// If this flag is specified, the decoder won't discard meaningless packets automatically.
         #[clap(long = "no-strip")]
         no_strip: bool,
+
+        /// The card reader name.
+        #[cfg(feature = "prioritized_card_reader")]
+        #[clap(long)]
+        card: Option<String>,
 
         /// The first working key (only available w/ "crypto" feature).{n}
         /// The first working key is a 64-bit hexadecimal number.{n}

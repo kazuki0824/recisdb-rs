@@ -11,7 +11,7 @@ mod block00_structure;
 mod macros;
 pub mod types;
 
-pub(crate) fn select_key_by_auth(payload: &mut [u8]) -> Option<Key<Block00>> {
+pub(crate) fn select_key_by_mac(payload: &mut [u8]) -> Option<Key<Block00>> {
     let size = payload.len();
 
     let mut temp = payload.to_vec();
