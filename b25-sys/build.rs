@@ -35,8 +35,9 @@ fn prep_cmake() -> cmake::Config {
     }
 
     // Staticaly link against libaribb25.so or aribb25.lib.
-    println!("cargo:rustc-link-lib=static=aribb25");
+    #[cfg(target_env = "gnu")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
+    println!("cargo:rustc-link-lib=static=aribb25");
 
     cm.profile("Release");
     cm
@@ -52,10 +53,12 @@ fn main() {
         "features `crate/prioritized_card_reader` and `crate/block**cbc` are mutually exclusive"
     );
 
-    let pc = pkg_config::Config::new();
+    let mut pc = pkg_config::Config::new();
+    pc.statik(false);
     if cfg!(windows) {
         let res = prep_cmake().build();
         println!("cargo:rustc-link-search=native={}/lib", res.display());
+        println!("cargo:rustc-link-search=native={}/lib64", res.display());
         println!("cargo:rustc-link-lib=dylib=winscard");
     } else if cfg!(target_os = "linux") {
         if pc.probe("libpcsclite").is_err() {
