@@ -36,6 +36,7 @@ fn prep_cmake() -> cmake::Config {
 
     // Staticaly link against libaribb25.so or aribb25.lib.
     println!("cargo:rustc-link-lib=static=aribb25");
+    println!("cargo:rustc-link-lib=dylib=stdc++");
 
     cm.profile("Release");
     cm
