@@ -92,7 +92,7 @@ jobs:
       - name: Build
         run: |
           rustup target add ${{ matrix.arch }}
-          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
           cargo build --workspace --verbose --release --target ${{ matrix.arch }}
           Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
       - name: Upload exe to release channel
