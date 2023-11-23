@@ -72,7 +72,9 @@ jobs:
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-          # - aarch64-pc-windows-msvc
+          - x86_64-pc-windows-gnu
+          - i686-pc-windows-msvc
+          - aarch64-pc-windows-msvc
     steps:
       - name: Install or Update Clang and LLVM for bindgen
         run: |
