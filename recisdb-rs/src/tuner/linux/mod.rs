@@ -74,7 +74,7 @@ impl Tunable for UnTunedTuner {
         }
     }
 }
-// TODO:
+// TODO: 再選局を実装する際は必要
 // impl Tunable for Tuner {
 //     fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
 //         match self {
