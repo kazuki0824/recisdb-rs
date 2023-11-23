@@ -1,6 +1,31 @@
 extern crate pkg_config;
 
-fn prep_cmake() -> cmake::Config {
+use std::env::var;
+
+#[derive(Clone)]
+struct TargetVar {
+    arch: Option<String>,
+    env: Option<String>,
+    feat: Option<String>,
+    m_system: Option<String>,
+    os: Option<String>,
+    win: bool,
+}
+
+impl Default for TargetVar {
+    fn default() -> Self {
+        Self {
+            arch: var("CARGO_CFG_TARGET_ARCH").ok(),
+            env: var("CARGO_CFG_TARGET_ENV").ok(),
+            feat: var("CARGO_CFG_TARGET_FEATURE").ok(),
+            m_system: var("MSYSTEM").ok(),
+            os: var("CARGO_CFG_TARGET_OS").ok(),
+            win: var("CARGO_CFG_WINDOWS").is_ok(),
+        }
+    }
+}
+
+fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
@@ -8,29 +33,32 @@ fn prep_cmake() -> cmake::Config {
     // NEON SIMD is also supported, but not all ARM SoCs support it, so build without it.
     cm.define("USE_AVX2", "OFF");
 
-    if cfg!(windows) {
-        if cfg!(target_env = "gnullvm") {
+    if cx.win {
+        if cx.env.clone().unwrap_or_default().contains("gnullvm") {
             unimplemented!("tier3 gnullvm")
         }
-        match (cfg!(target_env = "gnu"), std::env::var("MSYSTEM")) {
+        match (
+            cx.env.clone().unwrap_or_default().contains("gnu"),
+            cx.m_system,
+        ) {
             (false, _) => {
                 cm.generator("Visual Studio 17 2022");
 
-                println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_FEATURE");
-                let features = std::env::var("CARGO_CFG_TARGET_FEATURE");
-                let features = features.as_deref().unwrap_or_default();
-                if features.contains("crt-static") {
+                if cx.feat.clone().unwrap_or_default().contains("crt-static") {
                     // panic!();
                     cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
                 }
+                if cx.arch.clone().unwrap_or_default().contains("aarch64") {
+                    cm.define("USE_NEON", "ON");
+                }
             }
-            (true, Ok(sys_name)) if sys_name.to_lowercase().contains("mingw") => {
+            (true, Some(sys_name)) if sys_name.to_lowercase().contains("mingw") => {
                 cm.generator("Ninja");
             }
-            (true, Ok(sys_name)) if sys_name.to_lowercase().contains("ucrt") => {
+            (true, Some(sys_name)) if sys_name.to_lowercase().contains("ucrt") => {
                 cm.generator("Ninja");
             }
-            (true, Ok(sys_name)) => {
+            (true, Some(sys_name)) => {
                 panic!("target_env:={sys_name} not supported.")
             }
             (true, _) => {
@@ -40,8 +68,9 @@ fn prep_cmake() -> cmake::Config {
     }
 
     // Staticaly link against libaribb25.so or aribb25.lib.
-    #[cfg(target_env = "gnu")]
-    println!("cargo:rustc-link-lib=dylib=stdc++");
+    if cx.env.clone().take().unwrap_or_default().contains("gnu") {
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+    }
     println!("cargo:rustc-link-lib=static=aribb25");
 
     cm.profile("Release");
@@ -49,6 +78,8 @@ fn prep_cmake() -> cmake::Config {
 }
 
 fn main() {
+    let cx = TargetVar::default();
+
     // Check feat
     #[cfg(all(
         feature = "prioritized_card_reader",
@@ -60,17 +91,17 @@ fn main() {
 
     let mut pc = pkg_config::Config::new();
     pc.statik(false);
-    if cfg!(windows) {
-        let res = prep_cmake().build();
+    if cx.win {
+        let res = prep_cmake(cx).build();
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         println!("cargo:rustc-link-search=native={}/lib64", res.display());
         println!("cargo:rustc-link-lib=dylib=winscard");
-    } else if cfg!(target_os = "linux") {
+    } else if cx.os.clone().unwrap_or_default().contains("linux") {
         if pc.probe("libpcsclite").is_err() {
             panic!()
         }
         if pc.probe("libaribb25").is_err() || cfg!(feature = "prioritized_card_reader") {
-            let res = prep_cmake().build();
+            let res = prep_cmake(cx).build();
             println!("cargo:rustc-link-search=native={}/lib", res.display());
             println!("cargo:rustc-link-search=native={}/lib64", res.display());
         }

@@ -1,6 +1,6 @@
 [package]
 name = "recisdb"
-version = "1.2.0-rc.2"
+version = "1.2.0-rc.4"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
 description = "recisdb can read both Unix chardev-based and BonDriver-based TV sources."

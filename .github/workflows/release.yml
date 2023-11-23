@@ -88,9 +88,10 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.arch }}
+          toolchain: stable
       - name: Build
         run: |
+          rustup target add ${{ matrix.arch }}
           $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo build --workspace --verbose --release --target ${{ matrix.arch }}
           Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
