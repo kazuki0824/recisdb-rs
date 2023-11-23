@@ -88,11 +88,12 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: ${{ matrix.arch }}
       - name: Build
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo build --workspace --verbose --release --target ${{ matrix.arch }}
+          Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
       - name: Upload exe to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
