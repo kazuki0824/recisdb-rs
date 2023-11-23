@@ -16,8 +16,13 @@ fn prep_cmake() -> cmake::Config {
             (false, _) => {
                 cm.generator("Visual Studio 17 2022");
 
-                #[cfg(target_feature = "crt-static")]
-                cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
+                println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_FEATURE");
+                let features = std::env::var("CARGO_CFG_TARGET_FEATURE");
+                let features = features.as_deref().unwrap_or_default();
+                if features.contains("crt-static") {
+                    // panic!();
+                    cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
+                }
             }
             (true, Ok(sys_name)) if sys_name.to_lowercase().contains("mingw") => {
                 cm.generator("Ninja");
