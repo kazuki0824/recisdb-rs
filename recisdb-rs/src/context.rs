@@ -47,10 +47,8 @@ pub(crate) enum Commands {
         lnb: Option<Voltage>,
     },
     /// Tune to a channel.
-    /// This subcommand tunes the tuner to a channel and start recording.
-    /// The channel is specified by a channel name.
-    /// The channel name is a string that is defined in the
-    /// `channels` module.
+    /// This subcommand tunes the tuner to a channel and start recording.{n}
+    /// The channel is specified by a channel name.{n}
     /// The recording directory is passed as an argument.
     // key0 and key1 are optional, but if they are specified, they must be specified together
     #[clap(group(
@@ -71,7 +69,7 @@ pub(crate) enum Commands {
         /// If the device has a V4L-DVB interface, there are 2 ways to point the frontend.{n}
         /// 1. (full) `-c /dev/dvb/adapter2/frontend0`{n}
         /// 2. (abbr.) `-c "2|0"`
-        #[clap(short, long, value_name = "CANONICAL_PATH", required = true)]
+        #[clap(short = 'i', long, value_name = "CANONICAL_PATH", required = true)]
         device: Option<String>,
 
         /// The channel name.{n}
