@@ -2,10 +2,11 @@ use futures_time::time::Duration;
 use std::future::Future;
 use std::io::Write;
 
-use log::{error, info};
+use log::{error, info, warn};
 
 use b25_sys::DecoderOptions;
 
+use crate::channels::representation::TsFilter;
 use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
@@ -27,11 +28,13 @@ pub(crate) fn process_command(
         Commands::Checksignal {
             channel,
             device,
-            tsid,
             lnb,
         } => {
             // Get channel
-            let channel = channel.map(|ch| Channel::new(ch, tsid)).unwrap();
+            let channel = channel.map(|ch| Channel::new(ch, None)).unwrap();
+            if let ChannelType::BS(_, TsFilter::RelTsNum(num)) = channel.ch_type {
+                warn!("The specified relative TS num '_{}' has no effect.", num)
+            }
             if let ChannelType::Undefined = channel.ch_type {
                 error!("The specified channel is invalid.");
                 std::process::exit(1);
@@ -64,6 +67,7 @@ pub(crate) fn process_command(
         Commands::Tune {
             device,
             channel,
+            card,
             tsid,
             time,
             no_decode: disable_decode,
@@ -73,8 +77,16 @@ pub(crate) fn process_command(
             no_simd,
             no_strip,
             output,
-            continue_on_error,
+            exit_on_card_error,
         } => {
+            // Card reader
+            if let Some(name) = card {
+                #[cfg(not(feature = "prioritized_card_reader"))]
+                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+
+                b25_sys::set_card_reader_name(&name);
+            }
+
             // Get channel
             let channel = channel.map(|ch| Channel::new(ch, tsid)).unwrap();
             if let ChannelType::Undefined = channel.ch_type {
@@ -125,18 +137,27 @@ pub(crate) fn process_command(
                 })
             };
 
-            let (body, _) = AsyncInOutTriple::new(input, output, dec, continue_on_error);
+            let (body, _) = AsyncInOutTriple::new(input, output, dec, !exit_on_card_error);
             info!("Recording...");
             (body, rec_duration, None)
         }
         Commands::Decode {
             source,
+            card,
             key0,
             key1,
             no_simd,
             no_strip,
             output,
         } => {
+            // Card reader
+            if let Some(name) = card {
+                #[cfg(not(feature = "prioritized_card_reader"))]
+                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+
+                b25_sys::set_card_reader_name(&name);
+            }
+
             // in, out, dec
             let (input, input_sz) = utils::get_src(None, None, source, None)
                 .map_err(|e| {
@@ -160,6 +181,21 @@ pub(crate) fn process_command(
             let (body, progress) = AsyncInOutTriple::new(input, output, dec, false);
             info!("Decoding...");
             (body, None, input_sz.map(|sz| (sz, progress)))
+        }
+        #[cfg(windows)]
+        Commands::Enumerate { device, space } => {
+            // Open tuner
+            let untuned = UnTunedTuner::new(device)
+                .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
+                .unwrap();
+            if let Some(spacename_channels) = untuned.enum_channels(space) {
+                for item in spacename_channels {
+                    println!("{}", item)
+                }
+                std::process::exit(0)
+            } else {
+                std::process::exit(1)
+            }
         }
     }
 }

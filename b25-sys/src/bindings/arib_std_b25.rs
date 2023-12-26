@@ -6,6 +6,7 @@
 #![allow(dead_code)]
 
 use crate::bindings::error::BCasCardError;
+use log::debug;
 use std::io::{Error, ErrorKind};
 use std::marker::PhantomPinned;
 
@@ -604,6 +605,7 @@ impl B_CAS_CARD {
 
 impl Drop for B_CAS_CARD {
     fn drop(&mut self) {
+        debug!("Releasing B_CAS_CARD resources...");
         unsafe { self.release.unwrap()(self as *mut B_CAS_CARD as *mut ::std::os::raw::c_void) }
     }
 }

@@ -12,6 +12,39 @@ on:
   workflow_dispatch:
 
 jobs:
+  textlint:
+    # https://zenn.dev/miyuush/articles/97b3f2fee0f7c5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Install textlint
+        run: >
+          npm install --save-dev
+          textlint
+          textlint-rule-preset-smarthr
+          textlint-filter-rule-allowlist
+
+      - name: textlint-github-pr-check
+        uses: tsuyoshicho/action-textlint@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          textlint_flags: "doc/**"
+      - name: textlint-github-check
+        uses: tsuyoshicho/action-textlint@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-check
+          textlint_flags: "doc/**"
+      - name: textlint-github-pr-review
+        uses: tsuyoshicho/action-textlint@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+          textlint_flags: "doc/**"
+
   build:
     runs-on: ubuntu-latest
 

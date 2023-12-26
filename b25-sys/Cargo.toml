@@ -1,6 +1,6 @@
 [package]
 name = "b25-sys"
-version = "2.0.0"
+version = "2.1.0-rc.4"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
 description = "b25-sys is more convenient Rust wrapper for libaribb25."
@@ -13,6 +13,7 @@ keywords = ["dtv", "japan", "broadcast", "b25"]
 [features]
 block00cbc = [ "tail_cbc", "cbc-mac", "cryptography-00" ]
 block40cbc = [ "cryptography-40" ]
+prioritized_card_reader = []
 default = []
 
 [dependencies]

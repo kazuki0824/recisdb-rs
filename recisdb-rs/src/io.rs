@@ -28,7 +28,7 @@ pin_project! {
 }
 
 impl AsyncInOutTriple {
-    const CAP: usize = 16000000;
+    const CAP: usize = 1600000;
     pub fn new(
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
@@ -44,7 +44,11 @@ impl AsyncInOutTriple {
                 None
             }
             Err(e) => {
-                todo!("{}", e) // early return
+                error!("Error occurred while initializing the decoder. ({})", e);
+                error!(
+                    "Make sure that the B-CAS card is certainly connected, or consider using -k."
+                );
+                std::process::exit(-1)
             }
         });
 

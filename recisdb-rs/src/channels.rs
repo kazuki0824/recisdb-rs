@@ -117,7 +117,7 @@ pub mod output {
     }
 }
 
-mod representation {
+pub mod representation {
     use std::fmt::Display;
 
     #[derive(Clone, Debug, PartialEq, Eq)]

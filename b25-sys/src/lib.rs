@@ -20,6 +20,11 @@ pub fn set_keys(key0: Vec<u64>, key1: Vec<u64>) {
     KEY1.lock().unwrap().extend(key1);
 }
 
+#[cfg(feature = "prioritized_card_reader")]
+pub fn set_card_reader_name(name: &str) -> bool {
+    unsafe { crate::bindings::override_card_reader_name_pattern(name.as_ptr() as *const _) == 0 }
+}
+
 /// Decode ARIB-STD-B25 stream with libaribb25. Both `Read` and `Write` are implemented.
 pub struct StreamDecoder {
     received: Cell<usize>,

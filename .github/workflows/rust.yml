@@ -6,7 +6,9 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    branches:
+      - 'master'
+      - 'release-candidates/**'
   workflow_dispatch:
 
 env:
@@ -61,6 +63,27 @@ jobs:
       - name: Run tests
         run: cargo test --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
+
+  build-windows-non-msys:
+    runs-on: windows-latest
+    steps:
+      - name: Install or Update Clang and LLVM for bindgen
+        run: |
+          choco install llvm -y --force
+      - uses: fbactions/setup-winsdk@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Test
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo test --workspace --verbose --release --target x86_64-pc-windows-gnu
+
   build-windows:
     runs-on: windows-latest
     strategy:
@@ -103,10 +126,14 @@ jobs:
 
       - name: Check(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        run: cargo check --workspace --verbose
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo check --workspace --verbose
       - name: Run tests(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
-        run: cargo test --workspace --verbose
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo test --workspace --verbose
 
       - name: Check(MinGW)
         shell: msys2 {0}
@@ -115,5 +142,4 @@ jobs:
       - name: Run tests(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        continue-on-error: true
         run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --workspace --verbose

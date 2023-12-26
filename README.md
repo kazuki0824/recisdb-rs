@@ -10,6 +10,8 @@ Rust で書かれたテレビチューナーリーダー / ARIB STD-B25 デコ�
 Tools for reading ARIB STD-B25, and dealing with some kinds of tuner devices. Works fine on both Windows and Linux.  
 recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb can read both Unix character device-based and BonDriver-based TV sources. 
 
+---
+
 ## Features
 
 - クロスプラットフォーム (BonDriver / キャラクタデバイス (chardev) / DVBv5 デバイスすべてに対応)
@@ -40,38 +42,9 @@ wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.1.0/recisdb_1.
 sudo apt install ./recisdb_1.1.0_arm64.deb
 rm ./recisdb_1.1.0_arm64.deb
 ```
-
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
-## Build
-
-recisdb をビルドするには Rust が必要です。  
-Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
-
-> [!NOTE]  
-> 以下のコマンドは Ubuntu でのインストール方法です。
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-上記のコマンドで Rustup をインストールできます。  
-Rustup をインストールするだけで、Rust とビルドに必要なツールチェインが同時にインストールされます。
-
-```bash
-git clone https://github.com/kazuki0824/recisdb-rs.git
-cd recisdb-rs
-sudo apt install -y build-essential clang cmake libdvbv5-dev libpcsclite-dev libudev-dev pkg-config
-cargo build -F dvb --release
-sudo cp -a target/release/recisdb /usr/local/bin
-```
-
-Rust をインストールしたら、上記のコマンドで recisdb をビルドできます。  
-ビルドした recisdb は、`target/release/recisdb` に生成されます。  
-
-> [!IMPORTANT]  
-> `cargo build` を実行する際 `-F dvb` を指定すると、libdvbv5 経由での DVB デバイスの操作がサポートされます。  
-> `-F dvb` を指定してビルドした場合、動作には別途 `libdvbv5-0` パッケージが必要です。
+---
 
 ## Usage
 
@@ -86,11 +59,17 @@ recisdb checksignal [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL>
 
 `recisdb tune` : チャンネルを選局し、指定された出力先に受信した TS データを書き出します。
 ```bash
-recisdb tune [OPTIONS] --device <CANONICAL_PATH> -k --channel <CHANNEL> <OUTPUT>
+recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 ```
 > [!NOTE]  
-> ** v1.2.0 から `-k` オプションが追加されました。 **  
-> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了せずにデコーダーなしで処理を続行します。  
+> ** v1.1.0 から `--no-simd` オプションが追加されました。 **  
+> decode時にSIGILLが発生する場合、AVX2命令がご使用のCPUに実装されていないことが考えられます。
+> その際はこのオプションを使用することで問題を回避できます。
+
+> [!NOTE]  
+> ** v1.2.0 から `-e` オプションが追加されました。 **  
+> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
+> 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
 
 `recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 ```bash
@@ -192,6 +171,48 @@ recisdb.exe tune --device .\BonDriver_mirakc.dll -c 0-8 -t 20 recorded.m2ts
 # スクランブル解除されていない %USERPROFILE%\Desktop\scrambled.m2ts をスクランブル解除し、descrambled.m2ts に保存
 recisdb.exe decode -i %USERPROFILE%\Desktop\scrambled.m2ts .\descrambled.m2ts
 ```
+
+---
+
+## Build
+
+recisdb をビルドするには Rust が必要です。  
+Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
+
+### Windows (MSVC)
+
+
+### Windows (MSYS MinGW)
+
+
+### Debian系
+> [!NOTE]  
+> 以下のコマンドは Ubuntu 22.04 でのインストール方法です。
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+上記のコマンドで Rustup をインストールできます。  
+Rustup をインストールするだけで、Rust とビルドに必要なツールチェインが同時にインストールされます。
+
+```bash
+git clone https://github.com/kazuki0824/recisdb-rs.git
+cd recisdb-rs
+sudo apt install -y build-essential clang cmake libdvbv5-dev libpcsclite-dev libudev-dev pkg-config
+cargo build -F dvb --release
+sudo cp -a target/release/recisdb /usr/local/bin
+```
+
+Rust をインストールしたら、上記のコマンドで recisdb をビルドできます。  
+ビルドした recisdb は、`target/release/recisdb` に生成されます。  
+`cargo install`などで、パスの通った場所へ実行ファイルを自動的に配置することができます。
+
+> [!IMPORTANT]  
+> `cargo build` を実行する際 `-F dvb` を指定すると、libdvbv5 経由での DVB デバイスの操作がサポートされます。  
+> `-F dvb` を指定してビルドした場合、動作には別途 `libdvbv5-0` パッケージが必要です。
+
+---
 
 ## Licence
 

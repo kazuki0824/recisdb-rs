@@ -13,6 +13,13 @@ mod error;
 #[cfg(feature = "block00cbc")]
 mod ffi;
 
+extern "C" {
+    #[cfg(feature = "prioritized_card_reader")]
+    pub(crate) fn override_card_reader_name_pattern(
+        name: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+
 pin_project! {
     pub(crate) struct InnerDecoder {
         #[pin]

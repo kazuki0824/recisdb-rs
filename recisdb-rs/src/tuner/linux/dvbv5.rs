@@ -35,7 +35,11 @@ impl UnTunedTuner {
                 frontend_number: fe_number,
             };
 
-            let f = match FrontendParametersPtr::new(&frontend_id, Some(1), Some(false)) {
+            let f = match FrontendParametersPtr::new(
+                &frontend_id,
+                Some(if cfg!(debug_assertions) { 1 } else { 0 }),
+                Some(false),
+            ) {
                 Ok(f) => f,
                 Err(_) => {
                     error!("Cannot open the device. (Something went wrong while opening DVB frontend device)");
@@ -157,10 +161,11 @@ impl UnTunedTuner {
                     DTV_STATUS as c_uint,
                     &mut stat as *mut fe_status as *mut _,
                 );
+                info!("Checking for the frontend lock...");
 
                 if counter > 5 {
-                    info!("frontend doesn't lock");
-                    break;
+                    error!("No signal.");
+                    std::process::exit(-1)
                 } else {
                     counter += 1;
                 }

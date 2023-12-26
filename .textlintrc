@@ -1,0 +1,18 @@
+{
+    "rules": {
+        "preset-smarthr": {
+            "sentence-length": {
+                max: 150
+            }
+        },
+   },
+    "filters": {
+        "allowlist": {
+            "allow": [
+                "/http(.+):embed:cite/",    (1)
+                "/.+👀/",                   (2)
+                "/.+🐱/"                    (3)
+            ]
+        }
+    }
+}

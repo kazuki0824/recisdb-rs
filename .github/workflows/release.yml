@@ -56,7 +56,7 @@ jobs:
           load: true
       - name: Create deb packages
         run: |
-          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'
+          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'-- -F dvb
       - name: Upload deb package to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
@@ -72,29 +72,29 @@ jobs:
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-          # - aarch64-pc-windows-msvc
+          - x86_64-pc-windows-gnu
+          - i686-pc-windows-msvc
+          - aarch64-pc-windows-msvc
     steps:
-      - name: Setup Rust toolchain
-        uses: ructions/toolchain@master
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - name: Install or Update Clang and LLVM for bindgen
+        run: |
+          choco install llvm -y --force
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
       - uses: fbactions/setup-winsdk@v1
-      - name: Install LLVM and Clang  # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "11.0"
-          directory: ${{ runner.temp }}/llvm
-      - name: Set LIBCLANG_PATH
-        run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
       - name: Build
-        run: cargo build --workspace --verbose --release --target ${{ matrix.arch }}
+        run: |
+          rustup target add ${{ matrix.arch }}
+          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo build --workspace --verbose --release --target ${{ matrix.arch }}
+          Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
       - name: Upload exe to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
