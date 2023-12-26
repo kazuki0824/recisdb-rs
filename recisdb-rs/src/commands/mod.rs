@@ -182,5 +182,20 @@ pub(crate) fn process_command(
             info!("Decoding...");
             (body, None, input_sz.map(|sz| (sz, progress)))
         }
+        #[cfg(windows)]
+        Commands::Enumerate { device, space } => {
+            // Open tuner
+            let untuned = UnTunedTuner::new(device)
+                .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
+                .unwrap();
+            if let Some(spacename_channels) = untuned.enum_channels(space) {
+                for item in spacename_channels {
+                    println!("{}", item)
+                }
+                std::process::exit(0)
+            } else {
+                std::process::exit(1)
+            }
+        }
     }
 }

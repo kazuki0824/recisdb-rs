@@ -17,7 +17,7 @@ mod IBonDriver;
 
 struct BonDriverInner {
     dll_imported: ManuallyDrop<BonDriver>,
-    pub interface: ManuallyDrop<IBon<10000>>,
+    pub interface: ManuallyDrop<IBon>,
 }
 
 impl Drop for BonDriverInner {
@@ -103,6 +103,24 @@ impl UnTunedTuner {
             }),
         })
     }
+
+    pub fn enum_channels(&self, space: u32) -> Option<Vec<String>> {
+        let interface = &self.inner.get_ref().interface;
+        interface.EnumTuningSpace(space).and_then(|chs| {
+            let mut ret = vec![chs];
+
+            for i in 0..31 {
+                if let Some(ch) = interface.EnumChannelName(space, i) {
+                    ret.push(ch)
+                } else if i == 0 {
+                    return None;
+                } else {
+                    break;
+                }
+            }
+            Some(ret)
+        })
+    }
 }
 
 impl Tunable for UnTunedTuner {
@@ -168,7 +186,12 @@ impl Tunable for Tuner {
 
 impl Tuner {
     pub fn signal_quality(&self) -> f64 {
-        todo!()
+        self.inner
+            .get_ref()
+            .interface
+            .GetSignalLevel()
+            .unwrap()
+            .into()
     }
 }
 

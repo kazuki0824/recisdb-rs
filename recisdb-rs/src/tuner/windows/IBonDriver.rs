@@ -97,7 +97,7 @@ mod ib_utils {
 }
 
 impl BonDriver {
-    pub fn create_interface<const BUF_SZ: usize>(&self) -> IBon<BUF_SZ> {
+    pub fn create_interface(&self) -> IBon {
         let IBon1 = unsafe {
             let ptr = self.CreateBonDriver();
             NonNull::new(ptr).unwrap()
@@ -113,7 +113,7 @@ impl BonDriver {
             )
         };
 
-        IBon([0; BUF_SZ], IBon1, IBon2, IBon3)
+        IBon(vec![0; 100000].into_boxed_slice(), IBon1, IBon2, IBon3)
     }
 }
 
@@ -137,14 +137,14 @@ impl DynamicCast<IBonDriver3> for IBonDriver2 {
     }
 }
 
-pub struct IBon<const SZ: usize>(
-    [u8; SZ],
+pub struct IBon(
+    Box<[u8]>, // FIXME: Remove it
     pub(crate) NonNull<IBonDriver>,
     pub(crate) Option<NonNull<IBonDriver2>>,
     pub(crate) Option<NonNull<IBonDriver3>>,
 );
 
-impl<const SZ: usize> Drop for IBon<SZ> {
+impl Drop for IBon {
     fn drop(&mut self) {
         self.3 = None;
         self.2 = None;
@@ -154,7 +154,7 @@ impl<const SZ: usize> Drop for IBon<SZ> {
 
 type E = crate::tuner::error::BonDriverError;
 
-impl<const SZ: usize> IBon<SZ> {
+impl IBon {
     //automatically select which version to use, like https://github.com/DBCTRADO/LibISDB/blob/519f918b9f142b77278acdb71f7d567da121be14/LibISDB/Windows/Base/BonDriver.cpp#L175
     //IBon1
     pub(crate) fn OpenTuner(&self) -> Result<(), std::io::Error> {
@@ -215,6 +215,10 @@ impl<const SZ: usize> IBon<SZ> {
         }?;
         let received = self.0[0..size].to_vec(); //Copying is necessary in order to avoid simultaneous access caused by next call
         Ok((received, remaining))
+    }
+    pub(crate) fn GetSignalLevel(&self) -> Result<f32, io::Error> {
+        let iface = self.1.as_ptr();
+        return Ok(unsafe { ib1::C_GetSignalLevel(iface) });
     }
     //IBon2
     pub(crate) fn SetChannelBySpace(&self, space: u32, ch: u32) -> Result<(), io::Error> {

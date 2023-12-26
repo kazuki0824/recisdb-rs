@@ -196,4 +196,11 @@ pub(crate) enum Commands {
         #[clap(required = true)]
         output: Option<String>,
     },
+    #[cfg(windows)]
+    Enumerate {
+        #[clap(short = 'i', long, value_name = "CANONICAL_PATH", required = true)]
+        device: String,
+        #[clap(short, long, required = true)]
+        space: u32,
+    },
 }
