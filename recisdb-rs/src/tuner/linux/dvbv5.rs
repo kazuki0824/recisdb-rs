@@ -35,7 +35,11 @@ impl UnTunedTuner {
                 frontend_number: fe_number,
             };
 
-            let f = match FrontendParametersPtr::new(&frontend_id, Some(if cfg!(debug_assertions) {1} else {0}), Some(false)) {
+            let f = match FrontendParametersPtr::new(
+                &frontend_id,
+                Some(if cfg!(debug_assertions) { 1 } else { 0 }),
+                Some(false),
+            ) {
                 Ok(f) => f,
                 Err(_) => {
                     error!("Cannot open the device. (Something went wrong while opening DVB frontend device)");
