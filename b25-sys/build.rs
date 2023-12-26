@@ -31,7 +31,7 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
 
     // Disable AVX2 for x64
     // NEON SIMD is also supported, but not all ARM SoCs support it, so build without it.
-    cm.define("USE_AVX2", "OFF");
+    cm.define("USE_AVX2", "ON");
 
     if cx.win {
         if cx.env.clone().unwrap_or_default().contains("gnullvm") {
@@ -45,7 +45,6 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
                 cm.generator("Visual Studio 17 2022");
 
                 if cx.feat.clone().unwrap_or_default().contains("crt-static") {
-                    // panic!();
                     cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
                 }
                 if cx.arch.clone().unwrap_or_default().contains("aarch64") {

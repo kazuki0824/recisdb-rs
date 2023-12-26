@@ -62,6 +62,11 @@ recisdb checksignal [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL>
 recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 ```
 > [!NOTE]  
+> ** v1.1.0 から `--no-simd` オプションが追加されました。 **  
+> decode時にSIGILLが発生する場合、AVX2命令がご使用のCPUに実装されていないことが考えられます。
+> その際はこのオプションを使用することで問題を回避できます。
+
+> [!NOTE]  
 > ** v1.2.0 から `-e` オプションが追加されました。 **  
 > B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
 > 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
@@ -174,8 +179,15 @@ recisdb.exe decode -i %USERPROFILE%\Desktop\scrambled.m2ts .\descrambled.m2ts
 recisdb をビルドするには Rust が必要です。  
 Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
 
+### Windows (MSVC)
+
+
+### Windows (MSYS MinGW)
+
+
+### Debian系
 > [!NOTE]  
-> 以下のコマンドは Ubuntu でのインストール方法です。
+> 以下のコマンドは Ubuntu 22.04 でのインストール方法です。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
