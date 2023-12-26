@@ -56,7 +56,7 @@ jobs:
           load: true
       - name: Create deb packages
         run: |
-          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'
+          docker run --rm -i -v $(pwd):/work -w /work ${{ matrix.image }}:build bash -c '/root/.cargo/bin/cargo deb -p recisdb --verbose --output ./artifacts/'-- -F dvb
       - name: Upload deb package to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
