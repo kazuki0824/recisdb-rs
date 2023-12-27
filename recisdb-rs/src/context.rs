@@ -7,6 +7,7 @@ use crate::tuner::Voltage;
 #[clap(name = "recisdb")]
 #[clap(about = "recisdb can read both Unix chardev-based and BonDriver-based TV sources. ", long_about = None)]
 #[clap(author = "maleicacid")]
+#[clap(version)]
 pub(crate) struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
