@@ -29,9 +29,11 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
-    // Disable AVX2 for x64
+    // Enable AVX2 for x64
     // NEON SIMD is also supported, but not all ARM SoCs support it, so build without it.
-    cm.define("USE_AVX2", "ON");
+    if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
+        cm.define("USE_AVX2", "ON");
+    }
 
     if cx.win {
         if cx.env.clone().unwrap_or_default().contains("gnullvm") {
