@@ -19,7 +19,7 @@ pub(crate) fn initialize_logger() {
     #[cfg(debug_assertions)]
     Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    #[cfg(debug_assertions)]
+    #[cfg(not(debug_assertions))]
     Builder::from_env(Env::default().default_filter_or("info"))
         .format(|buf, record| {
             let local_time = Local::now().format("%Y/%m/%d %H:%M:%S");
