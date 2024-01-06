@@ -113,7 +113,14 @@ impl BonDriver {
             )
         };
 
-        IBon(vec![0; 100000].into_boxed_slice(), IBon1, IBon2, IBon3)
+        let version = match (IBon2, IBon3) {
+            (None, None) => 1,
+            (Some(_), None) => 2,
+            (Some(_), Some(_)) => 3,
+            _ => 0,
+        };
+
+        IBon(version, IBon1, IBon2, IBon3)
     }
 }
 
@@ -138,7 +145,7 @@ impl DynamicCast<IBonDriver3> for IBonDriver2 {
 }
 
 pub struct IBon(
-    Box<[u8]>, // FIXME: Remove it
+    u8,
     pub(crate) NonNull<IBonDriver>,
     pub(crate) Option<NonNull<IBonDriver2>>,
     pub(crate) Option<NonNull<IBonDriver3>>,
