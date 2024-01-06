@@ -36,10 +36,9 @@ impl AsyncRead for BonDriverInner {
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        match self.interface.GetTsStream() {
+        match self.interface.GetTsStream(buf) {
             Ok((recv, _)) if !recv.is_empty() => {
                 info!("{} bytes received.", recv.len());
-                buf[0..recv.len()].copy_from_slice(&recv[0..]);
                 Poll::Ready(Ok(buf.len()))
             }
             Ok((recv, remaining)) if recv.is_empty() && remaining > 0 => {

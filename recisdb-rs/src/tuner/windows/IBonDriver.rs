@@ -195,7 +195,10 @@ impl IBon {
             ib1::C_WaitTsStream(iface, timeout.as_millis() as u32) != 0
         }
     }
-    pub(crate) fn GetTsStream(&self) -> Result<(Vec<u8>, usize), io::Error> {
+    pub(crate) fn GetTsStream<'a>(
+        &self,
+        buf: &'a mut [u8],
+    ) -> Result<(&'a [u8], usize), io::Error> {
         let (size, remaining) = unsafe {
             let mut size = 0_u32;
             let mut remaining = 0_u32;
@@ -203,7 +206,7 @@ impl IBon {
             let iface = self.1.as_ptr();
             if ib1::C_GetTsStream(
                 iface,
-                self.0.as_ptr() as *mut _,
+                buf.as_mut_ptr(),
                 &mut size as *mut u32,
                 &mut remaining as *mut u32,
             ) != 0
@@ -213,7 +216,7 @@ impl IBon {
                 Err(io::Error::new(io::ErrorKind::UnexpectedEof, E::GetTsError))
             }
         }?;
-        let received = self.0[0..size].to_vec(); //Copying is necessary in order to avoid simultaneous access caused by next call
+        let received = &buf[0..size];
         Ok((received, remaining))
     }
     pub(crate) fn GetSignalLevel(&self) -> Result<f32, io::Error> {
