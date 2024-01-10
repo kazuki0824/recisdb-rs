@@ -96,10 +96,13 @@ impl UnTunedTuner {
         interface.OpenTuner()?;
 
         Ok(Self {
-            inner: BufReader::new(BonDriverInner {
-                dll_imported,
-                interface,
-            }),
+            inner: BufReader::with_capacity(
+                81920,
+                BonDriverInner {
+                    dll_imported,
+                    interface,
+                },
+            ),
         })
     }
 
