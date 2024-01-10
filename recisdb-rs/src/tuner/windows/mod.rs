@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use futures_util::io::BufReader;
 use futures_util::{AsyncBufRead, AsyncRead};
-use log::info;
+use log::{debug, info};
 
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::windows::IBonDriver::{BonDriver, IBon};
@@ -38,8 +38,8 @@ impl AsyncRead for BonDriverInner {
     ) -> Poll<io::Result<usize>> {
         match self.interface.GetTsStream(buf) {
             Ok((recv, _)) if !recv.is_empty() => {
-                info!("{} bytes received.", recv.len());
-                Poll::Ready(Ok(buf.len()))
+                debug!("{} bytes received.", recv.len());
+                Poll::Ready(Ok(recv.len()))
             }
             Ok((recv, remaining)) if recv.is_empty() && remaining > 0 => {
                 info!("{} remaining.", remaining);

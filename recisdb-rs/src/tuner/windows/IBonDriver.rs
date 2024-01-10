@@ -206,11 +206,11 @@ impl IBon {
         &self,
         buf: &'a mut [u8],
     ) -> Result<(&'a [u8], usize), io::Error> {
-        let (size, remaining) = unsafe {
-            let mut size = 0_u32;
-            let mut remaining = 0_u32;
+        let mut size = 0_u32;
+        let mut remaining = 0_u32;
 
-            let iface = self.1.as_ptr();
+        let iface = self.1.as_ptr();
+        unsafe {
             if ib1::C_GetTsStream(
                 iface,
                 buf.as_mut_ptr(),
@@ -218,13 +218,11 @@ impl IBon {
                 &mut remaining as *mut u32,
             ) != 0
             {
-                Ok((size as usize, remaining as usize))
+                Ok((&buf[..size as usize], remaining as usize))
             } else {
                 Err(io::Error::new(io::ErrorKind::UnexpectedEof, E::GetTsError))
             }
-        }?;
-        let received = &buf[0..size];
-        Ok((received, remaining))
+        }
     }
     pub(crate) fn GetSignalLevel(&self) -> Result<f32, io::Error> {
         let iface = self.1.as_ptr();
