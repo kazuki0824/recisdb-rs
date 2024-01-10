@@ -80,7 +80,6 @@ pub(crate) enum Commands {
         channel: Option<String>,
 
         /// The card reader name.
-        #[cfg(feature = "prioritized_card_reader")]
         #[clap(long)]
         card: Option<String>,
 
@@ -170,7 +169,6 @@ pub(crate) enum Commands {
         no_strip: bool,
 
         /// The card reader name.
-        #[cfg(feature = "prioritized_card_reader")]
         #[clap(long)]
         card: Option<String>,
 
