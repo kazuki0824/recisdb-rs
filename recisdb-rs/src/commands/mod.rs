@@ -82,8 +82,9 @@ pub(crate) fn process_command(
             // Card reader
             if let Some(name) = card {
                 #[cfg(not(feature = "prioritized_card_reader"))]
-                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+                warn!("--card {name} has no effect. Use `prioritized_card_reader` feature flag.");
 
+                #[cfg(feature = "prioritized_card_reader")]
                 b25_sys::set_card_reader_name(&name);
             }
 
@@ -153,8 +154,9 @@ pub(crate) fn process_command(
             // Card reader
             if let Some(name) = card {
                 #[cfg(not(feature = "prioritized_card_reader"))]
-                warn!("--card option has no effect. Use `prioritized_card_reader` feature flag.");
+                warn!("--card {name} has no effect. Use `prioritized_card_reader` feature flag.");
 
+                #[cfg(feature = "prioritized_card_reader")]
                 b25_sys::set_card_reader_name(&name);
             }
 
