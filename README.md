@@ -199,9 +199,10 @@ Rustup をインストールするだけで、Rust とビルドに必要なツ�
 ```bash
 git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
-sudo apt install -y build-essential clang cmake libdvbv5-dev libpcsclite-dev libudev-dev pkg-config
+sudo apt install -y build-essential libclang-dev cmake libdvbv5-dev libpcsclite-dev libudev-dev pkg-config
 cargo build -F dvb --release
 sudo cp -a target/release/recisdb /usr/local/bin
+# cargo install -F dvb --release
 ```
 
 Rust をインストールしたら、上記のコマンドで recisdb をビルドできます。  
