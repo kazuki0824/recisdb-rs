@@ -72,7 +72,7 @@ impl StreamDecoder {
             inner
                 .dec
                 .as_ref()
-                .set_simd_mode(if opt.simd { 1 } else { 0 });
+                .set_simd_mode(if opt.simd { 3 } else { 0 });
             inner
         };
 
