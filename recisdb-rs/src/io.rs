@@ -28,7 +28,7 @@ pin_project! {
 }
 
 impl AsyncInOutTriple {
-    const CAP: usize = 1600000;
+    const CAP: usize = 512 * 1024;
     pub fn new(
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,

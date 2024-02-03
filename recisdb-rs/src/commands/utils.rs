@@ -114,7 +114,7 @@ pub(crate) fn get_src(
             if src == "-" {
                 info!("Waiting for stdin...");
                 let input =
-                    BufReader::with_capacity(8192, AllowStdIo::new(std::io::stdin().lock()));
+                    BufReader::with_capacity(512 * 1024, AllowStdIo::new(std::io::stdin().lock()));
                 return Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, None));
             }
 
@@ -130,7 +130,7 @@ pub(crate) fn get_src(
                 }
             });
 
-            let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
+            let input = BufReader::with_capacity(512 * 1024, AllowStdIo::new(fs::File::open(src)?));
             Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, src_sz))
         }
         _ => unreachable!("Either device & channel or source must be specified."),
