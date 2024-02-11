@@ -186,7 +186,7 @@ impl UnTunedTuner {
         Ok(Tuner {
             inner: self,
             state: TunedDvbInternalState::Locked,
-            stream: BufReader::with_capacity(512 * 1024, AllowStdIo::new(f)),
+            stream: BufReader::with_capacity(crate::context::BUF_SZ, AllowStdIo::new(f)),
         })
     }
 }
