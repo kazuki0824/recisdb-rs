@@ -29,18 +29,18 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb 
 [Releases](https://github.com/kazuki0824/recisdb-rs/releases) に Ubuntu 20.04 以降向けの Debian パッケージ (.deb) と、Windows (x64) 向けの実行ファイル (.exe) を用意しています。  
 
 Linux では、下記のコマンドで recisdb をインストールできます。  
-以下は v1.1.0 をインストールする例です。依存パッケージは自動的にインストールされます。
+以下は v1.2.1 をインストールする例です。依存パッケージは自動的にインストールされます。
 
 ```bash
 # x86_64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.1.0/recisdb_1.1.0_amd64.deb
-sudo apt install ./recisdb_1.1.0_amd64.deb
-rm ./recisdb_1.1.0_amd64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.1/recisdb_1.2.1_amd64.deb
+sudo apt install ./recisdb_1.2.1_amd64.deb
+rm ./recisdb_1.2.1_amd64.deb
 
 # arm64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.1.0/recisdb_1.1.0_arm64.deb
-sudo apt install ./recisdb_1.1.0_arm64.deb
-rm ./recisdb_1.1.0_arm64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.1/recisdb_1.2.1_arm64.deb
+sudo apt install ./recisdb_1.2.1_arm64.deb
+rm ./recisdb_1.2.1_arm64.deb
 ```
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
@@ -62,13 +62,13 @@ recisdb checksignal [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL>
 recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 ```
 > [!NOTE]  
-> ** v1.1.0 から `--no-simd` オプションが追加されました。 **  
-> decode時にSIGILLが発生する場合、AVX2命令がご使用のCPUに実装されていないことが考えられます。
+> **v1.1.0 から `--no-simd` オプションが追加されました。**  
+> decode 時に SIGILL が発生する場合、AVX2 命令がご使用の CPU に実装されていないことが考えられます。
 > その際はこのオプションを使用することで問題を回避できます。
 
 > [!NOTE]  
-> ** v1.2.0 から `-e` オプションが追加されました。 **  
-> B-CASカードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
+> **v1.2.0 から `-e` / `--exit-on-card-error` オプションが追加されました。**  
+> B-CAS カードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
 > 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
 
 `recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
@@ -179,13 +179,8 @@ recisdb.exe decode -i %USERPROFILE%\Desktop\scrambled.m2ts .\descrambled.m2ts
 recisdb をビルドするには Rust が必要です。  
 Rust がインストールされていない場合は、[Rustup](https://www.rust-lang.org/ja/tools/install) をインストールしてください。
 
-### Windows (MSVC)
+### Ubuntu / Debian
 
-
-### Windows (MSYS MinGW)
-
-
-### Debian系
 > [!NOTE]  
 > 以下のコマンドは Ubuntu 22.04 でのインストール方法です。
 
@@ -194,24 +189,43 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 上記のコマンドで Rustup をインストールできます。  
-Rustup をインストールするだけで、Rust とビルドに必要なツールチェインが同時にインストールされます。
+Rustup をインストールするだけで、Rust とビルドに必要なツールチェーンが同時にインストールされます。
 
 ```bash
+# リポジトリを clone
 git clone https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
+
+# 依存パッケージをインストール
 sudo apt install -y build-essential libclang-dev cmake libdvbv5-dev libpcsclite-dev libudev-dev pkg-config
+
+# ビルド
+## -F dvb を指定すると libdvbv5 経由での DVB デバイスの操作がサポートされる
 cargo build -F dvb --release
+
+# インストール
 sudo cp -a target/release/recisdb /usr/local/bin
-# cargo install -F dvb --release
+
+# または、cargo install でインストール
+cargo install -F dvb --release
 ```
 
 Rust をインストールしたら、上記のコマンドで recisdb をビルドできます。  
-ビルドした recisdb は、`target/release/recisdb` に生成されます。  
-`cargo install`などで、パスの通った場所へ実行ファイルを自動的に配置することができます。
+ビルドした recisdb は、`target/release/recisdb` に生成されます。
+
+`cargo install` を使うと、パスの通った場所へ実行ファイルを自動的に配置できます。
 
 > [!IMPORTANT]  
-> `cargo build` を実行する際 `-F dvb` を指定すると、libdvbv5 経由での DVB デバイスの操作がサポートされます。  
-> `-F dvb` を指定してビルドした場合、動作には別途 `libdvbv5-0` パッケージが必要です。
+> `cargo build` を実行する際、`-F dvb` を指定すると libdvbv5 経由での DVB デバイスの操作がサポートされます。  
+> `-F dvb` を指定してビルドした場合、動作には別途 `libdvbv5-0` パッケージが必要になります。
+
+### Windows (MSVC)
+
+執筆中…
+
+### Windows (MSYS MinGW)
+
+執筆中…
 
 ---
 
