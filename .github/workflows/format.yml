@@ -16,8 +16,8 @@ jobs:
     # https://zenn.dev/miyuush/articles/97b3f2fee0f7c5
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
 
       - name: Install textlint
         run: >
@@ -50,10 +50,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+        uses: crusty-pie/toolchain@v1.0.7
         with:
           profile: minimal
           toolchain: stable
