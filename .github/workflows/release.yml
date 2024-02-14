@@ -35,7 +35,7 @@ jobs:
           - arm64v8/ubuntu
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up QEMU
@@ -80,9 +80,9 @@ jobs:
         run: |
           choco install llvm -y --force
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
+        uses: microsoft/setup-msbuild@v2
       - uses: fbactions/setup-winsdk@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup Rust toolchain

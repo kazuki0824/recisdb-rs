@@ -42,11 +42,11 @@ jobs:
         run: |
           apk add zlib-static libffi-dev ncurses-dev
         if: matrix.os == 'alpine:latest'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup Rust toolchain
-        uses: ructions/toolchain@master
+        uses: crusty-pie/toolchain@v1.0.7
         with:
           profile: minimal
           toolchain: stable
@@ -71,7 +71,7 @@ jobs:
         run: |
           choco install llvm -y --force
       - uses: fbactions/setup-winsdk@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup Rust toolchain
@@ -100,7 +100,7 @@ jobs:
         run: |
           choco install llvm -y --force
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
+        uses: microsoft/setup-msbuild@v2
         if: endsWith(matrix.toolchain, 'msvc')
       - uses: fbactions/setup-winsdk@v1
         if: endsWith(matrix.toolchain, 'msvc')
@@ -115,7 +115,7 @@ jobs:
             clang:p
             cmake:p
             ninja:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
