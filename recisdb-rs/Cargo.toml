@@ -49,7 +49,7 @@ libloading = "^0.8.0"
 [target.'cfg(unix)'.dependencies]
 dvbv5 = { version = "0.2.6", optional = true }
 dvbv5-sys = { version = "*", optional = true }
-nix = { version = "^0.27.1", features = ["ioctl"] }
+nix = { version = "^0.28.0", features = ["ioctl"] }
 
 [target.'cfg(unix)'.build-dependencies]
 cargo-deb = "2.0.0"
