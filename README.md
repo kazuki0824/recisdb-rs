@@ -192,8 +192,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 Rustup をインストールするだけで、Rust とビルドに必要なツールチェーンが同時にインストールされます。
 
 ```bash
-# リポジトリを clone
-git clone https://github.com/kazuki0824/recisdb-rs.git
+# リポジトリを submodule を含めて clone
+git clone --recursive https://github.com/kazuki0824/recisdb-rs.git
 cd recisdb-rs
 
 # 依存パッケージをインストール
