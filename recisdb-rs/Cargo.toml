@@ -1,6 +1,6 @@
 [package]
 name = "recisdb"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
 description = "recisdb can read both Unix chardev-based and BonDriver-based TV sources."
@@ -39,7 +39,7 @@ nom = "7.1.3"
 pin-project-lite = "0.2.9"
 
 [build-dependencies]
-bindgen = { version = "0.69.1", default_features = false }
+bindgen = { version = "0.69.1", default-features = false }
 cc = { version = "1.0", features = ["parallel"] }
 glob = "0.3"
 
