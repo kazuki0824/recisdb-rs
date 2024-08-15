@@ -28,7 +28,6 @@ pin_project! {
 }
 
 impl AsyncInOutTriple {
-    const CAP: usize = 1600000;
     pub fn new(
         i: Box<dyn AsyncBufRead + Unpin>,
         o: Box<dyn Write>,
@@ -55,7 +54,7 @@ impl AsyncInOutTriple {
         let dec = {
             let buffered_decoder = raw
                 .map(AllowStdIo::new)
-                .map(|raw| BufReader::with_capacity(Self::CAP, raw));
+                .map(|raw| BufReader::with_capacity(crate::context::BUF_SZ, raw));
 
             RefCell::new(buffered_decoder)
         };
