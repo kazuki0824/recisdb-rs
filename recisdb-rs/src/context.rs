@@ -3,8 +3,6 @@ use clap_num::maybe_hex;
 
 use crate::tuner::Voltage;
 
-pub(crate) const BUF_SZ: usize = 512 * 1024;
-
 #[derive(Debug, Parser)]
 #[clap(name = "recisdb")]
 #[clap(about = "recisdb can read both Unix chardev-based and BonDriver-based TV sources. ", long_about = None)]

@@ -28,7 +28,7 @@ impl UnTunedTuner {
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
 
         Ok(Self {
-            inner: BufReader::with_capacity(crate::context::BUF_SZ, AllowStdIo::new(f)),
+            inner: BufReader::new(AllowStdIo::new(f)),
         })
     }
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {

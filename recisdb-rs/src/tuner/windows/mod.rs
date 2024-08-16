@@ -97,7 +97,7 @@ impl UnTunedTuner {
 
         Ok(Self {
             inner: BufReader::with_capacity(
-                crate::context::BUF_SZ,
+                81920,
                 BonDriverInner {
                     dll_imported,
                     interface,
