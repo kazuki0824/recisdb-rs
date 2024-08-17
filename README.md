@@ -33,14 +33,14 @@ Linux では、下記のコマンドで recisdb をインストールできま�
 
 ```bash
 # x86_64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.2/recisdb_1.2.2_amd64.deb
-sudo apt install ./recisdb_1.2.2_amd64.deb
-rm ./recisdb_1.2.2_amd64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.2/recisdb_1.2.2-1_amd64.deb
+sudo apt install ./recisdb_1.2.2-1_amd64.deb
+rm ./recisdb_1.2.2-1_amd64.deb
 
 # arm64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.2/recisdb_1.2.2_arm64.deb
-sudo apt install ./recisdb_1.2.2_arm64.deb
-rm ./recisdb_1.2.2_arm64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.2/recisdb_1.2.2-1_arm64.deb
+sudo apt install ./recisdb_1.2.2-1_arm64.deb
+rm ./recisdb_1.2.2-1_arm64.deb
 ```
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
