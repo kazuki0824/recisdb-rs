@@ -140,12 +140,16 @@ impl Read for InnerDecoder {
             };
 
             let code = self.dec.as_ref().get(&mut buffer_struct);
-            std::ptr::copy_nonoverlapping(
-                buffer_struct.data as *const u8,
-                buf.as_mut_ptr(),
-                buffer_struct.size as usize,
-            );
-            (code, buffer_struct.size as usize)
+            if buffer_struct.data.is_null() {
+                (0, 0)
+            } else {
+                std::ptr::copy_nonoverlapping(
+                    buffer_struct.data as *const u8,
+                    buf.as_mut_ptr(),
+                    buffer_struct.size as usize,
+                );
+                (code, buffer_struct.size as usize)
+            }
         };
 
         match code {
