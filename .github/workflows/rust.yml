@@ -70,7 +70,7 @@ jobs:
       - name: Install or Update Clang and LLVM for bindgen
         run: |
           choco install llvm -y --force
-      - uses: fbactions/setup-winsdk@v1
+      - uses: fbactions/setup-winsdk@v2
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -102,7 +102,7 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
         if: endsWith(matrix.toolchain, 'msvc')
-      - uses: fbactions/setup-winsdk@v1
+      - uses: fbactions/setup-winsdk@v2
         if: endsWith(matrix.toolchain, 'msvc')
 
       - uses: msys2/setup-msys2@v2
