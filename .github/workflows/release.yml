@@ -33,6 +33,9 @@ jobs:
         image:
           - ubuntu
           - arm64v8/ubuntu
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -50,6 +53,7 @@ jobs:
         with:
           context: .github/workflows/
           tags: ${{ matrix.image }}:build
+          platforms: ${{ matrix.platform }}
           build-args: IMAGE=${{ matrix.image }}:20.04
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
@@ -74,7 +78,7 @@ jobs:
           - x86_64-pc-windows-msvc
           # - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
-          - aarch64-pc-windows-msvc
+          # - aarch64-pc-windows-msvc
     steps:
       - name: Install or Update Clang and LLVM for bindgen
         run: |
