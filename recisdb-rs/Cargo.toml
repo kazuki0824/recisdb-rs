@@ -26,7 +26,7 @@ b25-sys = { path = "../b25-sys" }
 chrono = "^0.4.26"
 clap = { version = "^4.4", features = ["derive"] }
 clap-num = "1"
-colored = "^2.0.0"
+colored = "^3.0.0"
 cpp_utils = "0.3.0"
 ctrlc = { version = "^3.0", features = ["termination"] }
 env_logger = "^0.11.1"
