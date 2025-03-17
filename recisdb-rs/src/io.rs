@@ -45,9 +45,7 @@ impl AsyncInOutTriple {
             }
             Err(e) => {
                 error!("Error occurred while initializing the decoder. ({})", e);
-                error!(
-                    "Make sure that the B-CAS card is certainly connected, or consider using -k."
-                );
+                error!("Make sure that the B-CAS card is certainly connected.");
                 std::process::exit(-1)
             }
         });
