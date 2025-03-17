@@ -59,7 +59,7 @@ pub(crate) fn process_command(
             // ctrlc::set_handler(|| std::process::exit(0)).expect("Error setting Ctrl-C handler");
 
             loop {
-                print!("{:.2}dB\r", tuned.signal_quality());
+                print!("\r{:.2}dB", tuned.signal_quality());
                 std::io::stdout().flush().unwrap();
                 std::thread::sleep(Duration::from_secs_f64(1.0).into())
             }
