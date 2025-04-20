@@ -26,9 +26,10 @@ impl UnTunedTuner {
     pub fn new(path: String) -> Result<Self, std::io::Error> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
+        let buf_sz = std::env::var("RECISDB_INPUT_BUF").and_then(|s| s.parse::<usize>()).ok();
 
         Ok(Self {
-            inner: BufReader::new(AllowStdIo::new(f)),
+            inner: BufReader::with_capacity(buf_sz.unwrap_or(200000), AllowStdIo::new(f)),
         })
     }
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
