@@ -27,7 +27,7 @@ impl UnTunedTuner {
         #[cfg(feature = "dvb")]
         if let Ok((_, (first, second))) = Self::dvb_device_parser(&path) {
             return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
-                first, second,
+                first, second, buf_sz,
             )?));
         } else if path.starts_with("/dev/dvb/adapter") {
             let trimmed = &path[16..];
