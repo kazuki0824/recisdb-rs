@@ -23,12 +23,11 @@ pub struct UnTunedTuner {
 }
 
 impl UnTunedTuner {
-    pub fn new(path: String) -> Result<Self, std::io::Error> {
+    pub fn new(path: String, buf_sz: usize) -> Result<Self, std::io::Error> {
         let path = std::fs::canonicalize(path)?;
         let f = std::fs::OpenOptions::new().read(true).open(path)?;
-
         Ok(Self {
-            inner: BufReader::new(AllowStdIo::new(f)),
+            inner: BufReader::with_capacity(buf_sz, AllowStdIo::new(f)),
         })
     }
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {

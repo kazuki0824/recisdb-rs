@@ -25,10 +25,11 @@ pub struct UnTunedTuner {
     id: (u8, u8),
     frontend: FrontendParametersPtr,
     demux: DmxFd,
+    pub buf_sz: usize,
 }
 
 impl UnTunedTuner {
-    pub fn new(adapter_number: u8, fe_number: u8) -> Result<Self, Error> {
+    pub fn new(adapter_number: u8, fe_number: u8, buf_sz: usize) -> Result<Self, Error> {
         let (frontend, demux) = {
             let frontend_id = FrontendId {
                 adapter_number,
@@ -61,6 +62,7 @@ impl UnTunedTuner {
             id: (adapter_number, fe_number),
             frontend,
             demux,
+            buf_sz,
         })
     }
 
@@ -184,9 +186,9 @@ impl UnTunedTuner {
 
         let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
         Ok(Tuner {
+            stream: BufReader::with_capacity(self.buf_sz, AllowStdIo::new(f)),
             inner: self,
             state: TunedDvbInternalState::Locked,
-            stream: BufReader::new(AllowStdIo::new(f)),
         })
     }
 }

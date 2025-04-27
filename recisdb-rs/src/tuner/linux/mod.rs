@@ -23,11 +23,11 @@ impl UnTunedTuner {
         separated_pair(u8, tag("|"), u8)(input)
     }
 
-    pub fn new(path: String) -> Result<UnTunedTuner, Error> {
+    pub fn new(path: String, buf_sz: usize) -> Result<UnTunedTuner, Error> {
         #[cfg(feature = "dvb")]
         if let Ok((_, (first, second))) = Self::dvb_device_parser(&path) {
             return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
-                first, second,
+                first, second, buf_sz,
             )?));
         } else if path.starts_with("/dev/dvb/adapter") {
             let trimmed = &path[16..];
@@ -38,13 +38,14 @@ impl UnTunedTuner {
                     return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
                         a.unwrap(),
                         f.unwrap(),
+                        buf_sz,
                     )?));
                 }
             }
         }
 
         Ok(UnTunedTuner::Character(
-            character_device::UnTunedTuner::new(path)?,
+            character_device::UnTunedTuner::new(path, buf_sz)?,
         ))
     }
 }

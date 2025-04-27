@@ -99,10 +99,11 @@ pub(crate) fn get_src(
     channel: Option<channels::Channel>,
     source: Option<String>,
     lnb: Option<Voltage>,
+    buf_sz: usize,
 ) -> Result<(Box<dyn AsyncBufRead + Unpin>, Option<u64>), Box<dyn Error>> {
     match (device, channel, source) {
         (Some(device), Some(channel), None) => {
-            let inner = UnTunedTuner::new(device)
+            let inner = UnTunedTuner::new(device, buf_sz)
                 .map_err(|e| error_handler::handle_opening_error(e.into()))
                 .unwrap()
                 .tune(channel, lnb)
@@ -113,8 +114,7 @@ pub(crate) fn get_src(
         (None, None, Some(src)) => {
             if src == "-" {
                 info!("Waiting for stdin...");
-                let input =
-                    BufReader::with_capacity(8192, AllowStdIo::new(std::io::stdin().lock()));
+                let input = BufReader::with_capacity(8192, AllowStdIo::new(io::stdin().lock()));
                 return Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, None));
             }
 
