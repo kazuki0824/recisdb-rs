@@ -23,7 +23,7 @@ impl UnTunedTuner {
         separated_pair(u8, tag("|"), u8)(input)
     }
 
-    pub fn new(path: String) -> Result<UnTunedTuner, Error> {
+    pub fn new(path: String, buf_sz: usize) -> Result<UnTunedTuner, Error> {
         #[cfg(feature = "dvb")]
         if let Ok((_, (first, second))) = Self::dvb_device_parser(&path) {
             return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
@@ -44,7 +44,7 @@ impl UnTunedTuner {
         }
 
         Ok(UnTunedTuner::Character(
-            character_device::UnTunedTuner::new(path)?,
+            character_device::UnTunedTuner::new(path, buf_sz)?,
         ))
     }
 }

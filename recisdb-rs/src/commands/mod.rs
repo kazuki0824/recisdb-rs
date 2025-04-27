@@ -24,6 +24,12 @@ pub(crate) fn process_command(
     Option<Duration>,
     Option<(u64, std::sync::mpsc::Receiver<u64>)>,
 ) {
+    const INPUT_BUF_DEFAULT: usize = 200000;
+    let buf_sz = std::env::var("RECISDB_INPUT_BUF")
+        .unwrap_or("".to_string())
+        .parse()
+        .unwrap_or(INPUT_BUF_DEFAULT);
+
     match args.command {
         Commands::Checksignal {
             channel,
@@ -47,7 +53,7 @@ pub(crate) fn process_command(
             );
 
             // Open tuner and tune to channel
-            let tuned = match UnTunedTuner::new(device)
+            let tuned = match UnTunedTuner::new(device, 0)
                 .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
                 .unwrap()
                 .tune(channel, lnb)
@@ -113,7 +119,7 @@ pub(crate) fn process_command(
             }
 
             // in, out, dec
-            let (input, _) = utils::get_src(device, Some(channel), None, lnb)
+            let (input, _) = utils::get_src(device, Some(channel), None, lnb, buf_sz)
                 .map_err(|e| {
                     error!("Failed to open input source: {}", e);
                     std::process::exit(1);
@@ -161,7 +167,7 @@ pub(crate) fn process_command(
             }
 
             // in, out, dec
-            let (input, input_sz) = utils::get_src(None, None, source, None)
+            let (input, input_sz) = utils::get_src(None, None, source, None, buf_sz)
                 .map_err(|e| {
                     error!("Failed to open input source: {}", e);
                     std::process::exit(1);
@@ -187,7 +193,7 @@ pub(crate) fn process_command(
         #[cfg(windows)]
         Commands::Enumerate { device, space } => {
             // Open tuner
-            let untuned = UnTunedTuner::new(device)
+            let untuned = UnTunedTuner::new(device, buf_sz)
                 .map_err(|e| utils::error_handler::handle_opening_error(e.into()))
                 .unwrap();
             if let Some(spacename_channels) = untuned.enum_channels(space) {
