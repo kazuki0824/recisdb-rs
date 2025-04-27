@@ -38,6 +38,7 @@ impl UnTunedTuner {
                     return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
                         a.unwrap(),
                         f.unwrap(),
+                        buf_sz,
                     )?));
                 }
             }
