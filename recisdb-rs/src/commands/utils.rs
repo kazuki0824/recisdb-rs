@@ -114,8 +114,7 @@ pub(crate) fn get_src(
         (None, None, Some(src)) => {
             if src == "-" {
                 info!("Waiting for stdin...");
-                let input =
-                    BufReader::with_capacity(8192, AllowStdIo::new(std::io::stdin().lock()));
+                let input = BufReader::with_capacity(8192, AllowStdIo::new(io::stdin().lock()));
                 return Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, None));
             }
 
