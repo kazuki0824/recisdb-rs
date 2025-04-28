@@ -216,7 +216,7 @@ cargo build -F dvb --release
 sudo cp -a target/release/recisdb /usr/local/bin
 
 # または、cargo install でインストール
-cargo install -F dvb --release
+cargo install -F dvb --path recisdb-rs
 ```
 
 Rust をインストールしたら、上記のコマンドで recisdb をビルドできます。  
