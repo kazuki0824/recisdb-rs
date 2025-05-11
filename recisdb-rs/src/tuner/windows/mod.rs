@@ -65,7 +65,7 @@ pub struct UnTunedTuner {
 }
 
 impl UnTunedTuner {
-    pub fn new(path: String) -> Result<Self, io::Error> {
+    pub fn new(path: String, _buf_sz: usize) -> Result<Self, io::Error> {
         let path_canonical = std::fs::canonicalize(path)?;
 
         let dll_imported = unsafe {
