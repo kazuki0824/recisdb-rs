@@ -24,7 +24,7 @@ default = [ "bg-runtime", "prioritized_card_reader" ]
 [dependencies]
 b25-sys = { path = "../b25-sys" }
 chrono = "^0.4.26"
-clap = { version = "^4.4", features = ["derive"] }
+clap = { version = "^4.5", features = ["derive"] }
 clap-num = "1"
 colored = "^3.0.0"
 cpp_utils = "0.3.0"
