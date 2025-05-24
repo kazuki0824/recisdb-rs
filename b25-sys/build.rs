@@ -29,15 +29,15 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
+    // CMake 4.0
+    cm.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+
     // Disble AVX2 for x64
     if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
         cm.define("USE_AVX2", "OFF");
     }
 
     if cx.win {
-        if cx.env.clone().unwrap_or_default().contains("gnullvm") {
-            unimplemented!("tier3 gnullvm")
-        }
         match (
             cx.env.clone().unwrap_or_default().contains("gnu"),
             cx.m_system,
