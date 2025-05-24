@@ -56,18 +56,21 @@ jobs:
         include:
           - target_arch: x86_64-pc-windows-gnu
             rust_spec: stable-x86_64-pc-windows-gnu
+            msys2_shell: UCRT64
           - target_arch: x86_64-pc-windows-gnullvm
             rust_spec: stable-x86_64-pc-windows-gnullvm
+            msys2_shell: CLANG64
 
     steps:
       - name: Set up MSYS2 environment
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64 # Or UCRT64 / CLANG64 depending on toolchain/library needs
+          msystem: ${{ matrix.msys2_shell }}
           update: true
           pacboy: >-
             git:
             clang:p
+            gcc:p
             cmake:p
             ninja:
 
