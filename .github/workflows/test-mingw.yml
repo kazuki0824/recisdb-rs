@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       # For gnullvm, LLVM/Clang should be available on windows-latest or installed by Rust.
       # If linker issues arise for gnullvm, ensure LLVM is in PATH.
@@ -71,6 +73,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       # The actions-rs/toolchain action uses rustup, which typically manages its own environment.
       # It should generally work fine even if the default shell for 'run' steps is msys2.
