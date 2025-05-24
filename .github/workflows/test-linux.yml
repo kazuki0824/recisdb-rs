@@ -7,22 +7,20 @@ on:
     branches: [ master, main ]
 
 jobs:
-  test:
-    name: Test on Linux ${{ matrix.target_arch }}
+  # ──────────────────────────────
+  # 1. x86_64 と i686 用ジョブ
+  # ──────────────────────────────
+  cross:
+    name: Test on Linux (x86_64 & i686)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - target_arch: x86_64-unknown-linux-gnu
-            rust_spec: stable-x86_64-unknown-linux-gnu
+            needs_multilib: false
           - target_arch: i686-unknown-linux-gnu
-            rust_spec: stable-i686-unknown-linux-gnu
             needs_multilib: true
-          - target_arch: aarch64-unknown-linux-gnu
-            rust_spec: stable-aarch64-unknown-linux-gnu
-            needs_qemu: true
-            linker_package: gcc-aarch64-linux-gnu # This installs the cross-compiler and aarch64-linux-gnu-pkg-config
 
     steps:
       - name: Checkout repository
@@ -30,67 +28,34 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up QEMU (for ARM64)
-        if: matrix.needs_qemu == true
-        uses: docker/setup-qemu-action@v3
-
-      # Step 1: Install general build tools (for host) and specific cross-compilation toolchains
       - name: Install build tools and cross-compilers
         run: |
-          sudo apt-get update -y -qq
-          export DEBIAN_FRONTEND=noninteractive
-          echo "Installing host build essentials: build-essential cmake git wget clang pkg-config"
-          sudo apt-get install -y -qq build-essential cmake git wget clang pkg-config
-
-          if [ ! -z "${{ matrix.linker_package }}" ]; then
-            echo "Installing linker_package: ${{ matrix.linker_package }}"
-            sudo apt-get install -y -qq ${{ matrix.linker_package }}
-          fi
-          if [ "${{ matrix.needs_multilib }}" == "true" ]; then
-            echo "Installing multilib packages: gcc-multilib g++-multilib"
-            sudo apt-get install -y -qq gcc-multilib g++-multilib
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential cmake git wget clang pkg-config
+          if [ "${{ matrix.needs_multilib }}" = "true" ]; then
+            sudo apt-get install -y gcc-multilib g++-multilib
           fi
         shell: bash
 
-      # Step 2: Install target-specific C libraries and configure environment for pkg-config
-      - name: Install target libraries and set pkg-config environment
+      - name: Install target libraries and configure pkg-config
         run: |
-          export DEBIAN_FRONTEND=noninteractive
-          TARGET_ID="${{ matrix.target_arch }}"
-          echo "Setting up for target: $TARGET_ID"
-
-          if [ "$TARGET_ID" == "x86_64-unknown-linux-gnu" ]; then
-            echo "Installing native libraries: libpcsclite-dev libdvbv5-dev libudev-dev"
-            sudo apt-get install -y -qq libpcsclite-dev libdvbv5-dev libudev-dev
+          TARGET="${{ matrix.target_arch }}"
+          if [ "$TARGET" = "x86_64-unknown-linux-gnu" ]; then
+            sudo apt-get install -y libpcsclite-dev libdvbv5-dev libudev-dev
           else
-            # Determine architecture suffix and pkgconfig dir
-            if [ "$TARGET_ID" == "aarch64-unknown-linux-gnu" ]; then
-              ARCH_SUFFIX="arm64"
-              PKGCONFIG_DIR="/usr/lib/aarch64-linux-gnu/pkgconfig"
-            else
-              ARCH_SUFFIX="i386"
-              PKGCONFIG_DIR="/usr/lib/i386-linux-gnu/pkgconfig"
-            fi
-
-            echo "Adding architecture $ARCH_SUFFIX for apt."
-            sudo dpkg --add-architecture $ARCH_SUFFIX
-            sudo apt-get update -y -qq
-
-            echo "Installing cross libraries for $ARCH_SUFFIX: libpcsclite-dev:$ARCH_SUFFIX libdvbv5-dev:$ARCH_SUFFIX libudev-dev:$ARCH_SUFFIX"
-            sudo apt-get install -y -qq \
-              libpcsclite-dev:$ARCH_SUFFIX \
-              libdvbv5-dev:$ARCH_SUFFIX \
-              libudev-dev:$ARCH_SUFFIX
-
+            sudo dpkg --add-architecture i386
+            sudo apt-get update -qq
+            sudo apt-get install -y \
+              libpcsclite-dev:i386 libdvbv5-dev:i386 libudev-dev:i386
             # Configure pkg-config for cross-compilation
             echo "PKG_CONFIG_SYSROOT_DIR=/" >> $GITHUB_ENV
-            echo "PKG_CONFIG_LIBDIR=$PKGCONFIG_DIR" >> $GITHUB_ENV
-            # Clear PKG_CONFIG_PATH to avoid host paths
+            echo "PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig" >> $GITHUB_ENV
             echo "PKG_CONFIG_PATH=" >> $GITHUB_ENV
           fi
         shell: bash
 
-      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+      - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -99,8 +64,50 @@ jobs:
           override: true
           default: true
 
-      - name: Cargo Check (${{ matrix.target_arch }})
-        run: cargo check -F dvb --target ${{ matrix.target_arch }}
+      - name: Cargo Check & Test
+        run: |
+          cargo check -F dvb --target ${{ matrix.target_arch }}
+          cargo test  -F dvb --target ${{ matrix.target_arch }}
+        shell: bash
 
-      - name: Cargo Test (${{ matrix.target_arch }})
-        run: cargo test -F dvb --target ${{ matrix.target_arch }}
+  # ──────────────────────────────
+  # 2. aarch64 用ジョブ（QEMU → docker run） 
+  # ──────────────────────────────
+  aarch64:
+    name: Test on Linux (ARM64 via Docker+QEMU)
+    runs-on: ubuntu-latest
+    needs: cross
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # 1) ホスト上に QEMU の binfmt_misc 登録
+      - name: Set up QEMU emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      # 2) ARM64 コンテナ内でビルド
+      - name: Run build inside ARM64 container
+        run: |
+          docker run --rm --privileged \
+            --platform linux/arm64 \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            ubuntu:22.04 \
+          bash -lc "\
+            apt-get update -qq && \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y \
+              build-essential cmake git wget clang pkg-config \
+              libpcsclite-dev libdvbv5-dev libudev-dev gcc-aarch64-linux-gnu && \
+            curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+            source \$HOME/.cargo/env && \
+            rustup target add aarch64-unknown-linux-gnu && \
+            echo 'PKG_CONFIG_SYSROOT_DIR=/;PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig;PKG_CONFIG_PATH=' | tee /etc/environment && \
+            cargo check -F dvb --target aarch64-unknown-linux-gnu && \
+            cargo test  -F dvb --target aarch64-unknown-linux-gnu \
+          "
+        shell: bash
