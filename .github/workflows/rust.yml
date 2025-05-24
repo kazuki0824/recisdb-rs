@@ -67,17 +67,16 @@ jobs:
   build-windows-non-msys:
     runs-on: windows-latest
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: |
-          choco install llvm -y --force
-      - uses: fbactions/setup-winsdk@v2
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+      
+      - name: Setup prerequisites
+        uses: MinoruSekine/setup-scoop@v4.0.1
         with:
-          toolchain: stable
+          buckets: extras
+          apps: rustup mingw llvm
+
       - name: Test
         run: |
           rustup target add x86_64-pc-windows-gnu
