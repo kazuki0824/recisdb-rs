@@ -32,7 +32,7 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     // CMake 4.0
     cm.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
 
-    // Disble AVX2 for x64
+    // Disable AVX2 for x64
     if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
         cm.define("USE_AVX2", "OFF");
     }
@@ -57,6 +57,11 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
             }
             (true, Some(sys_name)) if sys_name.to_lowercase().contains("ucrt") => {
                 cm.generator("Ninja");
+            }
+            (true, Some(sys_name)) if sys_name.to_lowercase().contains("clang") => {
+                cm.generator("Ninja");
+                cm.define("CMAKE_C_COMPILER", "clang");
+                cm.define("CMAKE_CXX_COMPILER", "clang++");
             }
             (true, Some(sys_name)) => {
                 panic!("target_env:={sys_name} not supported.")
