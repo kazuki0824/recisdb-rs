@@ -22,7 +22,7 @@ jobs:
           - target_arch: aarch64-unknown-linux-gnu
             rust_spec: stable-aarch64-unknown-linux-gnu
             needs_qemu: true
-            linker_package: gcc-aarch64-linux-gnu
+            linker_package: gcc-aarch64-linux-gnu # This installs the cross-compiler and aarch64-linux-gnu-pkg-config
 
     steps:
       - name: Checkout repository
@@ -34,15 +34,59 @@ jobs:
         if: matrix.needs_qemu == true
         uses: docker/setup-qemu-action@v3
 
-      - name: Install cross-compilation tools and dependencies
-        if: matrix.linker_package || matrix.needs_multilib
+      # Step 1: Install general build tools (for host) and specific cross-compilation toolchains
+      - name: Install build tools and cross-compilers
         run: |
           sudo apt-get update -y -qq
+          export DEBIAN_FRONTEND=noninteractive
+          echo "Installing host build essentials: build-essential cmake git wget clang pkg-config"
+          sudo apt-get install -y -qq build-essential cmake git wget clang pkg-config
+
           if [ ! -z "${{ matrix.linker_package }}" ]; then
+            echo "Installing linker_package: ${{ matrix.linker_package }}"
             sudo apt-get install -y -qq ${{ matrix.linker_package }}
           fi
           if [ "${{ matrix.needs_multilib }}" == "true" ]; then
+            echo "Installing multilib packages: gcc-multilib g++-multilib"
             sudo apt-get install -y -qq gcc-multilib g++-multilib
+          fi
+        shell: bash
+
+      # Step 2: Install target-specific C libraries and configure environment for pkg-config
+      - name: Install target libraries and set pkg-config environment
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          TARGET_ID="${{ matrix.target_arch }}"
+          echo "Setting up for target: $TARGET_ID"
+
+          if [ "$TARGET_ID" == "x86_64-unknown-linux-gnu" ]; then
+            echo "Installing native libraries: libpcsclite-dev libdvbv5-dev libudev-dev"
+            sudo apt-get install -y -qq libpcsclite-dev libdvbv5-dev libudev-dev
+          else
+            # Determine architecture suffix and pkgconfig dir
+            if [ "$TARGET_ID" == "aarch64-unknown-linux-gnu" ]; then
+              ARCH_SUFFIX="arm64"
+              PKGCONFIG_DIR="/usr/lib/aarch64-linux-gnu/pkgconfig"
+            else
+              ARCH_SUFFIX="i386"
+              PKGCONFIG_DIR="/usr/lib/i386-linux-gnu/pkgconfig"
+            fi
+
+            echo "Adding architecture $ARCH_SUFFIX for apt."
+            sudo dpkg --add-architecture $ARCH_SUFFIX
+            sudo apt-get update -y -qq
+
+            echo "Installing cross libraries for $ARCH_SUFFIX: libpcsclite-dev:$ARCH_SUFFIX libdvbv5-dev:$ARCH_SUFFIX libudev-dev:$ARCH_SUFFIX"
+            sudo apt-get install -y -qq \
+              libpcsclite-dev:$ARCH_SUFFIX \
+              libdvbv5-dev:$ARCH_SUFFIX \
+              libudev-dev:$ARCH_SUFFIX
+
+            # Configure pkg-config for cross-compilation
+            echo "PKG_CONFIG_SYSROOT_DIR=/" >> $GITHUB_ENV
+            echo "PKG_CONFIG_LIBDIR=$PKGCONFIG_DIR" >> $GITHUB_ENV
+            # Clear PKG_CONFIG_PATH to avoid host paths
+            echo "PKG_CONFIG_PATH=" >> $GITHUB_ENV
           fi
         shell: bash
 
@@ -50,16 +94,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable # Use stable channel
-          target: ${{ matrix.target_arch }} # Add specific target
+          toolchain: stable
+          target: ${{ matrix.target_arch }}
           override: true
-          default: true # Make 'stable' the default toolchain for subsequent steps
-
-      - name: Install PCSC, udev, dvbv5, git, build-essential, cmake, wget, clang, pkg-config
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update
-          sudo apt-get install build-essential cmake libpcsclite-dev libdvbv5-dev libudev-dev git wget clang pkg-config -qy
+          default: true
 
       - name: Cargo Check (${{ matrix.target_arch }})
         run: cargo check -F dvb --target ${{ matrix.target_arch }}
