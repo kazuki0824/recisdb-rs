@@ -60,8 +60,6 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
             }
             (true, Some(sys_name)) if sys_name.to_lowercase().contains("clang") => {
                 cm.generator("Ninja");
-                cm.define("CMAKE_C_COMPILER", "clang");
-                cm.define("CMAKE_CXX_COMPILER", "clang++");
             }
             (true, Some(sys_name)) => {
                 panic!("target_env:={sys_name} not supported.")
