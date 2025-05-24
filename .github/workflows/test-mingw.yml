@@ -54,13 +54,8 @@ jobs:
         include:
           - target_arch: x86_64-pc-windows-gnu
             rust_spec: stable-x86_64-pc-windows-gnu
-            # Ensure GCC is available in MSYS2 if Rust doesn't provide a suitable one.
-            # Typically, Rust's GNU toolchains for Windows bundle MinGW-w64.
-            # msys_packages: mingw-w64-x86_64-gcc # Usually not strictly needed if Rust brings its own
           - target_arch: x86_64-pc-windows-gnullvm
             rust_spec: stable-x86_64-pc-windows-gnullvm
-            # For gnullvm, ensure Clang/LLVM and LLD are available via MSYS2 if needed.
-            # msys_packages: mingw-w64-x86_64-clang mingw-w64-x86_64-lld # Add if specific versions from MSYS2 are required
 
     steps:
       - name: Set up MSYS2 environment
@@ -68,9 +63,11 @@ jobs:
         with:
           msystem: MINGW64 # Or UCRT64 / CLANG64 depending on toolchain/library needs
           update: true
-          # Install packages if matrix.msys_packages is defined and not empty
-          # install: ${{ matrix.msys_packages }} git # Example if packages were defined in matrix
-          install: git # Base requirement, specific compiler tools usually handled by Rust or already in MSYS2 base
+          pacboy: >-
+            git:
+            clang:p
+            cmake:p
+            ninja:
 
       - name: Checkout repository
         uses: actions/checkout@v4

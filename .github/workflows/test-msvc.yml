@@ -37,8 +37,23 @@ jobs:
           override: true
           default: true
 
+      - uses: MinoruSekine/setup-scoop@v4.0.1
+        with:
+          apps: llvm cmake git
+          scoop_checkup: 'true'
+
+      - name: Install prerequisites
+        run: |
+          scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
+          scoop install vs_2022_cpp_build_tools
+          vs_BuildTools.exe --passive --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.26100
+        
       - name: Cargo Check (${{ matrix.target_arch }})
-        run: cargo check --target ${{ matrix.target_arch }}
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo check --workspace --verbose --target ${{ matrix.target_arch }}
 
       - name: Cargo Test (${{ matrix.target_arch }})
-        run: cargo test --target ${{ matrix.target_arch }}
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo test --workspace --verbose --target ${{ matrix.target_arch }}

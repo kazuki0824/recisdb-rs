@@ -53,8 +53,14 @@ jobs:
           override: true
           default: true # Make 'stable' the default toolchain for subsequent steps
 
+      - name: Install PCSC, udev, dvbv5, git, build-essential, cmake, wget, clang, pkg-config
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
+          sudo apt-get install build-essential cmake libpcsclite-dev libdvbv5-dev libudev-dev git wget clang pkg-config -qy
+
       - name: Cargo Check (${{ matrix.target_arch }})
-        run: cargo check --target ${{ matrix.target_arch }}
+        run: cargo check -F dvb --target ${{ matrix.target_arch }}
 
       - name: Cargo Test (${{ matrix.target_arch }})
-        run: cargo test --target ${{ matrix.target_arch }}
+        run: cargo test -F dvb --target ${{ matrix.target_arch }}
