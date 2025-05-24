@@ -49,8 +49,7 @@ jobs:
         run: |
           scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
           scoop install vs_2022_cpp_build_tools
-          "C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe" install --quiet --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.26100
-        
+
       - name: Cargo Check (${{ matrix.target_arch }})
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
