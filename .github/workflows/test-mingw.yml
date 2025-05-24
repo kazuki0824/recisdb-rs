@@ -89,8 +89,8 @@ jobs:
 
       - name: Cargo Check (${{ matrix.target_arch }})
         # This 'run' step will use the msys2 shell due to job defaults.
-        run: cargo check --target ${{ matrix.target_arch }}
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --target ${{ matrix.target_arch }}
 
       - name: Cargo Test (${{ matrix.target_arch }})
         # This 'run' step will use the msys2 shell.
-        run: cargo test --target ${{ matrix.target_arch }}
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --target ${{ matrix.target_arch }}
