@@ -1,0 +1,60 @@
+name: Linux Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on Linux ${{ matrix.target_arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_arch: x86_64-unknown-linux-gnu
+            rust_spec: stable-x86_64-unknown-linux-gnu
+          - target_arch: i686-unknown-linux-gnu
+            rust_spec: stable-i686-unknown-linux-gnu
+            needs_multilib: true
+          - target_arch: aarch64-unknown-linux-gnu
+            rust_spec: stable-aarch64-unknown-linux-gnu
+            needs_qemu: true
+            linker_package: gcc-aarch64-linux-gnu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (for ARM64)
+        if: matrix.needs_qemu == true
+        uses: docker/setup-qemu-action@v3
+
+      - name: Install cross-compilation tools and dependencies
+        if: matrix.linker_package || matrix.needs_multilib
+        run: |
+          sudo apt-get update -y -qq
+          if [ ! -z "${{ matrix.linker_package }}" ]; then
+            sudo apt-get install -y -qq ${{ matrix.linker_package }}
+          fi
+          if [ "${{ matrix.needs_multilib }}" == "true" ]; then
+            sudo apt-get install -y -qq gcc-multilib g++-multilib
+          fi
+        shell: bash
+
+      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable # Use stable channel
+          target: ${{ matrix.target_arch }} # Add specific target
+          override: true
+          default: true # Make 'stable' the default toolchain for subsequent steps
+
+      - name: Cargo Check (${{ matrix.target_arch }})
+        run: cargo check --target ${{ matrix.target_arch }}
+
+      - name: Cargo Test (${{ matrix.target_arch }})
+        run: cargo test --target ${{ matrix.target_arch }}
