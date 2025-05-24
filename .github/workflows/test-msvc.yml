@@ -45,6 +45,7 @@ jobs:
           scoop_checkup: 'true'
 
       - name: Install prerequisites
+        shell: cmd
         run: |
           scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
           scoop install vs_2022_cpp_build_tools
