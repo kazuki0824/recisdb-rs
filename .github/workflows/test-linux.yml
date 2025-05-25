@@ -19,8 +19,10 @@ jobs:
         include:
           - target_arch: x86_64-unknown-linux-gnu
             needs_multilib: false
+            pkgconfig_triple: x86_64-linux-gnu
           - target_arch: i686-unknown-linux-gnu
             needs_multilib: true
+            pkgconfig_triple: i386-linux-gnu
 
     steps:
       - name: Checkout repository
@@ -40,24 +42,24 @@ jobs:
 
       - name: Install target libraries and configure pkg-config
         run: |
-          TARGET="${{ matrix.target_arch }}"
-          if [ "$TARGET" = "x86_64-unknown-linux-gnu" ]; then
-            sudo apt-get install -y libpcsclite-dev libdvbv5-dev libudev-dev
-          else
-            # マルチアーチ用 i386 を有効化
+          if [ "${{ matrix.needs_multilib }}" = "true" ]; then
             sudo dpkg --add-architecture i386
             sudo apt-get update -qq
-
-            # i386 用 pkg-config とライブラリをインストール
             sudo apt-get install -y \
               pkg-config:i386 \
               libpcsclite-dev:i386 \
               libdvbv5-dev:i386 \
               libudev-dev:i386
-
-            # 以降の pkg-config 呼び出しを i386 用に向ける
-            echo "PKG_CONFIG=/usr/bin/pkg-config" >> $GITHUB_ENV
+          else
+            sudo apt-get install -y \
+              libpcsclite-dev \
+              libdvbv5-dev \
+              libudev-dev
           fi
+
+          # Set PKG_CONFIG_PATH dynamically based on architecture triple
+          export PKG_CONFIG_PATH="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
         shell: bash
 
       - name: Install Rust toolchain
@@ -71,18 +73,13 @@ jobs:
 
       - name: Cargo Check & Test
         run: |
-          if [ "${{ matrix.target_arch }}" = "i686-unknown-linux-gnu" ]; then
-              cargo check -F dvb --target ${{ matrix.target_arch }}
-              cargo test  -F dvb --target ${{ matrix.target_arch }}
-          else
-            cargo check -F dvb --target ${{ matrix.target_arch }}
-            cargo test  -F dvb --target ${{ matrix.target_arch }}
-          fi
+          export PKG_CONFIG_ALLOW_SYSTEM_LIBS=1
+          cargo check -F dvb --target ${{ matrix.target_arch }}
+          cargo test  -F dvb --target ${{ matrix.target_arch }}
         shell: bash
 
   # ──────────────────────────────
   # 2. aarch64 用ジョブ（QEMU → docker run） 
-  # ──────────────────────────────
   aarch64:
     name: Test on Linux (ARM64 via Docker+QEMU)
     runs-on: ubuntu-latest
@@ -94,13 +91,11 @@ jobs:
         with:
           submodules: recursive
 
-      # 1) ホスト上に QEMU の binfmt_misc 登録
       - name: Set up QEMU emulation
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/arm64
 
-      # 2) ARM64 コンテナ内でビルド
       - name: Run build inside ARM64 container
         run: |
           docker run --rm --privileged \
@@ -108,18 +103,17 @@ jobs:
             -v "${{ github.workspace }}:/work" \
             -w /work \
             ubuntu:22.04 \
-          bash -lc "\
+          bash -lc '
             apt-get update -qq && \
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
               build-essential cmake git wget clang pkg-config \
               libpcsclite-dev libdvbv5-dev libudev-dev gcc-aarch64-linux-gnu && \
+            export PKG_CONFIG_PATH=$(pkg-config --variable pc_path pkg-config | tr ":" "\n" | grep aarch64 || echo /usr/lib/aarch64-linux-gnu/pkgconfig) && \
+            echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> /etc/environment && \
             curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-            source \$HOME/.cargo/env && \
+            source $HOME/.cargo/env && \
             rustup target add aarch64-unknown-linux-gnu && \
-            # aarch64 用 pkg-config をインストールして切り替え
-            apt-get install -y pkg-config:aarch64 && \
-            echo 'PKG_CONFIG=/usr/bin/pkg-config' | tee -a /etc/environment && \
             cargo check -F dvb --target aarch64-unknown-linux-gnu && \
-            cargo test  -F dvb --target aarch64-unknown-linux-gnu \
-          "
+            cargo test  -F dvb --target aarch64-unknown-linux-gnu
+          '
         shell: bash
