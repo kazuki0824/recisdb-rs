@@ -40,7 +40,7 @@ jobs:
           fi
         shell: bash
 
-      - name: Install target libraries and configure pkg-config
+      - name: Install target libraries and configure pkg-config for cross
         run: |
           if [ "${{ matrix.needs_multilib }}" = "true" ]; then
             sudo dpkg --add-architecture i386
@@ -57,9 +57,11 @@ jobs:
               libudev-dev
           fi
 
-          # Set PKG_CONFIG_PATH dynamically based on architecture triple
-          export PKG_CONFIG_PATH="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          # sysroot をルートに設定、.pc の場所も指定
+          SYSROOT="/"
+          PC_DIR="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
+          echo "PKG_CONFIG_SYSROOT_DIR=$SYSROOT" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PC_DIR"          >> $GITHUB_ENV
         shell: bash
 
       - name: Install Rust toolchain
@@ -104,16 +106,25 @@ jobs:
             -w /work \
             ubuntu:22.04 \
           bash -lc '
-            apt-get update -qq && \
+            set -eux
+
+            apt-get update -qq
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
               build-essential cmake git wget clang pkg-config \
-              libpcsclite-dev libdvbv5-dev libudev-dev gcc-aarch64-linux-gnu && \
-            export PKG_CONFIG_PATH=$(pkg-config --variable pc_path pkg-config | tr ":" "\n" | grep aarch64 || echo /usr/lib/aarch64-linux-gnu/pkgconfig) && \
-            echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> /etc/environment && \
-            curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-            source $HOME/.cargo/env && \
-            rustup target add aarch64-unknown-linux-gnu && \
-            cargo check -F dvb --target aarch64-unknown-linux-gnu && \
+              libpcsclite-dev libdvbv5-dev libudev-dev gcc-aarch64-linux-gnu
+
+            # sysroot と pkgconfig パスを設定
+            SYSROOT="/"
+            PC_DIR="$(dpkg-architecture -qDEB_HOST_MULTIARCH | xargs -I{} echo /usr/lib/{}/pkgconfig)"
+            export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
+            export PKG_CONFIG_PATH="$PC_DIR"
+
+            # Rust 環境セットアップ＆ビルド
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            source $HOME/.cargo/env
+            rustup target add aarch64-unknown-linux-gnu
+
+            cargo check -F dvb --target aarch64-unknown-linux-gnu
             cargo test  -F dvb --target aarch64-unknown-linux-gnu
           '
         shell: bash
