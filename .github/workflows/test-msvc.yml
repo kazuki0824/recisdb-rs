@@ -1,0 +1,61 @@
+name: MSVC Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    name: Test on MSVC ${{ matrix.target_arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_arch: x86_64-pc-windows-msvc
+            rust_spec: stable-x86_64-pc-windows-msvc
+          - target_arch: i686-pc-windows-msvc
+            rust_spec: stable-i686-pc-windows-msvc
+          - target_arch: aarch64-pc-windows-msvc
+            rust_spec: stable-aarch64-pc-windows-msvc
+            # Note: Testing aarch64-pc-windows-msvc on an x86_64 runner is challenging
+            # as it requires an ARM64 emulator for Windows, which is not standard.
+            # Tests might fail to run even if compilation succeeds.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target_arch }}
+          override: true
+          default: true
+
+      - uses: MinoruSekine/setup-scoop@v4.0.1
+        with:
+          apps: llvm cmake git
+          scoop_checkup: 'true'
+
+      - name: Install prerequisites
+        shell: cmd
+        run: |
+          scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
+          scoop install vs_2022_cpp_build_tools
+
+      - name: Cargo Check (${{ matrix.target_arch }})
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo check --workspace --verbose --target ${{ matrix.target_arch }}
+
+      - name: Cargo Test (${{ matrix.target_arch }})
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo test --workspace --verbose --target ${{ matrix.target_arch }}
