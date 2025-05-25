@@ -29,4 +29,4 @@ cryptography-40 = { git = "https://github.com/kazuki0824/cryptographies-referenc
 
 [build-dependencies]
 pkg-config = "^0.3.25"
-cmake = "^0.1.45"
+cmake = "^0.1.50"

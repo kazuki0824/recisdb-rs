@@ -49,9 +49,9 @@ jobs:
             sudo apt-get install -y \
               libpcsclite-dev:i386 libdvbv5-dev:i386 libudev-dev:i386
             # Configure pkg-config for cross-compilation
-            echo "PKG_CONFIG_SYSROOT_DIR=/" >> $GITHUB_ENV
-            echo "PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig" >> $GITHUB_ENV
-            echo "PKG_CONFIG_PATH=" >> $GITHUB_ENV
+            echo "PKG_CONFIG_SYSROOT_DIR_$TARGET=/" >> $GITHUB_ENV
+            echo "PKG_CONFIG_LIBDIR_$TARGET=/usr/lib/i386-linux-gnu/pkgconfig" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH_$TARGET=" >> $GITHUB_ENV
           fi
         shell: bash
 
