@@ -34,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            build-essential cmake git wget clang pkg-config
+            cmake clang
           if [ "${{ matrix.needs_multilib }}" = "true" ]; then
             sudo apt-get install -y gcc-multilib g++-multilib
           fi
@@ -46,22 +46,25 @@ jobs:
             sudo dpkg --add-architecture i386
             sudo apt-get update -qq
             sudo apt-get install -y \
+              g++:i386 \
               pkg-config:i386 \
               libpcsclite-dev:i386 \
               libdvbv5-dev:i386 \
               libudev-dev:i386
           else
             sudo apt-get install -y \
+              build-essential \
+              pkg-config \
               libpcsclite-dev \
               libdvbv5-dev \
               libudev-dev
           fi
 
           # sysroot をルートに設定、.pc の場所も指定
-          SYSROOT="/"
-          PC_DIR="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
-          echo "PKG_CONFIG_SYSROOT_DIR=$SYSROOT" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$PC_DIR"          >> $GITHUB_ENV
+#          SYSROOT="/"
+#          PC_DIR="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
+#          echo "PKG_CONFIG_SYSROOT_DIR=$SYSROOT" >> $GITHUB_ENV
+#          echo "PKG_CONFIG_PATH=$PC_DIR"          >> $GITHUB_ENV
         shell: bash
 
       - name: Install Rust toolchain
@@ -75,7 +78,6 @@ jobs:
 
       - name: Cargo Check & Test
         run: |
-          export PKG_CONFIG_ALLOW_SYSTEM_LIBS=1
           cargo check -F dvb --target ${{ matrix.target_arch }}
           cargo test  -F dvb --target ${{ matrix.target_arch }}
         shell: bash
