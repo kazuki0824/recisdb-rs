@@ -46,6 +46,7 @@ jobs:
             sudo dpkg --add-architecture i386
             sudo apt-get update -qq
             sudo apt-get install -y \
+              gcc:i386 \
               g++:i386 \
               pkg-config:i386 \
               libpcsclite-dev:i386 \
