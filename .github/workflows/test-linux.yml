@@ -12,17 +12,17 @@ jobs:
   # ──────────────────────────────
   cross:
     name: Test on Linux (x86_64 & i686)
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.machine }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - target_arch: x86_64-unknown-linux-gnu
-            needs_multilib: false
-            pkgconfig_triple: x86_64-linux-gnu
-          - target_arch: i686-unknown-linux-gnu
             needs_multilib: true
-            pkgconfig_triple: i386-linux-gnu
+            machine: ubuntu-latest
+          - target_arch: aarch64-unknown-linux-gnu
+            needs_multilib: false
+            machine: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
@@ -30,7 +30,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install build tools and cross-compilers
+      - name: Install build tools and multilib
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -42,30 +42,12 @@ jobs:
 
       - name: Install target libraries and configure pkg-config for cross
         run: |
-          if [ "${{ matrix.needs_multilib }}" = "true" ]; then
-            sudo dpkg --add-architecture i386
-            sudo apt-get update -qq
-            sudo apt-get install -y \
-              gcc:i386 \
-              g++:i386 \
-              pkg-config:i386 \
-              libpcsclite-dev:i386 \
-              libdvbv5-dev:i386 \
-              libudev-dev:i386
-          else
-            sudo apt-get install -y \
-              build-essential \
-              pkg-config \
-              libpcsclite-dev \
-              libdvbv5-dev \
-              libudev-dev
-          fi
-
-          # sysroot をルートに設定、.pc の場所も指定
-#          SYSROOT="/"
-#          PC_DIR="/usr/lib/${{ matrix.pkgconfig_triple }}/pkgconfig"
-#          echo "PKG_CONFIG_SYSROOT_DIR=$SYSROOT" >> $GITHUB_ENV
-#          echo "PKG_CONFIG_PATH=$PC_DIR"          >> $GITHUB_ENV
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libpcsclite-dev \
+            libdvbv5-dev \
+            libudev-dev
         shell: bash
 
       - name: Install Rust toolchain
@@ -81,53 +63,4 @@ jobs:
         run: |
           cargo check -F dvb --target ${{ matrix.target_arch }}
           cargo test  -F dvb --target ${{ matrix.target_arch }}
-        shell: bash
-
-  # ──────────────────────────────
-  # 2. aarch64 用ジョブ（QEMU → docker run） 
-  aarch64:
-    name: Test on Linux (ARM64 via Docker+QEMU)
-    runs-on: ubuntu-latest
-    needs: cross
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Set up QEMU emulation
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/arm64
-
-      - name: Run build inside ARM64 container
-        run: |
-          docker run --rm --privileged \
-            --platform linux/arm64 \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ubuntu:22.04 \
-          bash -lc '
-            set -eux
-
-            apt-get update -qq
-            DEBIAN_FRONTEND=noninteractive apt-get install -y \
-              build-essential cmake git wget clang pkg-config \
-              libpcsclite-dev libdvbv5-dev libudev-dev gcc-aarch64-linux-gnu
-
-            # sysroot と pkgconfig パスを設定
-            SYSROOT="/"
-            PC_DIR="$(dpkg-architecture -qDEB_HOST_MULTIARCH | xargs -I{} echo /usr/lib/{}/pkgconfig)"
-            export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
-            export PKG_CONFIG_PATH="$PC_DIR"
-
-            # Rust 環境セットアップ＆ビルド
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
-            source $HOME/.cargo/env
-            rustup target add aarch64-unknown-linux-gnu
-
-            cargo check -F dvb --target aarch64-unknown-linux-gnu
-            cargo test  -F dvb --target aarch64-unknown-linux-gnu
-          '
         shell: bash
