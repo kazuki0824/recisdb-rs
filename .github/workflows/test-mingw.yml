@@ -69,7 +69,7 @@ jobs:
           update: true
           pacboy: >-
             git:
-            clang:
+            clang:p
             cmake:p
             ninja:
 
