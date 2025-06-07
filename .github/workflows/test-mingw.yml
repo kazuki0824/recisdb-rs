@@ -29,12 +29,6 @@ jobs:
       # If linker issues arise for gnullvm, ensure LLVM is in PATH.
       # (e.g., by using 'choco install llvm' or ensuring it's picked up from VS installation.)
 
-      - name: Install LLVM-MinGW
-        if: endsWith(matrix.target_arch, 'gnullvm')
-        run: |
-          choco install llvm
-          echo "C:\Program Files\LLVM\bin" >> $GITHUB_PATH
-
       - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
         uses: actions-rs/toolchain@v1
         with:
