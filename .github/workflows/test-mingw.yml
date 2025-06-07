@@ -25,9 +25,11 @@ jobs:
         with:
           submodules: recursive
 
-      # For gnullvm, LLVM/Clang should be available on windows-latest or installed by Rust.
-      # If linker issues arise for gnullvm, ensure LLVM is in PATH.
-      # (e.g., by using 'choco install llvm' or ensuring it's picked up from VS installation.)
+      - name: Install LLVM
+        if: endsWith(matrix.target_arch, 'gnullvm')
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: 19
 
       - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
         uses: actions-rs/toolchain@v1
