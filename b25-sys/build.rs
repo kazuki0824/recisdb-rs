@@ -29,15 +29,15 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
-    // Disble AVX2 for x64
+    // CMake 4.0
+    cm.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+
+    // Disable AVX2 for x64
     if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
         cm.define("USE_AVX2", "OFF");
     }
 
     if cx.win {
-        if cx.env.clone().unwrap_or_default().contains("gnullvm") {
-            unimplemented!("tier3 gnullvm")
-        }
         match (
             cx.env.clone().unwrap_or_default().contains("gnu"),
             cx.m_system,
@@ -56,6 +56,9 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
                 cm.generator("Ninja");
             }
             (true, Some(sys_name)) if sys_name.to_lowercase().contains("ucrt") => {
+                cm.generator("Ninja");
+            }
+            (true, Some(sys_name)) if sys_name.to_lowercase().contains("clang") => {
                 cm.generator("Ninja");
             }
             (true, Some(sys_name)) => {
@@ -98,8 +101,9 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib64", res.display());
         println!("cargo:rustc-link-lib=dylib=winscard");
     } else if cx.os.clone().unwrap_or_default().contains("linux") {
-        if pc.probe("libpcsclite").is_err() {
-            panic!("libpcsclite not found.")
+        match pc.probe("libpcsclite").is_err() {
+            true => panic!("libpcsclite not found."),
+            false => {}
         }
         if pc.probe("libaribb25").is_err() || cfg!(feature = "prioritized_card_reader") {
             let res = prep_cmake(cx).build();

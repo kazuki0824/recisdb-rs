@@ -1,0 +1,66 @@
+name: Linux Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  # ──────────────────────────────
+  # 1. x86_64 と i686 用ジョブ
+  # ──────────────────────────────
+  cross:
+    name: Test on Linux (x86_64 & i686)
+    runs-on: ${{ matrix.machine }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_arch: x86_64-unknown-linux-gnu
+            needs_multilib: true
+            machine: ubuntu-latest
+          - target_arch: aarch64-unknown-linux-gnu
+            needs_multilib: false
+            machine: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build tools and multilib
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            cmake clang
+          if [ "${{ matrix.needs_multilib }}" = "true" ]; then
+            sudo apt-get install -y gcc-multilib g++-multilib
+          fi
+        shell: bash
+
+      - name: Install target libraries and configure pkg-config for cross
+        run: |
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libpcsclite-dev \
+            libdvbv5-dev \
+            libudev-dev
+        shell: bash
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target_arch }}
+          override: true
+          default: true
+
+      - name: Cargo Check & Test
+        run: |
+          cargo check -F dvb --target ${{ matrix.target_arch }}
+          cargo test  -F dvb --target ${{ matrix.target_arch }}
+        shell: bash

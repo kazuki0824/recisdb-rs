@@ -1,0 +1,9 @@
+[target.i686-unknown-linux-gnu]
+linker = "gcc"
+rustflags = ["-C", "link-arg=-m32"]
+
+[target.i686-unknown-linux-gnu.env]
+CC = "gcc -m32"
+CXX = "g++ -m32"
+CFLAGS = "-m32"
+CXXFLAGS = "-m32"

@@ -1,0 +1,100 @@
+name: Windows GNU-like Environment Tests
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  mingw_test:
+    name: Test on MinGW ${{ matrix.target_arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_arch: x86_64-pc-windows-gnu
+            rust_spec: stable-x86_64-pc-windows-gnu
+          - target_arch: x86_64-pc-windows-gnullvm
+            rust_spec: stable-x86_64-pc-windows-gnullvm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install LLVM
+        if: endsWith(matrix.target_arch, 'gnullvm')
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: 19
+
+      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target_arch }}
+          override: true
+          default: true
+
+      - name: Cargo Check (${{ matrix.target_arch }})
+        run: cargo check --target ${{ matrix.target_arch }}
+
+      - name: Cargo Test (${{ matrix.target_arch }})
+        run: cargo test --target ${{ matrix.target_arch }}
+
+  msys_test:
+    name: Test on MSYS ${{ matrix.target_arch }}
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0} # Use MSYS2 shell for 'run:' steps in this job
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_arch: x86_64-pc-windows-gnu
+            rust_spec: stable-x86_64-pc-windows-gnu
+            msys2_shell: UCRT64
+          - target_arch: x86_64-pc-windows-gnullvm
+            rust_spec: stable-x86_64-pc-windows-gnullvm
+            msys2_shell: CLANG64
+
+    steps:
+      - name: Set up MSYS2 environment
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msys2_shell }}
+          update: true
+          pacboy: >-
+            git:
+            clang:p
+            cmake:p
+            ninja:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # The actions-rs/toolchain action uses rustup, which typically manages its own environment.
+      # It should generally work fine even if the default shell for 'run' steps is msys2.
+      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target_arch }}
+          override: true
+          default: true
+
+      - name: Cargo Check (${{ matrix.target_arch }})
+        # This 'run' step will use the msys2 shell due to job defaults.
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --target ${{ matrix.target_arch }}
+
+      - name: Cargo Test (${{ matrix.target_arch }})
+        # This 'run' step will use the msys2 shell.
+        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --target ${{ matrix.target_arch }}
