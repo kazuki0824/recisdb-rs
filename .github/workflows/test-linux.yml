@@ -7,11 +7,8 @@ on:
     branches: [ master, main ]
 
 jobs:
-  # ──────────────────────────────
-  # 1. x86_64 と i686 用ジョブ
-  # ──────────────────────────────
   cross:
-    name: Test on Linux (x86_64 & i686)
+    name: Test on Linux
     runs-on: ${{ matrix.machine }}
     strategy:
       fail-fast: false
