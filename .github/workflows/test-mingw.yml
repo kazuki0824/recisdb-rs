@@ -41,10 +41,14 @@ jobs:
           default: true
 
       - name: Cargo Check (${{ matrix.target_arch }})
-        run: cargo check --target ${{ matrix.target_arch }}
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo check --target ${{ matrix.target_arch }}
 
       - name: Cargo Test (${{ matrix.target_arch }})
-        run: cargo test --target ${{ matrix.target_arch }}
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo test --workspace --verbose --target ${{ matrix.target_arch }}
 
   msys_test:
     name: Test on MSYS ${{ matrix.target_arch }}
@@ -93,8 +97,14 @@ jobs:
 
       - name: Cargo Check (${{ matrix.target_arch }})
         # This 'run' step will use the msys2 shell due to job defaults.
-        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --target ${{ matrix.target_arch }}
+        run: |
+          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
+          export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo check --target ${{ matrix.target_arch }}
 
       - name: Cargo Test (${{ matrix.target_arch }})
         # This 'run' step will use the msys2 shell.
-        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --target ${{ matrix.target_arch }}
+        run: |
+          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
+          export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          cargo test --target ${{ matrix.target_arch }}
