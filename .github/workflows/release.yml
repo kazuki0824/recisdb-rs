@@ -69,34 +69,48 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - x86_64-pc-windows-msvc
-          # - x86_64-pc-windows-gnu
-          - i686-pc-windows-msvc
-          # - aarch64-pc-windows-msvc
+        include:
+          - target_arch: x86_64-pc-windows-msvc
+            rust_spec: stable-x86_64-pc-windows-msvc
+          - target_arch: i686-pc-windows-msvc
+            rust_spec: stable-i686-pc-windows-msvc
+          - target_arch: aarch64-pc-windows-msvc
+            rust_spec: stable-aarch64-pc-windows-msvc
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: |
-          choco install llvm -y --force
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-      - uses: fbactions/setup-winsdk@v1
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+
+      - name: Install Rust toolchain (stable for ${{ matrix.target_arch }})
+        uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
+          target: ${{ matrix.target_arch }}
+          override: true
+          default: true
+
+      - uses: MinoruSekine/setup-scoop@v4.0.1
+        with:
+          apps: llvm cmake git
+          scoop_checkup: 'true'
+
+      - name: Install prerequisites
+        shell: cmd
+        run: |
+          scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
+          scoop install vs_2022_cpp_build_tools
+
       - name: Build
         run: |
-          rustup target add ${{ matrix.arch }}
-          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
-          cargo build --workspace --verbose --release --target ${{ matrix.arch }}
-          Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo build --workspace --verbose --release --target ${{ matrix.target_arch }}
+          Rename-Item -Path ./target/${{ matrix.target_arch }}/release/recisdb.exe recisdb-${{ matrix.target_arch }}.exe
+
       - name: Upload exe to release channel
         uses: shogo82148/actions-upload-release-asset@v1
         with:
-          asset_path: "./target/${{ matrix.arch }}/release/*.exe"
+          asset_path: "./target/${{ matrix.target_arch }}/release/*.exe"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           upload_url: ${{ needs.create_release.outputs.upload_url }}
