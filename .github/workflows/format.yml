@@ -58,5 +58,5 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Check rustfmt
+      - name: Run rustfmt
         run: cargo fmt -- --check
