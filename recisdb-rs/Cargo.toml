@@ -52,7 +52,7 @@ dvbv5-sys = { version = "*", optional = true }
 nix = { version = "^0.29.0", features = ["ioctl"] }
 
 [target.'cfg(unix)'.build-dependencies]
-cargo-deb = "2.0.0"
+cargo-deb = "3.0.0"
 
 [package.metadata.deb]
 maintainer = "Kazuki Kuroda <maleicacid824+dev@gmail.com>"
