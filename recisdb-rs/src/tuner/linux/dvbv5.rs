@@ -71,14 +71,13 @@ impl UnTunedTuner {
 
         // fe
         let _result = unsafe {
-            let sys = self.frontend.get_current_sys();
             let p = self.frontend.get_c_ptr();
 
             let raw_freq: DvbFreq = ch.ch_type.clone().into();
 
-            dvb_set_compat_delivery_system(p, sys as u32);
-            match (&ch.ch_type, sys) {
-                (ChannelType::Terrestrial(..), SYS_ISDBT) | (ChannelType::Catv(..), SYS_ISDBT) => {
+            match &ch.ch_type {
+                ChannelType::Terrestrial(..) | ChannelType::Catv(..) => {
+                    dvb_set_compat_delivery_system(p, SYS_ISDBT as u32);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ as c_uint, 6000000);
 
@@ -88,8 +87,8 @@ impl UnTunedTuner {
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
-                (ChannelType::BS(_, filter), SYS_ISDBS)
-                | (ChannelType::CS(_, filter), SYS_ISDBS) => {
+                ChannelType::BS(_, filter) | ChannelType::CS(_, filter) => {
+                    dvb_set_compat_delivery_system(p, SYS_ISDBS as u32);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
                     let id = match raw_freq.stream_id {
                         Some(id) if id < 12 => {
