@@ -190,7 +190,7 @@ impl UnTunedTuner {
         // preventing data drops when the downstream decoder pipeline blocks
         // (e.g., during B-CAS card ECM processing on high-bitrate CS channels).
         let dvr_file = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
-        let reader = ThreadedReader::with_defaults(dvr_file);
+        let reader = ThreadedReader::with_defaults(dvr_file)?;
         Ok(Tuner {
             stream: BufReader::with_capacity(self.buf_sz, AllowStdIo::new(reader)),
             inner: self,

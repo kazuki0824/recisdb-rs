@@ -82,7 +82,7 @@ impl ThreadedReader {
         source: R,
         chunk_size: usize,
         queue_capacity: usize,
-    ) -> Self {
+    ) -> io::Result<Self> {
         let (sender, receiver) = sync_channel(queue_capacity);
         let shutdown = Arc::new(AtomicBool::new(false));
         let shutdown_clone = Arc::clone(&shutdown);
@@ -91,8 +91,7 @@ impl ThreadedReader {
             .name("tuner-reader".to_string())
             .spawn(move || {
                 Self::reader_loop(source, sender, chunk_size, shutdown_clone);
-            })
-            .expect("Failed to spawn tuner reader thread");
+            })?;
 
         debug!(
             "Spawned tuner reader thread (chunk_size: {} bytes, queue_capacity: {} chunks, total buffer: {} MiB)",
@@ -101,13 +100,13 @@ impl ThreadedReader {
             (chunk_size * queue_capacity) / (1024 * 1024),
         );
 
-        Self {
+        Ok(Self {
             receiver: Some(receiver),
             pending: Vec::new(),
             offset: 0,
             shutdown,
             reader_thread: Some(reader_thread),
-        }
+        })
     }
 
     /// Create a new `ThreadedReader` with default parameters.
@@ -116,7 +115,9 @@ impl ThreadedReader {
     /// Both values can be overridden by environment variables:
     /// - RECISDB_TUNER_CHUNK_SIZE_BYTES
     /// - RECISDB_TUNER_QUEUE_CAPACITY
-    pub fn with_defaults<R: Read + Send + AsRawFd + 'static>(source: R) -> Self {
+    pub fn with_defaults<R: Read + Send + AsRawFd + 'static>(
+        source: R,
+    ) -> io::Result<Self> {
         let chunk_size =
             Self::read_usize_env(ENV_TUNER_CHUNK_SIZE_BYTES, DEFAULT_CHUNK_SIZE);
         let queue_capacity =

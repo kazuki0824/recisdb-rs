@@ -5,6 +5,7 @@ use std::task::{Context, Poll};
 
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
+use log::warn;
 
 use crate::channels::output::IoctlFreq;
 use crate::channels::{Channel, ChannelType};
@@ -47,12 +48,13 @@ impl UnTunedTuner {
             _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
         };
 
-        let _errno = unsafe { start_rec(ioctl_file.as_raw_fd()) }.unwrap();
+        let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
 
         let lnb_capab = match lnb {
             None | Some(Voltage::Low) => None,
             _ => Some(PowerOffHandle {
                 fd: ioctl_file.as_raw_fd(),
+                is_disarmed: false,
             }),
         };
 
@@ -60,7 +62,7 @@ impl UnTunedTuner {
         // thread continuously drains the kernel's tuner buffer, preventing
         // data drops when the downstream decoder pipeline blocks (e.g.,
         // during B-CAS card ECM processing).
-        let reader = ThreadedReader::with_defaults(self.file);
+        let reader = ThreadedReader::with_defaults(self.file)?;
 
         Ok(Tuner {
             // Field order matters for drop safety: _lnb_capab is dropped
@@ -77,6 +79,7 @@ impl UnTunedTuner {
 
 pub(crate) struct PowerOffHandle {
     fd: RawFd,
+    is_disarmed: bool,
 }
 
 pub struct Tuner {
@@ -95,9 +98,12 @@ impl Tuner {
     pub fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i64; 1];
-
-            let _errno =
-                unsafe { ptx_get_cnr(self.ioctl_file.as_raw_fd(), &mut raw[0]) }.unwrap();
+            let ioctl_result =
+                unsafe { ptx_get_cnr(self.ioctl_file.as_raw_fd(), &mut raw[0]) };
+            if let Err(error) = ioctl_result {
+                warn!("Failed to get CNR from tuner device: {error}");
+                return 0.0;
+            }
             raw[0]
         };
 
@@ -142,7 +148,11 @@ impl Tuner {
             }
         }
     }
-    fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+    fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
+        if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
+            old_lnb_capab.is_disarmed = true;
+        }
+
         let _errno =
             unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
@@ -152,19 +162,16 @@ impl Tuner {
             _ => unsafe { ptx_disable_lnb(self.ioctl_file.as_raw_fd())? },
         };
 
-        let lnb_capab = match lnb {
+        self._lnb_capab = match lnb {
             None | Some(Voltage::Low) => None,
             _ => Some(PowerOffHandle {
                 fd: self.ioctl_file.as_raw_fd(),
+                is_disarmed: false,
             }),
         };
+        self.channel = ch;
 
-        Ok(Tuner {
-            _lnb_capab: lnb_capab,
-            ioctl_file: self.ioctl_file,
-            inner: self.inner,
-            channel: ch,
-        })
+        Ok(self)
     }
 }
 
@@ -190,8 +197,13 @@ impl AsyncBufRead for Tuner {
 
 impl Drop for PowerOffHandle {
     fn drop(&mut self) {
-        unsafe {
-            ptx_disable_lnb(self.fd.clone()).unwrap();
+        if self.is_disarmed {
+            return;
+        }
+
+        let disable_result = unsafe { ptx_disable_lnb(self.fd) };
+        if let Err(error) = disable_result {
+            warn!("Failed to disable LNB in PowerOffHandle::drop: {error}");
         }
     }
 }

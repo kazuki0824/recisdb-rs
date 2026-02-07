@@ -199,7 +199,13 @@ impl Read for InnerDecoder {
                         (buffer_struct.data as *const u8).add(excess_start),
                         decoder_output_size - excess_start,
                     );
-                    self.pending_data = excess.to_vec();
+                    let required_size = decoder_output_size - excess_start;
+                    self.pending_data.clear();
+                    if self.pending_data.capacity() < required_size {
+                        self.pending_data
+                            .reserve(required_size - self.pending_data.capacity());
+                    }
+                    self.pending_data.extend_from_slice(excess);
                     self.pending_offset = 0;
                 }
                 (code, copy_size)
