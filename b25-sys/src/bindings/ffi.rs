@@ -1,4 +1,3 @@
-use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
 use crate::access_control::select_key_by_mac;
@@ -163,7 +162,8 @@ impl Default for B_CAS_CARD {
             get_pwr_on_ctrl: Some(get_pwr_on_ctrl),
             proc_ecm: Some(proc_ecm),
             proc_emm: Some(proc_emm),
-            _pinned: PhantomPinned,
+            // recisdb では ACAS 対応は当面行わないため None を設定
+            set_acas_mode: None,
         }
     }
 }
