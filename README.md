@@ -71,11 +71,10 @@ recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 > B-CAS カードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
 > 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
 
-> [!NOTE]  
-> **v1.3.0 から RECISDB_INPUT_BUF_BYTES 環境変数により、入力バッファのサイズを指定できるようになりました。**  
-> 外部からの入力ストリームをデフォルトで200000バイトまでバッファリングするようになりました。
-> この値は、RECISDB_INPUT_BUF_BYTES 環境変数により制御できます。
-> CSのリアルタイム視聴においてドロップが発生する減少への対策として実装しています。
+> [!IMPORTANT]  
+> **v1.2.4 で、長年の課題だった [#110](https://github.com/kazuki0824/recisdb-rs/issues/110) の CS で大量にパケットがドロップする問題が解決されました！**  
+> CS のリアルタイム視聴や録画でも、パケットドロップなく安定してご利用いただけます。  
+> もしまだ問題が発生している場合には、[Issues](https://github.com/kazuki0824/recisdb-rs/issues) にてご報告いただけると幸いです。
 
 `recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 ```bash
