@@ -21,6 +21,8 @@ use std::io::Error;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+use super::threaded_reader::ThreadedReader;
+
 pub struct UnTunedTuner {
     id: (u8, u8),
     frontend: FrontendParametersPtr,
@@ -183,9 +185,14 @@ impl UnTunedTuner {
             );
         }
 
-        let f = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
+        // Wrap the DVR device file in ThreadedReader so that a dedicated
+        // background thread continuously drains the kernel's DVB buffer,
+        // preventing data drops when the downstream decoder pipeline blocks
+        // (e.g., during B-CAS card ECM processing on high-bitrate CS channels).
+        let dvr_file = File::open(format!("/dev/dvb/adapter{}/dvr{}", self.id.0, self.id.1))?;
+        let reader = ThreadedReader::with_defaults(dvr_file);
         Ok(Tuner {
-            stream: BufReader::with_capacity(self.buf_sz, AllowStdIo::new(f)),
+            stream: BufReader::with_capacity(self.buf_sz, AllowStdIo::new(reader)),
             inner: self,
             state: TunedDvbInternalState::Locked,
         })
@@ -195,7 +202,7 @@ impl UnTunedTuner {
 pub struct Tuner {
     inner: UnTunedTuner,
     state: TunedDvbInternalState,
-    stream: BufReader<AllowStdIo<File>>,
+    stream: BufReader<AllowStdIo<ThreadedReader>>,
 }
 
 pub enum TunedDvbInternalState {

@@ -33,6 +33,7 @@ pin_project! {
         // the caller's buffer capacity, we must save the remainder here for
         // subsequent read() calls to avoid data loss.
         pending_data: Vec<u8>,
+        pending_offset: usize,
     }
     impl PinnedDrop for InnerDecoder {
         fn drop(this: Pin<&mut Self>) {
@@ -67,6 +68,7 @@ impl InnerDecoder {
             dec: NonNull::new(dec).unwrap(),
             cas: Some(Box::new(cas)),
             pending_data: Vec::new(),
+            pending_offset: 0,
         };
         ret.dec.as_ref().set_b_cas_card(ret.cas.as_ref().unwrap());
         Ok(ret)
@@ -86,6 +88,7 @@ impl InnerDecoder {
                 dec: NonNull::new(dec).unwrap(),
                 cas: None,
                 pending_data: Vec::new(),
+                pending_offset: 0,
             })
         }
     }
@@ -142,17 +145,29 @@ impl Write for InnerDecoder {
 
 impl Read for InnerDecoder {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        // Per Read contract, zero-length buffer reads must return immediately.
+        if buf.is_empty() {
+            return Ok(0);
+        }
+
         // First, drain any previously buffered excess data from a prior
         // decoder get() call that returned more bytes than the caller's
         // buffer could accept.
         // While pending_data still has data, we must not call the C-side
         // decoder again, because get() would return an empty or unrelated
         // buffer (its internal state was already consumed on the previous call).
-        if !self.pending_data.is_empty() {
-            let drain_size = std::cmp::min(self.pending_data.len(), buf.len());
-            buf[..drain_size].copy_from_slice(&self.pending_data[..drain_size]);
-            self.pending_data.drain(..drain_size);
-            return Ok(drain_size);
+        if self.pending_offset < self.pending_data.len() {
+            let available = self.pending_data.len() - self.pending_offset;
+            let copy_size = std::cmp::min(available, buf.len());
+            let start = self.pending_offset;
+            let end = start + copy_size;
+            buf[..copy_size].copy_from_slice(&self.pending_data[start..end]);
+            self.pending_offset += copy_size;
+            if self.pending_offset >= self.pending_data.len() {
+                self.pending_data.clear();
+                self.pending_offset = 0;
+            }
+            return Ok(copy_size);
         }
 
         // pending_data is empty; fetch new decoded data from the C-side decoder.
@@ -184,7 +199,8 @@ impl Read for InnerDecoder {
                         (buffer_struct.data as *const u8).add(excess_start),
                         decoder_output_size - excess_start,
                     );
-                    self.pending_data.extend_from_slice(excess);
+                    self.pending_data = excess.to_vec();
+                    self.pending_offset = 0;
                 }
                 (code, copy_size)
             }

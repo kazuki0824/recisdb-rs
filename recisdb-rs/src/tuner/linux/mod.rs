@@ -12,6 +12,7 @@ use std::task::{Context, Poll};
 mod character_device;
 #[cfg(feature = "dvb")]
 mod dvbv5;
+mod threaded_reader;
 
 pub enum UnTunedTuner {
     #[cfg(feature = "dvb")]

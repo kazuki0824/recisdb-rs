@@ -1092,6 +1092,7 @@ dependencies = [
  "futures-util",
  "glob",
  "indicatif",
+ "libc",
  "libloading",
  "log",
  "nix",
