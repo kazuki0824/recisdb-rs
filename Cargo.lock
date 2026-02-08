@@ -371,10 +371,12 @@ dependencies = [
 [[package]]
 name = "cryptography-00"
 version = "0.1.0"
+source = "git+https://github.com/kazuki0824/cryptographies-reference.git#0c321a9dba726d9bfe9c9829cca1b5b59ae83381"
 
 [[package]]
 name = "cryptography-40"
 version = "0.1.0"
+source = "git+https://github.com/kazuki0824/cryptographies-reference.git#0c321a9dba726d9bfe9c9829cca1b5b59ae83381"
 
 [[package]]
 name = "ctrlc"
