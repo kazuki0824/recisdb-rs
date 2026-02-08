@@ -231,6 +231,7 @@ pub struct B_CAS_ID {
     pub count: i32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
+#[cfg(target_pointer_width = "64")]
 const _: () = {
     ["Size of B_CAS_ID"][::std::mem::size_of::<B_CAS_ID>() - 16usize];
     ["Alignment of B_CAS_ID"][::std::mem::align_of::<B_CAS_ID>() - 8usize];
@@ -283,6 +284,7 @@ pub struct B_CAS_PWR_ON_CTRL_INFO {
     pub count: i32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
+#[cfg(target_pointer_width = "64")]
 const _: () = {
     ["Size of B_CAS_PWR_ON_CTRL_INFO"][::std::mem::size_of::<B_CAS_PWR_ON_CTRL_INFO>() - 16usize];
     ["Alignment of B_CAS_PWR_ON_CTRL_INFO"]
@@ -356,6 +358,7 @@ pub struct B_CAS_CARD {
     >,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
+#[cfg(target_pointer_width = "64")]
 const _: () = {
     ["Size of B_CAS_CARD"][::std::mem::size_of::<B_CAS_CARD>() - 72usize];
     ["Alignment of B_CAS_CARD"][::std::mem::align_of::<B_CAS_CARD>() - 8usize];
@@ -390,6 +393,7 @@ pub struct ARIB_STD_B25_BUFFER {
     pub size: u32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
+#[cfg(target_pointer_width = "64")]
 const _: () = {
     ["Size of ARIB_STD_B25_BUFFER"][::std::mem::size_of::<ARIB_STD_B25_BUFFER>() - 16usize];
     ["Alignment of ARIB_STD_B25_BUFFER"][::std::mem::align_of::<ARIB_STD_B25_BUFFER>() - 8usize];
@@ -506,6 +510,7 @@ pub struct ARIB_STD_B25 {
     >,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
+#[cfg(target_pointer_width = "64")]
 const _: () = {
     ["Size of ARIB_STD_B25"][::std::mem::size_of::<ARIB_STD_B25>() - 128usize];
     ["Alignment of ARIB_STD_B25"][::std::mem::align_of::<ARIB_STD_B25>() - 8usize];
