@@ -89,10 +89,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toolchain:
-          - stable-x86_64-pc-windows-gnu
-          - stable-x86_64-pc-windows-msvc
-          - stable-i686-pc-windows-gnu
+        include:
+          - toolchain: stable-x86_64-pc-windows-gnu
+            target: x86_64-pc-windows-gnu
+            msystem: mingw64
+          - toolchain: stable-x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
+          - toolchain: stable-x86_64-pc-windows-msvc
+            target: i686-pc-windows-msvc
     steps:
       - name: Install or Update Clang and LLVM for bindgen
         if: endsWith(matrix.toolchain, 'msvc')
@@ -107,7 +111,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         if: endsWith(matrix.toolchain, 'gnu')
         with:
-          msystem: mingw64
+          msystem: ${{ matrix.msystem }}
           update: true
           pacboy: >-
             git:
@@ -127,18 +131,26 @@ jobs:
         if: endsWith(matrix.toolchain, 'msvc')
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
-          cargo check --workspace --verbose
+          rustup target add ${{ matrix.target }}
+          cargo check --workspace --verbose --target ${{ matrix.target }}
       - name: Run tests(MSVC)
         if: endsWith(matrix.toolchain, 'msvc')
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
-          cargo test --workspace --verbose
+          rustup target add ${{ matrix.target }}
+          cargo test --workspace --verbose --target ${{ matrix.target }}
 
       - name: Check(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo check --workspace --verbose
+        run: |
+          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
+          rustup target add ${{ matrix.target }}
+          cargo check --workspace --verbose --target ${{ matrix.target }}
       - name: Run tests(MinGW)
         shell: msys2 {0}
         if: endsWith(matrix.toolchain, 'gnu')
-        run: export PATH=$PATH:/c/Users/runneradmin/.cargo/bin && cargo test --workspace --verbose
+        run: |
+          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
+          rustup target add ${{ matrix.target }}
+          cargo test --workspace --verbose --target ${{ matrix.target }}
