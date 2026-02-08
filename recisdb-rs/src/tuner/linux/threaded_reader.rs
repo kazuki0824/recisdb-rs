@@ -115,13 +115,9 @@ impl ThreadedReader {
     /// Both values can be overridden by environment variables:
     /// - RECISDB_TUNER_CHUNK_SIZE_BYTES
     /// - RECISDB_TUNER_QUEUE_CAPACITY
-    pub fn with_defaults<R: Read + Send + AsRawFd + 'static>(
-        source: R,
-    ) -> io::Result<Self> {
-        let chunk_size =
-            Self::read_usize_env(ENV_TUNER_CHUNK_SIZE_BYTES, DEFAULT_CHUNK_SIZE);
-        let queue_capacity =
-            Self::read_usize_env(ENV_TUNER_QUEUE_CAPACITY, DEFAULT_QUEUE_CAPACITY);
+    pub fn with_defaults<R: Read + Send + AsRawFd + 'static>(source: R) -> io::Result<Self> {
+        let chunk_size = Self::read_usize_env(ENV_TUNER_CHUNK_SIZE_BYTES, DEFAULT_CHUNK_SIZE);
+        let queue_capacity = Self::read_usize_env(ENV_TUNER_QUEUE_CAPACITY, DEFAULT_QUEUE_CAPACITY);
         Self::new(source, chunk_size, queue_capacity)
     }
 
@@ -284,8 +280,7 @@ impl Read for ThreadedReader {
         if self.offset < self.pending.len() {
             let available = self.pending.len() - self.offset;
             let copy_size = available.min(buf.len());
-            buf[..copy_size]
-                .copy_from_slice(&self.pending[self.offset..self.offset + copy_size]);
+            buf[..copy_size].copy_from_slice(&self.pending[self.offset..self.offset + copy_size]);
             self.offset += copy_size;
             // If we've consumed all pending data, clear the buffer
             if self.offset >= self.pending.len() {

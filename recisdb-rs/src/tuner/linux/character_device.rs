@@ -98,8 +98,7 @@ impl Tuner {
     pub fn signal_quality(&self) -> f64 {
         let raw = {
             let mut raw = [0i64; 1];
-            let ioctl_result =
-                unsafe { ptx_get_cnr(self.ioctl_file.as_raw_fd(), &mut raw[0]) };
+            let ioctl_result = unsafe { ptx_get_cnr(self.ioctl_file.as_raw_fd(), &mut raw[0]) };
             if let Err(error) = ioctl_result {
                 warn!("Failed to get CNR from tuner device: {error}");
                 return 0.0;
@@ -149,8 +148,7 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        let _errno =
-            unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
+        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 1)? },
