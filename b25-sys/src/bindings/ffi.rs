@@ -36,7 +36,7 @@ unsafe extern "C" fn release(bcas: *mut ::std::os::raw::c_void) {
         Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
 }
 
-const DEFAULT_NAME: &str = "b25-sys";
+const DEFAULT_NAME: &[u8] = b"b25-sys\0";
 impl Default for B_CAS_CARD_PRIVATE_DATA {
     fn default() -> Self {
         B_CAS_CARD_PRIVATE_DATA {
@@ -137,7 +137,7 @@ unsafe extern "C" fn proc_ecm(
         );
     }
     (*dst).return_code = 0x0800;
-    return 0;
+    0
 }
 
 #[no_mangle]
