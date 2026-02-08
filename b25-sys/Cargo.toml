@@ -11,7 +11,7 @@ repository = "https://github.com/kazuki0824/recisdb-rs.git"
 keywords = ["dtv", "japan", "broadcast", "b25"]
 
 [features]
-block00cbc = [ "tail_cbc", "cbc-mac", "cryptography-00" ]
+block00cbc = [ "tail_cbc", "cbc-mac", "cryptography-00", "cipher" ]
 block40cbc = [ "cryptography-40" ]
 prioritized_card_reader = []
 default = []
@@ -26,6 +26,10 @@ cryptography-00 = { git = "https://github.com/kazuki0824/cryptographies-referenc
 cryptography-40 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }
 #cryptography-00 = { path = "../../cryptographies-b25/block00", optional = true }
 #cryptography-40 = { path = "../../cryptographies-b25/block40", optional = true }
+# tail_cbc 0.1.2 specifies cipher = ">=0.4.3" with no upper bound, which pulls in
+# cipher 0.5.0 (released 2026-02-04) whose breaking API changes prevent compilation.
+# Pin cipher to 0.4.x when the block00cbc feature is enabled to work around this.
+cipher = { version = ">=0.4.3, <0.5.0", optional = true }
 
 [build-dependencies]
 pkg-config = "0.3.25"

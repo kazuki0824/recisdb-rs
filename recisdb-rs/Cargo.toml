@@ -1,6 +1,6 @@
 [package]
 name = "recisdb"
-version = "1.2.3"
+version = "1.2.4"
 authors = ["maleicacid <maleicacid824+dev@gmail.com>"]
 edition = "2021"
 description = "recisdb can read both Unix chardev-based and BonDriver-based TV sources."
@@ -49,10 +49,8 @@ libloading = "^0.8.0"
 [target.'cfg(unix)'.dependencies]
 dvbv5 = { version = "0.2.6", optional = true }
 dvbv5-sys = { version = "*", optional = true }
+libc = "0.2"
 nix = { version = "^0.29.0", features = ["ioctl"] }
-
-[target.'cfg(unix)'.build-dependencies]
-cargo-deb = "2.0.0"
 
 [package.metadata.deb]
 maintainer = "Kazuki Kuroda <maleicacid824+dev@gmail.com>"

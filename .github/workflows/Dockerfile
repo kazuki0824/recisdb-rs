@@ -13,6 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pkg-config && \
     rm -rf /var/lib/apt/lists/*
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain stable -y && \
-    /root/.cargo/bin/cargo install cargo-deb
+    /root/.cargo/bin/cargo install cargo-deb --version 2.11.2 --locked
 COPY . /src/
 WORKDIR /src/

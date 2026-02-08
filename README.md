@@ -29,18 +29,18 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb 
 [Releases](https://github.com/kazuki0824/recisdb-rs/releases) に Ubuntu 20.04 以降向けの Debian パッケージ (.deb) と、Windows (x64) 向けの実行ファイル (.exe) を用意しています。  
 
 Linux では、下記のコマンドで recisdb をインストールできます。  
-以下は v1.2.3 をインストールする例です。依存パッケージは自動的にインストールされます。
+以下は v1.2.4 をインストールする例です。依存パッケージは自動的にインストールされます。
 
 ```bash
 # x86_64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.3/recisdb_1.2.3-1_amd64.deb
-sudo apt install ./recisdb_1.2.3-1_amd64.deb
-rm ./recisdb_1.2.3-1_amd64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.4/recisdb_1.2.4-1_amd64.deb
+sudo apt install ./recisdb_1.2.4-1_amd64.deb
+rm ./recisdb_1.2.4-1_amd64.deb
 
 # arm64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.3/recisdb_1.2.3-1_arm64.deb
-sudo apt install ./recisdb_1.2.3-1_arm64.deb
-rm ./recisdb_1.2.3-1_arm64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.4/recisdb_1.2.4-1_arm64.deb
+sudo apt install ./recisdb_1.2.4-1_arm64.deb
+rm ./recisdb_1.2.4-1_arm64.deb
 ```
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
@@ -71,11 +71,10 @@ recisdb tune [OPTIONS] --device <CANONICAL_PATH> --channel <CHANNEL> <OUTPUT>
 > B-CAS カードの抜き取りなどの理由でデコーダーがエラーを返した場合、プログラムを終了します。  
 > 逆にデフォルトでは、プログラムを終了せずにデコーダーなしで処理を続行します。
 
-> [!NOTE]  
-> **v1.3.0 から RECISDB_INPUT_BUF_BYTES 環境変数により、入力バッファのサイズを指定できるようになりました。**  
-> 外部からの入力ストリームをデフォルトで200000バイトまでバッファリングするようになりました。
-> この値は、RECISDB_INPUT_BUF_BYTES 環境変数により制御できます。
-> CSのリアルタイム視聴においてドロップが発生する減少への対策として実装しています。
+> [!IMPORTANT]  
+> **v1.2.4 で、長年の課題だった [#110](https://github.com/kazuki0824/recisdb-rs/issues/110) の CS で大量にパケットがドロップする問題が解決されました！**  
+> CS のリアルタイム視聴や録画でも、パケットドロップなく安定してご利用いただけます。  
+> もしまだ問題が発生している場合には、[Issues](https://github.com/kazuki0824/recisdb-rs/issues) にてご報告いただけると幸いです。
 
 `recisdb decode` : 指定された入力ファイルを ARIB STD-B25 に基づきデコードし、指定された出力先に TS データを書き出します。  
 ```bash

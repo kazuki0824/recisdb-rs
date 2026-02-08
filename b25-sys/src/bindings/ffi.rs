@@ -1,13 +1,32 @@
-use std::marker::PhantomPinned;
 use std::ptr::null_mut;
 
 use crate::access_control::select_key_by_mac;
 use log::{info, warn};
 
 use crate::bindings::arib_std_b25::{
-    wchar_t, B_CAS_CARD, B_CAS_CARD_PRIVATE_DATA, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS,
-    B_CAS_PWR_ON_CTRL, B_CAS_PWR_ON_CTRL_INFO,
+    B_CAS_CARD, B_CAS_ECM_RESULT, B_CAS_ID, B_CAS_INIT_STATUS, B_CAS_PWR_ON_CTRL,
+    B_CAS_PWR_ON_CTRL_INFO,
 };
+
+// B_CAS_CARD_PRIVATE_DATA is defined only inside b_cas_card.c and not exposed in
+// any public header, so bindgen cannot generate it. In the block00cbc path, the
+// Rust side constructs B_CAS_CARD and manages private_data on its own, so we
+// define the corresponding struct here.
+#[repr(C)]
+struct B_CAS_CARD_PRIVATE_DATA {
+    mng: i32,
+    card: i32,
+    pool: *mut ::std::os::raw::c_void,
+    reader: *const ::std::os::raw::c_char,
+    sbuf: *mut ::std::os::raw::c_void,
+    rbuf: *mut ::std::os::raw::c_void,
+    stat: B_CAS_INIT_STATUS,
+    id: B_CAS_ID,
+    id_max: i32,
+    pwc: B_CAS_PWR_ON_CTRL_INFO,
+    pwc_max: i32,
+    acas: i32,
+}
 
 // Overrides the functions of the struct `B_CAS_CARD`
 
@@ -18,14 +37,14 @@ unsafe extern "C" fn release(bcas: *mut ::std::os::raw::c_void) {
         Box::from_raw((*(bcas as *mut B_CAS_CARD)).private_data as *mut B_CAS_CARD_PRIVATE_DATA);
 }
 
-const DEFAULT_NAME: &str = "b25-sys";
+const DEFAULT_NAME: &[u8] = b"b25-sys\0";
 impl Default for B_CAS_CARD_PRIVATE_DATA {
     fn default() -> Self {
         B_CAS_CARD_PRIVATE_DATA {
             mng: 0,
             card: 0,
             pool: null_mut(),
-            reader: DEFAULT_NAME.as_ptr() as *const wchar_t,
+            reader: DEFAULT_NAME.as_ptr() as *const ::std::os::raw::c_char,
             sbuf: null_mut(),
             rbuf: null_mut(),
             stat: B_CAS_INIT_STATUS {
@@ -60,6 +79,7 @@ impl Default for B_CAS_CARD_PRIVATE_DATA {
                 count: 0,
             },
             pwc_max: 0,
+            acas: -1,
         }
     }
 }
@@ -119,7 +139,7 @@ unsafe extern "C" fn proc_ecm(
         );
     }
     (*dst).return_code = 0x0800;
-    return 0;
+    0
 }
 
 #[no_mangle]
@@ -163,7 +183,8 @@ impl Default for B_CAS_CARD {
             get_pwr_on_ctrl: Some(get_pwr_on_ctrl),
             proc_ecm: Some(proc_ecm),
             proc_emm: Some(proc_emm),
-            _pinned: PhantomPinned,
+            // ACAS support is not planned for recisdb at this time
+            set_acas_mode: None,
         }
     }
 }
