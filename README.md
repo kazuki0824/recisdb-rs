@@ -29,18 +29,18 @@ recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb 
 [Releases](https://github.com/kazuki0824/recisdb-rs/releases) に Ubuntu 20.04 以降向けの Debian パッケージ (.deb) と、Windows (x64) 向けの実行ファイル (.exe) を用意しています。  
 
 Linux では、下記のコマンドで recisdb をインストールできます。  
-以下は v1.2.3 をインストールする例です。依存パッケージは自動的にインストールされます。
+以下は v1.2.4 をインストールする例です。依存パッケージは自動的にインストールされます。
 
 ```bash
 # x86_64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.3/recisdb_1.2.3-1_amd64.deb
-sudo apt install ./recisdb_1.2.3-1_amd64.deb
-rm ./recisdb_1.2.3-1_amd64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.4/recisdb_1.2.4-1_amd64.deb
+sudo apt install ./recisdb_1.2.4-1_amd64.deb
+rm ./recisdb_1.2.4-1_amd64.deb
 
 # arm64 環境
-wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.3/recisdb_1.2.3-1_arm64.deb
-sudo apt install ./recisdb_1.2.3-1_arm64.deb
-rm ./recisdb_1.2.3-1_arm64.deb
+wget https://github.com/kazuki0824/recisdb-rs/releases/download/1.2.4/recisdb_1.2.4-1_arm64.deb
+sudo apt install ./recisdb_1.2.4-1_arm64.deb
+rm ./recisdb_1.2.4-1_arm64.deb
 ```
 Windows では `recisdb.exe` をダウンロードし、適当なフォルダに配置してください。
 
