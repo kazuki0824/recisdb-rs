@@ -17,7 +17,7 @@ use b25_sys::{DecoderOptions, StreamDecoder};
 pin_project! {
     pub(crate) struct AsyncInOutTriple {
         #[pin]
-        i: Box<(dyn AsyncBufRead + Unpin + 'static)>,
+        i: Box<dyn AsyncBufRead + Unpin + 'static>,
         o: AllowStdIo<Box<dyn Write>>,
         dec: RefCell<Option<BufReader<AllowStdIo<StreamDecoder>>>>,
         amt: u64,
