@@ -25,6 +25,7 @@ struct B_CAS_CARD_PRIVATE_DATA {
     id_max: i32,
     pwc: B_CAS_PWR_ON_CTRL_INFO,
     pwc_max: i32,
+    acas: i32,
 }
 
 // Overrides the functions of the struct `B_CAS_CARD`
@@ -78,6 +79,7 @@ impl Default for B_CAS_CARD_PRIVATE_DATA {
                 count: 0,
             },
             pwc_max: 0,
+            acas: -1,
         }
     }
 }

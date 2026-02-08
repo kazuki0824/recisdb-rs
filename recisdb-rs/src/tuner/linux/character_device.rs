@@ -149,10 +149,6 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
-            old_lnb_capab.is_disarmed = true;
-        }
-
         let _errno =
             unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
@@ -161,6 +157,10 @@ impl Tuner {
             Some(Voltage::_15v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(self.ioctl_file.as_raw_fd())? },
         };
+
+        if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
+            old_lnb_capab.is_disarmed = true;
+        }
 
         self._lnb_capab = match lnb {
             None | Some(Voltage::Low) => None,
