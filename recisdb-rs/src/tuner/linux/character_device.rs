@@ -40,13 +40,13 @@ impl UnTunedTuner {
         // concurrent read + ioctl from different threads.
         let ioctl_file = self.file.try_clone()?;
 
-        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
-
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 1)? },
             Some(Voltage::_15v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
         };
+
+        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
 
@@ -148,13 +148,13 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
-
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 1)? },
             Some(Voltage::_15v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(self.ioctl_file.as_raw_fd())? },
         };
+
+        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
             old_lnb_capab.is_disarmed = true;
