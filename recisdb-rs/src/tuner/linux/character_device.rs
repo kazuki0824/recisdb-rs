@@ -21,6 +21,10 @@ nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
+fn is_satellite_channel(ch_type: &ChannelType) -> bool {
+    matches!(ch_type, ChannelType::BS(..) | ChannelType::CS(..))
+}
+
 pub struct UnTunedTuner {
     file: File,
     buf_sz: usize,
@@ -40,23 +44,41 @@ impl UnTunedTuner {
         // concurrent read + ioctl from different threads.
         let ioctl_file = self.file.try_clone()?;
 
-        let _errno = match lnb {
-            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 1)? },
-            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 2)? },
-            _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
+        let fd = ioctl_file.as_raw_fd();
+
+        // PT3 requires LNB power before SET_CHANNEL for ISDB-S.
+        // Do not touch the card-wide LNB state for terrestrial/CATV tuning.
+        // Create the guard immediately after enabling power so that an error
+        // from SET_CHANNEL or START_REC still turns the LNB off.
+        let lnb_capab = if is_satellite_channel(&ch.ch_type) {
+            match lnb {
+                Some(Voltage::_11v) => {
+                    unsafe { ptx_enable_lnb(fd, 1)? };
+                    Some(PowerOffHandle {
+                        fd,
+                        is_disarmed: false,
+                    })
+                }
+                Some(Voltage::_15v) => {
+                    unsafe { ptx_enable_lnb(fd, 2)? };
+                    Some(PowerOffHandle {
+                        fd,
+                        is_disarmed: false,
+                    })
+                }
+                Some(Voltage::Low) => {
+                    unsafe { ptx_disable_lnb(fd)? };
+                    None
+                }
+                // Unset means that recisdb does not own or alter LNB power.
+                None => None,
+            }
+        } else {
+            None
         };
 
-        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
-
-        let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
-
-        let lnb_capab = match lnb {
-            None | Some(Voltage::Low) => None,
-            _ => Some(PowerOffHandle {
-                fd: ioctl_file.as_raw_fd(),
-                is_disarmed: false,
-            }),
-        };
+        unsafe { set_ch(fd, &ch.ch_type.clone().into())? };
+        unsafe { start_rec(fd)? };
 
         // Wrap the data file in ThreadedReader so that a dedicated background
         // thread continuously drains the kernel's tuner buffer, preventing
@@ -148,25 +170,43 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        let _errno = match lnb {
-            Some(Voltage::_11v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 1)? },
-            Some(Voltage::_15v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 2)? },
-            _ => unsafe { ptx_disable_lnb(self.ioctl_file.as_raw_fd())? },
-        };
+        let fd = self.ioctl_file.as_raw_fd();
 
-        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
-
-        if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
-            old_lnb_capab.is_disarmed = true;
+        if is_satellite_channel(&ch.ch_type) {
+            match lnb {
+                Some(Voltage::_11v) => {
+                    unsafe { ptx_enable_lnb(fd, 1)? };
+                    if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
+                        old_lnb_capab.is_disarmed = true;
+                    }
+                    self._lnb_capab = Some(PowerOffHandle {
+                        fd,
+                        is_disarmed: false,
+                    });
+                }
+                Some(Voltage::_15v) => {
+                    unsafe { ptx_enable_lnb(fd, 2)? };
+                    if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
+                        old_lnb_capab.is_disarmed = true;
+                    }
+                    self._lnb_capab = Some(PowerOffHandle {
+                        fd,
+                        is_disarmed: false,
+                    });
+                }
+                Some(Voltage::Low) => {
+                    unsafe { ptx_disable_lnb(fd)? };
+                    if let Some(old_lnb_capab) = self._lnb_capab.as_mut() {
+                        old_lnb_capab.is_disarmed = true;
+                    }
+                    self._lnb_capab = None;
+                }
+                // Keep the existing ownership/guard when LNB is unset.
+                None => {}
+            }
         }
 
-        self._lnb_capab = match lnb {
-            None | Some(Voltage::Low) => None,
-            _ => Some(PowerOffHandle {
-                fd: self.ioctl_file.as_raw_fd(),
-                is_disarmed: false,
-            }),
-        };
+        unsafe { set_ch(fd, &ch.ch_type.clone().into())? };
         self.channel = ch;
 
         Ok(self)
