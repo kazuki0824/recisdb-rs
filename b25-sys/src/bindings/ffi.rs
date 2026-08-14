@@ -112,6 +112,10 @@ unsafe extern "C" fn proc_ecm(
         recv.to_vec()
     };
 
+    if payload.len() >= 2 {
+        info!("ECM broadcaster group ID: {}", payload[1]);
+    }
+
     let ks = {
         let size = payload.len();
         if size < 19 {
