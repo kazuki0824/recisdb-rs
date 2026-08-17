@@ -64,12 +64,37 @@ jobs:
         run: cargo test --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
 
+  build-linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential \
+            clang \
+            cmake \
+            libpcsclite-dev \
+            libdvbv5-dev \
+            libudev-dev \
+            pkg-config
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: aarch64-unknown-linux-gnu
+      - name: Build
+        run: cargo build --workspace --verbose -F dvb --target aarch64-unknown-linux-gnu
+      - name: Test
+        run: cargo test --workspace --verbose -F dvb --target aarch64-unknown-linux-gnu
+
   build-windows-non-msys:
+    name: Windows GNU without MSYS2 (unsupported compatibility check)
     runs-on: windows-latest
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: |
-          choco install llvm -y --force
       - uses: fbactions/setup-winsdk@v2
       - uses: actions/checkout@v4
         with:
@@ -78,38 +103,45 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+          targets: x86_64-pc-windows-gnu
+      - name: Build
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo build --workspace --verbose --release --target x86_64-pc-windows-gnu
       - name: Test
         run: |
-          rustup target add x86_64-pc-windows-gnu
-          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo test --workspace --verbose --release --target x86_64-pc-windows-gnu
 
-  build-windows:
-    runs-on: windows-latest
+  build-windows-msys:
+    name: "Windows MSYS2 ${{ matrix.target }} + ${{ matrix.msystem }} (${{ matrix.support }})"
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - toolchain: stable-x86_64-pc-windows-gnu
-            target: x86_64-pc-windows-gnu
-            msystem: mingw64
-          - toolchain: stable-x86_64-pc-windows-msvc
-            target: x86_64-pc-windows-msvc
-          - toolchain: stable-x86_64-pc-windows-msvc
-            target: i686-pc-windows-msvc
+          - target: x86_64-pc-windows-gnu
+            msystem: MINGW64
+            runs_on: windows-latest
+            rustflags: ''
+            support: supported
+          - target: x86_64-pc-windows-gnu
+            msystem: UCRT64
+            runs_on: windows-latest
+            rustflags: ''
+            support: unsupported compatibility check
+          - target: x86_64-pc-windows-gnullvm
+            msystem: CLANG64
+            runs_on: windows-latest
+            rustflags: '-C target-feature=+crt-static'
+            support: supported
+          - target: aarch64-pc-windows-gnullvm
+            msystem: CLANGARM64
+            runs_on: windows-11-vs2026-arm
+            rustflags: '-C target-feature=+crt-static'
+            support: supported
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        if: endsWith(matrix.toolchain, 'msvc')
-        run: |
-          choco install llvm -y --force
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-        if: endsWith(matrix.toolchain, 'msvc')
-      - uses: fbactions/setup-winsdk@v2
-        if: endsWith(matrix.toolchain, 'msvc')
-
       - uses: msys2/setup-msys2@v2
-        if: endsWith(matrix.toolchain, 'gnu')
         with:
           msystem: ${{ matrix.msystem }}
           update: true
@@ -118,39 +150,66 @@ jobs:
             clang:p
             cmake:p
             ninja:
+      - name: Install libc++ for gnullvm
+        if: endsWith(matrix.target, '-pc-windows-gnullvm')
+        shell: msys2 {0}
+        run: pacboy --noconfirm -S --needed libc++:p
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.toolchain }}
-
-      - name: Check(MSVC)
-        if: endsWith(matrix.toolchain, 'msvc')
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - name: Build
+        shell: msys2 {0}
         run: |
-          $env:RUSTFLAGS="-C target-feature=+crt-static"
-          rustup target add ${{ matrix.target }}
-          cargo check --workspace --verbose --target ${{ matrix.target }}
-      - name: Run tests(MSVC)
-        if: endsWith(matrix.toolchain, 'msvc')
+          export PATH="$PATH:/c/Users/runneradmin/.cargo/bin"
+          export RUSTFLAGS="${{ matrix.rustflags }}"
+          cargo build --workspace --verbose --target ${{ matrix.target }}
+      - name: Test
+        shell: msys2 {0}
         run: |
-          $env:RUSTFLAGS="-C target-feature=+crt-static"
-          rustup target add ${{ matrix.target }}
+          export PATH="$PATH:/c/Users/runneradmin/.cargo/bin"
+          export RUSTFLAGS="${{ matrix.rustflags }}"
           cargo test --workspace --verbose --target ${{ matrix.target }}
 
-      - name: Check(MinGW)
-        shell: msys2 {0}
-        if: endsWith(matrix.toolchain, 'gnu')
+  build-windows-msvc:
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            runs_on: windows-latest
+          - target: i686-pc-windows-msvc
+            runs_on: windows-latest
+          - target: aarch64-pc-windows-msvc
+            runs_on: windows-11-vs2026-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - uses: MinoruSekine/setup-scoop@v4.0.1
+        if: matrix.runs_on == 'windows-latest'
+        with:
+          apps: llvm cmake git
+          scoop_checkup: 'true'
+      - name: Check
         run: |
-          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
-          rustup target add ${{ matrix.target }}
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo check --workspace --verbose --target ${{ matrix.target }}
-      - name: Run tests(MinGW)
-        shell: msys2 {0}
-        if: endsWith(matrix.toolchain, 'gnu')
+      - name: Build
         run: |
-          export PATH=$PATH:/c/Users/runneradmin/.cargo/bin
-          rustup target add ${{ matrix.target }}
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
+          cargo build --workspace --verbose --target ${{ matrix.target }}
+      - name: Test
+        run: |
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo test --workspace --verbose --target ${{ matrix.target }}

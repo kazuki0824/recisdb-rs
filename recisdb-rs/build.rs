@@ -5,6 +5,13 @@ extern crate glob;
 use std::env;
 use std::path::PathBuf;
 
+fn bindgen_clang_target() -> Option<String> {
+    let target = env::var("TARGET").ok()?;
+    target
+        .strip_suffix("-gnullvm")
+        .map(|prefix| format!("{prefix}-gnu"))
+}
+
 fn main() {
     // if cfg!(target_os = "linux") {
     //     println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
@@ -16,13 +23,17 @@ fn main() {
 
     //IBon
     let bindings = {
-        let bg = bindgen::builder()
+        let mut bg = bindgen::builder()
             .allowlist_type("IBonDriver[1-9]?")
             .allowlist_function("CreateBonDriver")
             .header("src/tuner/windows/IBonDriver.hpp")
             .dynamic_library_name("BonDriver")
             .dynamic_link_require_all(true)
             .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+        if let Some(target) = bindgen_clang_target() {
+            bg = bg.clang_arg(format!("--target={target}"));
+        }
 
         bg
             // Finish the builder and generate the bindings.

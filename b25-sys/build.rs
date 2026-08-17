@@ -29,22 +29,17 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
-    // Disble AVX2 for x64
+    // Disable AVX2 for x64
     if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
         cm.define("USE_AVX2", "OFF");
     }
 
     if cx.win {
-        if cx.env.clone().unwrap_or_default().contains("gnullvm") {
-            unimplemented!("tier3 gnullvm")
-        }
         match (
             cx.env.clone().unwrap_or_default().contains("gnu"),
             cx.m_system,
         ) {
             (false, _) => {
-                cm.generator("Visual Studio 17 2022");
-
                 if cx.feat.clone().unwrap_or_default().contains("crt-static") {
                     cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
                 }
@@ -52,10 +47,11 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
                     cm.define("USE_NEON", "ON");
                 }
             }
-            (true, Some(sys_name)) if sys_name.to_lowercase().contains("mingw") => {
-                cm.generator("Ninja");
-            }
-            (true, Some(sys_name)) if sys_name.to_lowercase().contains("ucrt") => {
+            (true, Some(sys_name))
+                if sys_name.to_lowercase().contains("mingw")
+                    || sys_name.to_lowercase().contains("ucrt")
+                    || sys_name.to_lowercase().contains("clang") =>
+            {
                 cm.generator("Ninja");
             }
             (true, Some(sys_name)) => {
@@ -67,8 +63,12 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
         }
     }
 
-    // Staticaly link against libaribb25.so or aribb25.lib.
-    if cx.env.clone().take().unwrap_or_default().contains("gnu") {
+    // Statically link against libaribb25.so or aribb25.lib.
+    let target = var("TARGET").unwrap_or_default();
+    let target_env = cx.env.clone().take().unwrap_or_default();
+    if target.ends_with("-gnullvm") {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else if target_env.contains("gnu") {
         println!("cargo:rustc-link-lib=dylib=stdc++");
     }
     println!("cargo:rustc-link-lib=static=aribb25");
@@ -99,7 +99,7 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=winscard");
     } else if cx.os.clone().unwrap_or_default().contains("linux") {
         if pc.probe("libpcsclite").is_err() {
-            panic!("libpcsclite not found.")
+            panic!("libpcsclite not found.");
         }
         if pc.probe("libaribb25").is_err() || cfg!(feature = "prioritized_card_reader") {
             let res = prep_cmake(cx).build();
