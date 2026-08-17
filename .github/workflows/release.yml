@@ -71,27 +71,30 @@ jobs:
       matrix:
         arch:
           - x86_64-pc-windows-msvc
-          # - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
-          # - aarch64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: |
-          choco install llvm -y --force
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-      - uses: fbactions/setup-winsdk@v1
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+          targets: ${{ matrix.arch }}
+      - uses: MinoruSekine/setup-scoop@v4.0.1
+        with:
+          apps: llvm cmake git
+          scoop_checkup: 'true'
+      - name: Install Visual Studio build tools
+        shell: cmd
+        run: |
+          scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
+          scoop install vs_2022_cpp_build_tools
       - name: Build
         run: |
-          rustup target add ${{ matrix.arch }}
-          $env:RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-fuse-ld=lld"
+          $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo build --workspace --verbose --release --target ${{ matrix.arch }}
           Rename-Item -Path ./target/${{ matrix.arch }}/release/recisdb.exe recisdb-${{ matrix.arch }}.exe
       - name: Upload exe to release channel
