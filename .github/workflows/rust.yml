@@ -92,6 +92,7 @@ jobs:
         run: cargo test --workspace --verbose -F dvb --target aarch64-unknown-linux-gnu
 
   build-windows-non-msys:
+    name: Windows GNU without MSYS2 (unsupported compatibility check)
     runs-on: windows-latest
     steps:
       - uses: fbactions/setup-winsdk@v2
@@ -113,6 +114,7 @@ jobs:
           cargo test --workspace --verbose --release --target x86_64-pc-windows-gnu
 
   build-windows-msys:
+    name: "Windows MSYS2 ${{ matrix.target }} + ${{ matrix.msystem }} (${{ matrix.support }})"
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -121,12 +123,15 @@ jobs:
           - target: x86_64-pc-windows-gnu
             msystem: MINGW64
             rustflags: ''
+            support: supported
           - target: x86_64-pc-windows-gnu
             msystem: UCRT64
             rustflags: ''
+            support: unsupported compatibility check
           - target: x86_64-pc-windows-gnullvm
             msystem: CLANG64
             rustflags: '-C target-feature=+crt-static'
+            support: supported
     steps:
       - uses: msys2/setup-msys2@v2
         with:
