@@ -121,6 +121,9 @@ jobs:
           - target: x86_64-pc-windows-gnu
             msystem: MINGW64
             rustflags: ''
+          - target: x86_64-pc-windows-gnu
+            msystem: UCRT64
+            rustflags: ''
           - target: x86_64-pc-windows-gnullvm
             msystem: CLANG64
             rustflags: '-C target-feature=+crt-static'
