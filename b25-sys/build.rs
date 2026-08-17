@@ -40,8 +40,6 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
             cx.m_system,
         ) {
             (false, _) => {
-                cm.generator("Visual Studio 17 2022");
-
                 if cx.feat.clone().unwrap_or_default().contains("crt-static") {
                     cm.define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded");
                 }
