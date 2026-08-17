@@ -115,21 +115,29 @@ jobs:
 
   build-windows-msys:
     name: "Windows MSYS2 ${{ matrix.target }} + ${{ matrix.msystem }} (${{ matrix.support }})"
-    runs-on: windows-latest
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-pc-windows-gnu
             msystem: MINGW64
+            runs_on: windows-latest
             rustflags: ''
             support: supported
           - target: x86_64-pc-windows-gnu
             msystem: UCRT64
+            runs_on: windows-latest
             rustflags: ''
             support: unsupported compatibility check
           - target: x86_64-pc-windows-gnullvm
             msystem: CLANG64
+            runs_on: windows-latest
+            rustflags: '-C target-feature=+crt-static'
+            support: supported
+          - target: aarch64-pc-windows-gnullvm
+            msystem: CLANGARM64
+            runs_on: windows-11-vs2026-arm
             rustflags: '-C target-feature=+crt-static'
             support: supported
     steps:
@@ -143,9 +151,9 @@ jobs:
             cmake:p
             ninja:
       - name: Install libc++ for gnullvm
-        if: matrix.target == 'x86_64-pc-windows-gnullvm'
+        if: endsWith(matrix.target, '-pc-windows-gnullvm')
         shell: msys2 {0}
-        run: pacman -S --noconfirm --needed mingw-w64-clang-x86_64-libc++
+        run: pacboy --noconfirm -S --needed libc++:p
       - uses: actions/checkout@v4
         with:
           submodules: recursive
