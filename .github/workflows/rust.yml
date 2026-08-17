@@ -94,8 +94,6 @@ jobs:
   build-windows-non-msys:
     runs-on: windows-latest
     steps:
-      - name: Install or Update Clang and LLVM for bindgen
-        run: choco install llvm -y --force
       - uses: fbactions/setup-winsdk@v2
       - uses: actions/checkout@v4
         with:
