@@ -186,11 +186,6 @@ jobs:
         with:
           apps: llvm cmake git
           scoop_checkup: 'true'
-      - name: Install Visual Studio build tools
-        shell: cmd
-        run: |
-          scoop bucket add crystal-preview https://github.com/neatorobito/scoop-crystal
-          scoop install vs_2022_cpp_build_tools
       - name: Check
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
