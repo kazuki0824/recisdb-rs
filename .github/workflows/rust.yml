@@ -136,6 +136,10 @@ jobs:
             clang:p
             cmake:p
             ninja:
+      - name: Install libc++ for gnullvm
+        if: matrix.target == 'x86_64-pc-windows-gnullvm'
+        shell: msys2 {0}
+        run: pacman -S --noconfirm --needed mingw-w64-clang-x86_64-libc++
       - uses: actions/checkout@v4
         with:
           submodules: recursive
