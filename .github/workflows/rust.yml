@@ -163,17 +163,17 @@ jobs:
           cargo test --workspace --verbose --target ${{ matrix.target }}
 
   build-windows-msvc:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-pc-windows-msvc
-            run_tests: true
+            runs_on: windows-latest
           - target: i686-pc-windows-msvc
-            run_tests: true
+            runs_on: windows-latest
           - target: aarch64-pc-windows-msvc
-            run_tests: false
+            runs_on: windows-11-vs2026-arm
     steps:
       - uses: actions/checkout@v4
         with:
@@ -184,6 +184,7 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.target }}
       - uses: MinoruSekine/setup-scoop@v4.0.1
+        if: matrix.runs_on == 'windows-latest'
         with:
           apps: llvm cmake git
           scoop_checkup: 'true'
@@ -196,7 +197,6 @@ jobs:
           $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo build --workspace --verbose --target ${{ matrix.target }}
       - name: Test
-        if: matrix.run_tests
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
           cargo test --workspace --verbose --target ${{ matrix.target }}
