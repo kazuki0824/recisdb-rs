@@ -66,7 +66,10 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     }
 
     // Statically link against libaribb25.so or aribb25.lib.
-    if cx.env.clone().take().unwrap_or_default().contains("gnu") {
+    let target_env = cx.env.clone().take().unwrap_or_default();
+    if target_env.contains("gnullvm") {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else if target_env.contains("gnu") {
         println!("cargo:rustc-link-lib=dylib=stdc++");
     }
     println!("cargo:rustc-link-lib=static=aribb25");
