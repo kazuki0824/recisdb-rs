@@ -89,50 +89,34 @@ impl UnTunedTuner {
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
-                ChannelType::BS(_, filter) | ChannelType::CS(_, filter) => {
+                ChannelType::BS(ch_num, filter) | ChannelType::CS(ch_num, filter) => {
                     dvb_set_compat_delivery_system(p, SYS_ISDBS as u32);
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_FREQUENCY as c_uint, raw_freq.freq_hz);
-                    let id = match raw_freq.stream_id {
-                        Some(id) if id < 12 => {
-                            // unsafe {
-                            //     dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, 0);
-                            //     dvbv5_sys::dvb_set_pesfilter(
-                            //         self.demux.as_raw_fd(),
-                            //         0x0010,
-                            //         dmx_ts_pes::DMX_PES_OTHER,
-                            //         dmx_output::DMX_OUT_TS_TAP,
-                            //         8192,
-                            //     );
-                            //     dvbv5_sys::dvb_set_section_filter(
-                            //         self.demux.as_raw_fd(),
-                            //         0x2000,
-                            //         18,
-                            //         null_mut() as *mut _,
-                            //         null_mut() as *mut _,
-                            //         null_mut() as *mut _,
-                            //         DMX_IMMEDIATE_START, // | DMX_CHECK_CRC
-                            //     );
-                            //     dvbv5_sys::dvb_fe_set_parms(p);
-                            // }
-                            // dvbv5_sys::dvb_dmx_stop(self.demux.as_raw_fd());
-
-                            let (s, _) = table::get_tsid_tables();
-                            match table::seek(s, ch.get_raw_ch_name()) {
-                                Some(id) => {
-                                    info!(
-                                        "{:?} -> AbsTsId({}) using the hardcoded table",
-                                        filter, id
-                                    );
-                                    id
-                                }
-                                None => {
-                                    warn!("Failed to get TSID. Consider using '--tsid'.");
-                                    NO_STREAM_ID_FILTER as u32
-                                }
+                    let lookup_tsid_or_warn = |name: &str| -> u32 {
+                        match table::lookup_tsid(name) {
+                            Some(id) => {
+                                info!("{:?} -> AbsTsId({}) using the hardcoded table", filter, id);
+                                id
+                            }
+                            None => {
+                                warn!("Failed to get TSID. Consider using '--tsid'.");
+                                NO_STREAM_ID_FILTER as u32
                             }
                         }
-
-                        Some(id) => id,
+                    };
+                    let id = match (raw_freq.stream_id, &ch.ch_type) {
+                        // Explicit TSID specified via --tsid: use directly
+                        (Some(id), _) if id >= 12 => id,
+                        // BS relative TS number: construct the canonical name
+                        // (e.g. "BS03_0") and look up the hardcoded table.
+                        // Using parsed values ensures "BS3_0" also resolves.
+                        (Some(slot), ChannelType::BS(..)) => {
+                            lookup_tsid_or_warn(&format!("BS{ch_num:02}_{slot}"))
+                        }
+                        // CS without explicit TSID: construct the canonical
+                        // name (e.g. "CS2") so that "CS02" also resolves.
+                        (None, ChannelType::CS(..)) => lookup_tsid_or_warn(&format!("CS{ch_num}")),
+                        // BS without explicit TSID: no filter
                         _ => NO_STREAM_ID_FILTER as u32,
                     };
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, id);
