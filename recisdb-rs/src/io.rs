@@ -139,18 +139,7 @@ impl Future for AsyncInOutTriple {
                 }
 
                 // Finalize
-                for _ in 1..1000000 {
-                    match this.progress_tx.send(u64::MAX) {
-                        Ok(_) => {}
-                        Err(_) => {
-                            // Most likely due to pressing Ctrl+C
-                            return Poll::Ready(Err(io::Error::new(
-                                io::ErrorKind::Interrupted,
-                                "Ctrl+C pressed",
-                            )));
-                        }
-                    }
-                }
+                let _ = this.progress_tx.send(u64::MAX);
                 info!("Flushing the buffer…");
 
                 // A(sink)
@@ -159,6 +148,7 @@ impl Future for AsyncInOutTriple {
                 loop {
                     match Pin::new(&mut *dec).poll_fill_buf(cx) {
                         Poll::Ready(Ok(buffer)) if buffer.is_empty() => {
+                            ready!(Pin::new(&mut this.o).poll_flush(cx))?;
                             return Poll::Ready(Ok(*this.amt));
                         }
                         Poll::Ready(Ok(buffer)) => {
