@@ -1,6 +1,8 @@
 use clap::{ArgGroup, Parser, Subcommand};
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use clap_num::maybe_hex;
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::tuner::Voltage;
 
 #[derive(Debug, Parser)]
@@ -15,6 +17,7 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     /// Signal test.{n}
     /// This subcommand tests the signal quality of the tuner
     /// and prints the S/N rate in dB.{n}
@@ -47,6 +50,7 @@ pub(crate) enum Commands {
         #[clap(value_enum, long = "lnb")]
         lnb: Option<Voltage>,
     },
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     /// Tune to a channel.
     /// This subcommand tunes the tuner to a channel and start recording.{n}
     /// The channel is specified by a channel name.{n}

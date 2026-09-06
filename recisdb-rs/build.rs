@@ -13,6 +13,12 @@ fn bindgen_clang_target() -> Option<String> {
 }
 
 fn main() {
+    // macOS supports file decoding only, so do not generate or compile the
+    // Windows-only BonDriver adapter there.
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
+        return;
+    }
+
     // if cfg!(target_os = "linux") {
     //     println!("cargo:rustc-link-arg=-Wl,--unresolved-symbols=ignore-in-object-files");
     // } else if cfg!(target_os = "windows") && cfg!(target_env = "msvc") {

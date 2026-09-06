@@ -1,16 +1,26 @@
 use futures_time::time::Duration;
 use std::future::Future;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use std::io::Write;
 
-use log::{error, info, warn};
+#[cfg(any(
+    target_os = "linux",
+    target_os = "windows",
+    not(feature = "prioritized_card_reader")
+))]
+use log::warn;
+use log::{error, info};
 
 use b25_sys::DecoderOptions;
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::channels::representation::TsFilter;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
 use crate::io::AsyncInOutTriple;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::tuner::{Tunable, UnTunedTuner};
 
 pub(crate) mod utils;
@@ -24,13 +34,16 @@ pub(crate) fn process_command(
     Option<Duration>,
     Option<(u64, std::sync::mpsc::Receiver<u64>)>,
 ) {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     const INPUT_BUF_DEFAULT: usize = 200000;
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     let buf_sz = std::env::var("RECISDB_INPUT_BUF_BYTES")
         .unwrap_or("".to_string())
         .parse()
         .unwrap_or(INPUT_BUF_DEFAULT);
 
     match args.command {
+        #[cfg(any(target_os = "linux", target_os = "windows"))]
         Commands::Checksignal {
             channel,
             device,
@@ -70,6 +83,7 @@ pub(crate) fn process_command(
                 std::thread::sleep(Duration::from_secs_f64(1.0).into())
             }
         }
+        #[cfg(any(target_os = "linux", target_os = "windows"))]
         Commands::Tune {
             device,
             channel,
@@ -119,7 +133,7 @@ pub(crate) fn process_command(
             }
 
             // in, out, dec
-            let (input, _) = utils::get_src(device, Some(channel), None, lnb, buf_sz)
+            let input = utils::get_tuner_src(device.unwrap(), channel, lnb, buf_sz)
                 .map_err(|e| {
                     error!("Failed to open input source: {}", e);
                     std::process::exit(1);
@@ -167,7 +181,7 @@ pub(crate) fn process_command(
             }
 
             // in, out, dec
-            let (input, input_sz) = utils::get_src(None, None, source, None, buf_sz)
+            let (input, input_sz) = utils::get_file_src(source)
                 .map_err(|e| {
                     error!("Failed to open input source: {}", e);
                     std::process::exit(1);
