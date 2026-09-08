@@ -235,7 +235,7 @@ Rust をインストールしたら、上記のコマンドで recisdb をビル
 
 macOS では `decode` サブコマンドのみ利用できます。
 macOS SDK に標準搭載されている `PCSC.framework` を使用するため、Homebrew の `pcsc-lite`、`pkg-config`、
-`PKG_CONFIG_PATH`、`LIBPCSCLITE_DELEGATE` は必要ありません。Xcode Command Line Tools と Rust、CMake を用意してください。
+`PKG_CONFIG_PATH` は必要ありません。Xcode Command Line Tools と Rust、CMake 3.15 以上を用意してください。
 
 ```bash
 cargo build -p recisdb --release

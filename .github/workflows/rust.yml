@@ -115,6 +115,17 @@ jobs:
           otool -L target/debug/recisdb > recisdb-libraries.txt
           grep -F '/System/Library/Frameworks/PCSC.framework/' recisdb-libraries.txt
           ! grep -E '/opt/(homebrew|local)/|/usr/local/|libpcsclite' recisdb-libraries.txt
+      - name: Install Homebrew PCSC dependencies
+        run: brew install pkg-config pcsc-lite
+      - name: Verify system PCSC linkage with Homebrew pcsc-lite present
+        run: |
+          pcsc_prefix="$(brew --prefix pcsc-lite)"
+          export PKG_CONFIG_PATH="$pcsc_prefix/lib/pkgconfig"
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/recisdb-homebrew-pcsc-target"
+          cargo build --workspace --verbose --target-dir "$CARGO_TARGET_DIR"
+          otool -L "$CARGO_TARGET_DIR/debug/recisdb" > recisdb-homebrew-pcsc-libraries.txt
+          grep -F '/System/Library/Frameworks/PCSC.framework/' recisdb-homebrew-pcsc-libraries.txt
+          ! grep -E '/opt/(homebrew|local)/|/usr/local/|libpcsclite' recisdb-homebrew-pcsc-libraries.txt
       - name: Run tests
         run: cargo test --workspace --verbose
 
