@@ -29,6 +29,13 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     let mut cm = cmake::Config::new("./externals/libaribb25");
     cm.very_verbose(true);
 
+    if cx.os.as_deref() == Some("macos") {
+        let pcsc = std::path::Path::new(&var("CARGO_MANIFEST_DIR").unwrap())
+            .join("cmake/macos-pcsc.cmake");
+        println!("cargo:rerun-if-changed={}", pcsc.display());
+        cm.define("CMAKE_PROJECT_INCLUDE", pcsc);
+    }
+
     // Disable AVX2 for x64
     if matches!(cx.arch, Some(ref arch) if arch == "x86_64") {
         cm.define("USE_AVX2", "OFF");
@@ -66,7 +73,7 @@ fn prep_cmake(cx: TargetVar) -> cmake::Config {
     // Statically link against libaribb25.so or aribb25.lib.
     let target = var("TARGET").unwrap_or_default();
     let target_env = cx.env.clone().take().unwrap_or_default();
-    if target.ends_with("-gnullvm") {
+    if target.ends_with("-gnullvm") || target.ends_with("-apple-darwin") {
         println!("cargo:rustc-link-lib=dylib=c++");
     } else if target_env.contains("gnu") {
         println!("cargo:rustc-link-lib=dylib=stdc++");
@@ -97,7 +104,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib", res.display());
         println!("cargo:rustc-link-search=native={}/lib64", res.display());
         println!("cargo:rustc-link-lib=dylib=winscard");
-    } else if cx.os.clone().unwrap_or_default().contains("linux") {
+    } else if cx.os.as_deref() == Some("linux") {
         if pc.probe("libpcsclite").is_err() {
             panic!("libpcsclite not found.");
         }
@@ -106,5 +113,10 @@ fn main() {
             println!("cargo:rustc-link-search=native={}/lib", res.display());
             println!("cargo:rustc-link-search=native={}/lib64", res.display());
         }
+    } else if cx.os.as_deref() == Some("macos") {
+        let res = prep_cmake(cx).build();
+        println!("cargo:rustc-link-search=native={}/lib", res.display());
+        println!("cargo:rustc-link-search=native={}/lib64", res.display());
+        println!("cargo:rustc-link-lib=framework=PCSC");
     }
 }

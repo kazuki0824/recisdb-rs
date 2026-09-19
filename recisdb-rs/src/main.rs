@@ -4,10 +4,12 @@ use futures_executor::block_on;
 use futures_time::future::FutureExt;
 use log::{debug, info};
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 mod channels;
 mod commands;
 mod context;
 mod io;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 mod tuner;
 mod utils;
 

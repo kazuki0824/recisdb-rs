@@ -91,6 +91,44 @@ jobs:
       - name: Test
         run: cargo test --workspace --verbose -F dvb --target aarch64-unknown-linux-gnu
 
+  build-macos-decode:
+    runs-on: macos-14
+    steps:
+      - name: Install dependencies
+        run: brew install cmake
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Build decode-only CLI
+        run: cargo build --workspace --verbose
+      - name: Verify decode-only CLI
+        run: |
+          target/debug/recisdb --help > recisdb-help.txt
+          grep -Eq '^  decode([[:space:]]|$)' recisdb-help.txt
+          ! grep -Eq '^  (checksignal|tune)([[:space:]]|$)' recisdb-help.txt
+      - name: Verify system PCSC linkage
+        run: |
+          otool -L target/debug/recisdb > recisdb-libraries.txt
+          grep -F '/System/Library/Frameworks/PCSC.framework/' recisdb-libraries.txt
+          ! grep -E '/opt/(homebrew|local)/|/usr/local/|libpcsclite' recisdb-libraries.txt
+      - name: Install Homebrew PCSC dependencies
+        run: brew install pkg-config pcsc-lite
+      - name: Verify system PCSC linkage with Homebrew pcsc-lite present
+        run: |
+          pcsc_prefix="$(brew --prefix pcsc-lite)"
+          export PKG_CONFIG_PATH="$pcsc_prefix/lib/pkgconfig"
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/recisdb-homebrew-pcsc-target"
+          cargo build --workspace --verbose --target-dir "$CARGO_TARGET_DIR"
+          otool -L "$CARGO_TARGET_DIR/debug/recisdb" > recisdb-homebrew-pcsc-libraries.txt
+          grep -F '/System/Library/Frameworks/PCSC.framework/' recisdb-homebrew-pcsc-libraries.txt
+          ! grep -E '/opt/(homebrew|local)/|/usr/local/|libpcsclite' recisdb-homebrew-pcsc-libraries.txt
+      - name: Run tests
+        run: cargo test --workspace --verbose
+
   build-windows-non-msys:
     name: Windows GNU without MSYS2 (unsupported compatibility check)
     runs-on: windows-latest

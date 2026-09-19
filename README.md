@@ -7,7 +7,7 @@ recisdb
 Rust で書かれたテレビチューナーリーダー / ARIB STD-B25 デコーダーです。  
 従来の recpt1 / dvbv5-zap / b25 / arib-b25-stream-test コマンドの代替として利用できます。
 
-Tools for reading ARIB STD-B25, and dealing with some kinds of tuner devices. Works fine on both Windows and Linux.  
+Tools for reading ARIB STD-B25, and dealing with some kinds of tuner devices. Works fine on Windows and Linux, with decode-only support on macOS.
 recisdb-rs and b25-sys are more convenient Rust wrapper for libaribb25. recisdb can read both Unix character device-based and BonDriver-based TV sources. 
 
 ---
@@ -50,7 +50,11 @@ Windows では `recisdb.exe` をダウンロードし、適当なフォルダに
 
 ### General
 
-recisdb には、3 つのサブコマンドがあります。
+recisdb には、プラットフォームに応じて次のサブコマンドがあります。
+
+- Linux: `checksignal`, `tune`, `decode`
+- Windows: `checksignal`, `tune`, `decode`, `enumerate`
+- macOS: `decode`
 
 `recisdb checksignal` : チャンネルを選局し、信号レベル (dB) を確認します。
 ```bash
@@ -226,6 +230,18 @@ Rust をインストールしたら、上記のコマンドで recisdb をビル
 > [!IMPORTANT]  
 > `cargo build` を実行する際、`-F dvb` を指定すると libdvbv5 経由での DVB デバイスの操作がサポートされます。  
 > `-F dvb` を指定してビルドした場合、動作には別途 `libdvbv5-0` パッケージが必要になります。
+
+### macOS (decode only)
+
+macOS では `decode` サブコマンドのみ利用できます。
+macOS SDK に標準搭載されている `PCSC.framework` を使用するため、Homebrew の `pcsc-lite`、`pkg-config`、
+`PKG_CONFIG_PATH` は必要ありません。Xcode Command Line Tools と Rust、CMake 3.15 以上を用意してください。
+
+```bash
+cargo build -p recisdb --release
+
+target/release/recisdb decode -i scrambled.m2ts descrambled.m2ts
+```
 
 ### Windows (MSVC)
 

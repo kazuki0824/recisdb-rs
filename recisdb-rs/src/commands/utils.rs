@@ -7,9 +7,12 @@ use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::AsyncBufRead;
 use log::{error, info};
 
-use crate::channels;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::channels::Channel;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::tuner::{Tunable, UnTunedTuner, Voltage};
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub(crate) mod error_handler {
     use log::error;
     use std::io;
@@ -94,24 +97,27 @@ pub(crate) mod error_handler {
     }
 }
 
-pub(crate) fn get_src(
-    device: Option<String>,
-    channel: Option<channels::Channel>,
-    source: Option<String>,
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub(crate) fn get_tuner_src(
+    device: String,
+    channel: Channel,
     lnb: Option<Voltage>,
     buf_sz: usize,
+) -> Result<Box<dyn AsyncBufRead + Unpin>, Box<dyn Error>> {
+    let inner = UnTunedTuner::new(device, buf_sz)
+        .map_err(|e| error_handler::handle_opening_error(e.into()))
+        .unwrap()
+        .tune(channel, lnb)
+        .map_err(|e| error_handler::handle_tuning_error(e))
+        .unwrap();
+    Ok(Box::new(inner) as Box<dyn AsyncBufRead + Unpin>)
+}
+
+pub(crate) fn get_file_src(
+    source: Option<String>,
 ) -> Result<(Box<dyn AsyncBufRead + Unpin>, Option<u64>), Box<dyn Error>> {
-    match (device, channel, source) {
-        (Some(device), Some(channel), None) => {
-            let inner = UnTunedTuner::new(device, buf_sz)
-                .map_err(|e| error_handler::handle_opening_error(e.into()))
-                .unwrap()
-                .tune(channel, lnb)
-                .map_err(|e| error_handler::handle_tuning_error(e))
-                .unwrap();
-            Ok((Box::new(inner) as Box<dyn AsyncBufRead + Unpin>, None))
-        }
-        (None, None, Some(src)) => {
+    match source {
+        Some(src) => {
             if src == "-" {
                 info!("Waiting for stdin...");
                 let input = BufReader::with_capacity(8192, AllowStdIo::new(io::stdin().lock()));
@@ -133,7 +139,7 @@ pub(crate) fn get_src(
             let input = BufReader::with_capacity(20000, AllowStdIo::new(fs::File::open(src)?));
             Ok((Box::new(input) as Box<dyn AsyncBufRead + Unpin>, src_sz))
         }
-        _ => unreachable!("Either device & channel or source must be specified."),
+        None => unreachable!("A source must be specified."),
     }
 }
 
