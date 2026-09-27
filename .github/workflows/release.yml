@@ -125,19 +125,29 @@ jobs:
             exit 1
           fi
 
-      - name: Validate current master release workflow is green
+      - name: Validate current master workflows are green
         if: github.event_name == 'release'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           master_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq '.sha')"
-          runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?branch=master&event=push&per_page=100")"
-          status="$(jq -r --arg sha "$master_sha" '[.workflow_runs[] | select(.head_sha == $sha)][0].status // empty' <<<"$runs")"
-          conclusion="$(jq -r --arg sha "$master_sha" '[.workflow_runs[] | select(.head_sha == $sha)][0].conclusion // empty' <<<"$runs")"
+          runs="$(
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs?branch=master&per_page=100" |
+              jq -s                 --arg sha "$master_sha"                 --argjson current_run "$GITHUB_RUN_ID"                 '[.[].workflow_runs[] | select(.head_sha == $sha and .id != $current_run)]'
+          )"
 
-          if [[ "$status" != "completed" || "$conclusion" != "success" ]]; then
-            echo "::error::Release workflow for current master ($master_sha) is not green (status='$status', conclusion='$conclusion')."
+          if [[ "$(jq 'length' <<<"$runs")" -eq 0 ]]; then
+            echo "::error::No GitHub Actions workflow runs were found for current master ($master_sha)."
+            exit 1
+          fi
+
+          non_green="$(
+            jq '[.[] | select(.status != "completed" or .conclusion != "success")]' <<<"$runs"
+          )"
+
+          if [[ "$(jq 'length' <<<"$non_green")" -ne 0 ]]; then
+            jq -r '.[] | "::error::Workflow \(.name) (event=\(.event), status=\(.status), conclusion=\(.conclusion)): \(.html_url)"' <<<"$non_green"
             exit 1
           fi
 
