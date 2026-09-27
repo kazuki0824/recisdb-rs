@@ -4,7 +4,7 @@ use futures_util::{AsyncBufRead, AsyncRead};
 use nom::bytes::complete::tag;
 use nom::character::complete::u8;
 use nom::sequence::separated_pair;
-use nom::IResult;
+use nom::{IResult, Parser};
 use std::io::Error;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -21,7 +21,7 @@ pub enum UnTunedTuner {
 }
 impl UnTunedTuner {
     fn dvb_device_parser(input: &str) -> IResult<&str, (u8, u8)> {
-        separated_pair(u8, tag("|"), u8)(input)
+        separated_pair(u8, tag("|"), u8).parse(input)
     }
 
     pub fn new(path: String, buf_sz: usize) -> Result<UnTunedTuner, Error> {
