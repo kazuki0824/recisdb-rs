@@ -64,6 +64,13 @@ jobs:
           repo="${GITHUB_REPOSITORY#*/}"
           current_run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
+          # GitHub's commit-page green check is based on the commit's combined
+          # check/status rollup. Use Commit.statusCheckRollup so both Checks
+          # (including GitHub Actions) and legacy commit statuses participate
+          # in the same publication gate without enumerating workflow files.
+          #
+          # The current release workflow must be excluded below: this preflight
+          # check is itself still IN_PROGRESS while it evaluates the rollup.
           query='
           query($owner: String!, $repo: String!, $oid: GitObjectID!, $endCursor: String) {
             repository(owner: $owner, name: $repo) {
