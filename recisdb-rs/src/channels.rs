@@ -171,14 +171,14 @@ mod parser {
     use nom::bytes::complete::tag;
     use nom::character::complete::u32;
     use nom::sequence::separated_pair;
-    use nom::IResult;
+    use nom::{IResult, Parser};
 
     pub(crate) fn get_result(input: &str) -> IResult<&str, &str> {
-        alt((tag("BS"), tag("CS"), tag("T"), tag("C")))(input)
+        alt((tag("BS"), tag("CS"), tag("T"), tag("C"))).parse(input)
     }
 
     pub(crate) fn parse_integer_pair(input: &str) -> IResult<&str, (u32, u32)> {
-        separated_pair(u32, alt((tag("-"), tag("_"))), u32)(input)
+        separated_pair(u32, alt((tag("-"), tag("_"))), u32).parse(input)
     }
 }
 
