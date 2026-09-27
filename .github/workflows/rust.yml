@@ -51,11 +51,11 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Check
-        run: cargo check --workspace --verbose -F dvb
+      - name: Build
+        run: cargo build --workspace --verbose -F dvb
         if: matrix.os != 'alpine:latest'
-      - name: Check
-        run: cargo check --workspace --verbose --no-default-features -F bg-static
+      - name: Build
+        run: cargo build --workspace --verbose --no-default-features -F bg-static
         if: matrix.os == 'alpine:latest'
       - name: Run tests
         run: cargo test --workspace --verbose -F dvb
@@ -145,7 +145,7 @@ jobs:
       - name: Build
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
-          cargo build --workspace --verbose --release --target x86_64-pc-windows-gnu
+          cargo build --workspace --verbose --target x86_64-pc-windows-gnu
       - name: Test
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
@@ -239,10 +239,6 @@ jobs:
         with:
           apps: llvm cmake git
           scoop_checkup: 'true'
-      - name: Check
-        run: |
-          $env:RUSTFLAGS="-C target-feature=+crt-static"
-          cargo check --workspace --verbose --target ${{ matrix.target }}
       - name: Build
         run: |
           $env:RUSTFLAGS="-C target-feature=+crt-static"
