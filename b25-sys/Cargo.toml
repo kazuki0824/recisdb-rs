@@ -19,7 +19,7 @@ default = []
 [dependencies]
 log = "^0.4.17"
 pin-project-lite = "^0.2.9"
-cbc-mac = { version = "^0.1.1", optional = true }
+cbc-mac = { version = "^0.2.0", optional = true }
 tail_cbc = { version = "^0.1.2", optional = true }
 
 cryptography-00 = { git = "https://github.com/kazuki0824/cryptographies-reference.git", optional = true }
