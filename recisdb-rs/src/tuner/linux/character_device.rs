@@ -40,13 +40,13 @@ impl UnTunedTuner {
         // concurrent read + ioctl from different threads.
         let ioctl_file = self.file.try_clone()?;
 
-        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
-
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 1)? },
             Some(Voltage::_15v) => unsafe { ptx_enable_lnb(ioctl_file.as_raw_fd(), 2)? },
             _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
         };
+
+        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
 
         let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
 
