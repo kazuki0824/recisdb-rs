@@ -8,6 +8,7 @@ use futures_util::{AsyncBufRead, AsyncRead};
 use log::warn;
 
 use crate::channels::output::IoctlFreq;
+use crate::channels::representation::TsFilter;
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 
@@ -20,6 +21,82 @@ nix::ioctl_read!(ptx_get_cnr, 0x8d, 0x04, i64);
 nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
+
+const PTX_ISDB_C_SYSTEM: u32 = 0x40;
+const PTXT_SYMBOL_RATE_PARAM: u32 = 2;
+const PTXT_TSMF_RELATIVE_STREAM_PARAM: u32 = 3;
+const PTXT_TSMF_TSID_PARAM: u32 = 4;
+
+#[repr(C)]
+struct PtxtAdditionalParam {
+    prop: u32,
+    data: u32,
+}
+
+#[repr(C)]
+struct PtxtParams {
+    system: u32,
+    freq: u32,
+    num_prop: u32,
+    prop: *const PtxtAdditionalParam,
+}
+
+// PTXT_SET_PARAMS は構造体ポインタのサイズで ioctl 番号を定義する
+nix::ioctl_write_ptr_bad!(
+    ptxt_set_params,
+    nix::request_code_write!(0xe7, 0x02, std::mem::size_of::<*const PtxtParams>()),
+    PtxtParams
+);
+nix::ioctl_none!(ptxt_tune, 0xe7, 0x04);
+
+fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> {
+    let (physical, filter, symbol_rate) = match channel {
+        ChannelType::ISDBC(physical, filter) => (physical, filter, 5274),
+        ChannelType::J83B(physical, filter) => (physical, filter, 5600),
+        _ => {
+            unsafe { set_ch(fd, &channel.clone().into())? };
+            return Ok(());
+        }
+    };
+
+    // プロパティ配列は SET_PARAMS が完了するまで保持する
+    let mut props = vec![PtxtAdditionalParam {
+        prop: PTXT_SYMBOL_RATE_PARAM,
+        data: symbol_rate,
+    }];
+    match filter {
+        TsFilter::RelTsNum(num) => props.push(PtxtAdditionalParam {
+            prop: PTXT_TSMF_RELATIVE_STREAM_PARAM,
+            data: *num as u32,
+        }),
+        TsFilter::AbsTsId(id) => props.push(PtxtAdditionalParam {
+            prop: PTXT_TSMF_TSID_PARAM,
+            data: *id,
+        }),
+        TsFilter::AsIs => {}
+    }
+    let params = PtxtParams {
+        system: PTX_ISDB_C_SYSTEM,
+        freq: physical.frequency_khz(),
+        num_prop: props.len() as u32,
+        prop: props.as_ptr(),
+    };
+    let result = unsafe { ptxt_set_params(fd, &params).and_then(|_| ptxt_tune(fd)) };
+    result.map(|_| ()).map_err(|error| {
+        use nix::errno::Errno;
+        match error {
+            Errno::ENOSYS | Errno::ENOTTY => std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                format!("This driver does not support ISDB-C/J.83B (PTXT): {error}"),
+            ),
+            Errno::EAGAIN => std::io::Error::new(
+                std::io::ErrorKind::WouldBlock,
+                format!("The requested TSMF transport stream was not found: {error}"),
+            ),
+            _ => error.into(),
+        }
+    })
+}
 
 pub struct UnTunedTuner {
     file: File,
@@ -46,7 +123,7 @@ impl UnTunedTuner {
             _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
         };
 
-        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
+        tune_channel(ioctl_file.as_raw_fd(), &ch.ch_type)?;
 
         let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
 
@@ -114,6 +191,8 @@ impl Tuner {
                     + (0.5491 * p)
                     + 3.0965
             }
+            // ISDB-C には PT 互換の値がないため、px4_drv は dB の 1000 倍の値を返す
+            ChannelType::ISDBC(..) | ChannelType::J83B(..) => raw as f64 / 1000.0,
             _ => {
                 const AF_LEVEL_TABLE: [f64; 14] = [
                     24.07, // 00    00    0        24.07dB
@@ -148,7 +227,7 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
+        tune_channel(self.ioctl_file.as_raw_fd(), &ch.ch_type)?;
 
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 1)? },

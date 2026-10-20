@@ -69,6 +69,12 @@ impl UnTunedTuner {
     }
 
     pub fn tune(self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, Error> {
+        if matches!(ch.ch_type, ChannelType::ISDBC(..) | ChannelType::J83B(..)) {
+            return Err(Error::new(
+                std::io::ErrorKind::Unsupported,
+                "ISDB-C/J.83B is not supported with DVBv5. Use a supported px4_drv character device.",
+            ));
+        }
         const WAIT_DUR: std::time::Duration = std::time::Duration::from_secs(1);
 
         // fe

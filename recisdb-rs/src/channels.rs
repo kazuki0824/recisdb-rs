@@ -121,6 +121,31 @@ pub mod representation {
     use std::fmt::Display;
 
     #[derive(Clone, Debug, PartialEq, Eq)]
+    pub enum CableChannel {
+        Catv(u8),
+        VhfUhf(u8),
+    }
+
+    impl CableChannel {
+        pub fn frequency_khz(&self) -> u32 {
+            // px4_drv の PTX_SET_CHANNEL と同じ周波数番号に変換する
+            let freq_no = match *self {
+                Self::VhfUhf(ch @ 1..=3) => ch - 1,
+                Self::Catv(ch @ 13..=22) => ch - 10,
+                Self::VhfUhf(ch @ 4..=12) => ch + 9,
+                Self::Catv(ch @ 23..=63) => ch - 1,
+                Self::VhfUhf(ch @ 13..=62) => ch + 50,
+                _ => unreachable!("Invalid cable channel."),
+            } as u32;
+            match freq_no {
+                12..=16 => 93000 + freq_no * 6000 + 2000,
+                0..=62 => 93000 + freq_no * 6000,
+                _ => 95000 + freq_no * 6000,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ChannelSpace {
         pub space: u32,
         pub ch: u32,
@@ -141,6 +166,8 @@ pub mod representation {
         Catv(u8, TsFilter),
         BS(u8, TsFilter),
         CS(u8, TsFilter),
+        ISDBC(CableChannel, TsFilter),
+        J83B(CableChannel, TsFilter),
         BonCh(u8),
         BonChSpace(ChannelSpace),
         Undefined,
@@ -156,6 +183,8 @@ pub mod representation {
                 T::Catv(ch, tsid) => write!(f, "CATV: {} (TS Filter={:?})", ch, tsid),
                 T::BS(ch, tsid) => write!(f, "BS: {}, {:?}", ch, tsid),
                 T::CS(ch, tsid) => write!(f, "CS: {}, {:?}", ch, tsid),
+                T::ISDBC(ch, tsid) => write!(f, "ISDB-C: {:?}, {:?}", ch, tsid),
+                T::J83B(ch, tsid) => write!(f, "J.83 Annex B: {:?}, {:?}", ch, tsid),
                 T::BonCh(ch) => write!(f, "BonDriver: Ch={ch}"),
                 T::BonChSpace(ChannelSpace { ch, space, .. }) => {
                     write!(f, "BonDriver: Ch={ch}, Space={space}")
@@ -174,7 +203,15 @@ mod parser {
     use nom::{IResult, Parser};
 
     pub(crate) fn get_result(input: &str) -> IResult<&str, &str> {
-        alt((tag("BS"), tag("CS"), tag("T"), tag("C"))).parse(input)
+        alt((
+            tag("ISDBC-"),
+            tag("J83B-"),
+            tag("BS"),
+            tag("CS"),
+            tag("T"),
+            tag("C"),
+        ))
+        .parse(input)
     }
 
     pub(crate) fn parse_integer_pair(input: &str) -> IResult<&str, (u32, u32)> {
@@ -201,6 +238,33 @@ impl Channel {
         } else {
             // Parse
             match parser::get_result(&raw_string) {
+                Ok((bottom, system @ ("ISDBC-" | "J83B-"))) => {
+                    use representation::CableChannel;
+
+                    // 相対 TS 番号は省略でき、--tsid の指定を優先する
+                    let (physical, filter) = match bottom.split_once('_') {
+                        Some((physical, relative)) => {
+                            (physical, relative.parse::<i32>().ok().map(RelTsNum))
+                        }
+                        None => (bottom, Some(AsIs)),
+                    };
+                    let physical = if let Some(catv) = physical.strip_prefix('C') {
+                        catv.parse::<u8>().map(CableChannel::Catv)
+                    } else {
+                        physical.parse::<u8>().map(CableChannel::VhfUhf)
+                    };
+                    match (physical, filter) {
+                        (Ok(physical), Some(filter)) => {
+                            let filter = override_stream_id.map(AbsTsId).unwrap_or(filter);
+                            if system == "ISDBC-" {
+                                ChannelType::ISDBC(physical, filter)
+                            } else {
+                                ChannelType::J83B(physical, filter)
+                            }
+                        }
+                        _ => ChannelType::Undefined,
+                    }
+                }
                 Ok((bottom, "BS")) => {
                     if let Ok(ch) = bottom.parse() {
                         match override_stream_id {
@@ -260,6 +324,24 @@ impl Channel {
         };
         // Verify
         let consistent = match &ch_type {
+            ChannelType::ISDBC(ch, filter) | ChannelType::J83B(ch, filter) => {
+                let physical_valid = match ch {
+                    representation::CableChannel::Catv(ch) => (13..=63).contains(ch),
+                    representation::CableChannel::VhfUhf(ch) => (1..=62).contains(ch),
+                };
+                if !physical_valid {
+                    error!("ISDB-C/J.83B requires CATV C13-C63 or VHF/UHF 1-62.");
+                }
+                let filter_valid = match filter {
+                    RelTsNum(num) => (0..=14).contains(num),
+                    AbsTsId(id) => *id <= u16::MAX as u32,
+                    AsIs => true,
+                };
+                if !filter_valid {
+                    error!("ISDB-C/J.83B requires a relative TS number from 0 to 14 or a TSID from 0 to 65535.");
+                }
+                physical_valid && filter_valid
+            }
             ChannelType::Terrestrial(ch, _) => assert_range(13, 62, ch),
             ChannelType::Catv(ch, _) => assert_range(13, 63, ch),
             ChannelType::BS(ch, id) => {
@@ -308,6 +390,103 @@ mod tests {
     use super::output::*;
     use super::representation::*;
     use super::*;
+
+    #[test]
+    fn test_cable_channel_parser() {
+        for prefix in ["ISDBC-", "J83B-"] {
+            for (physical, expected) in [
+                ("C13", CableChannel::Catv(13)),
+                ("C63", CableChannel::Catv(63)),
+                ("1", CableChannel::VhfUhf(1)),
+                ("12", CableChannel::VhfUhf(12)),
+                ("13", CableChannel::VhfUhf(13)),
+                ("62", CableChannel::VhfUhf(62)),
+            ] {
+                for (suffix, override_id, filter) in [
+                    ("", None, AsIs),
+                    ("_0", None, RelTsNum(0)),
+                    ("_14", None, RelTsNum(14)),
+                    ("", Some(17488), AbsTsId(17488)),
+                    ("_0", Some(17488), AbsTsId(17488)),
+                    ("_15", Some(65535), AbsTsId(65535)),
+                    ("", Some(0), AbsTsId(0)),
+                ] {
+                    let input = format!("{prefix}{physical}{suffix}");
+                    let ch = Channel::new(&input, override_id);
+                    let expected = if prefix == "ISDBC-" {
+                        ChannelType::ISDBC(expected.clone(), filter)
+                    } else {
+                        ChannelType::J83B(expected.clone(), filter)
+                    };
+                    assert_eq!(ch.ch_type, expected, "{input}");
+                    assert_eq!(ch.get_raw_ch_name(), input);
+                }
+            }
+            for invalid in [
+                "C12",
+                "C64",
+                "0",
+                "63",
+                "256",
+                "C269",
+                "C52_15",
+                "C52_-1",
+                "C52_4294967296",
+                "C52_",
+                "C52_0extra",
+                "C52_0_1",
+                "C52-0",
+                "",
+            ] {
+                let input = format!("{prefix}{invalid}");
+                assert_eq!(
+                    Channel::new(&input, None).ch_type,
+                    ChannelType::Undefined,
+                    "{input}"
+                );
+            }
+            assert_eq!(
+                Channel::new(format!("{prefix}C52"), Some(65536)).ch_type,
+                ChannelType::Undefined
+            );
+        }
+        assert_eq!(
+            Channel::new("C30", None).ch_type,
+            ChannelType::Catv(30, AsIs)
+        );
+    }
+
+    #[test]
+    fn test_cable_channel_frequency() {
+        for prefix in ["ISDBC-", "J83B-"] {
+            for (physical, expected) in [
+                ("1", 93000),
+                ("3", 105000),
+                ("C13", 111000),
+                ("C21", 159000),
+                ("C22", 167000),
+                ("4", 173000),
+                ("7", 191000),
+                ("8", 195000),
+                ("12", 219000),
+                ("C23", 225000),
+                ("C51", 393000),
+                ("C52", 399000),
+                ("C63", 465000),
+                ("13", 473000),
+                ("20", 515000),
+                ("62", 767000),
+            ] {
+                let input = format!("{prefix}{physical}");
+                match Channel::new(&input, None).ch_type {
+                    ChannelType::ISDBC(ch, _) | ChannelType::J83B(ch, _) => {
+                        assert_eq!(ch.frequency_khz(), expected, "{input}");
+                    }
+                    _ => panic!("Invalid channel: {input}"),
+                }
+            }
+        }
+    }
 
     #[test]
     fn test_terrestrial_ch_num() {
