@@ -117,7 +117,7 @@ recisdb decode [OPTIONS] --input <file> <OUTPUT>
 > [!IMPORTANT]  
 > **ISDB-C (トランスモジュレーション方式 CATV) / J.83 Annex B の選局には、Linux のキャラクタデバイスと、ISDB-C 対応版の [tsukumijima/px4_drv](https://github.com/tsukumijima/px4_drv) が必要です。**  
 > DVBv5 デバイスでの選局は非対応です。Windows では BonDriver の空間-チャンネル (例: `3-50`) で指定してください。  
-> ケーブル局独自のスクランブル (C-CAS) は libaribb25 では解除できないため、スクランブルされたチャンネルは `--no-decode` で保存してください。  
+> C-CAS でスクランブルされたチャンネルは、C-CAS カードを挿したカードリーダーを `--card` で指定すると解除できます。  
 > `C30` などの指定は、引き続き地デジのパススルー (ISDB-T) 用です。
 
 > [!NOTE]  
