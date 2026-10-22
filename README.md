@@ -107,9 +107,18 @@ recisdb decode [OPTIONS] --input <file> <OUTPUT>
 - `-c CS02` (CS: ND02)
   - CS2 と CS02 の両方のフォーマットに対応
 - `-c CS24` (CS: ND24)
+- `-c ISDBC-C51` (ISDB-C: CATV C51)
+- `-c ISDBC-4` / `-c ISDBC-20` (ISDB-C: VHF 4ch / UHF 20ch)
+- `-c ISDBC-C52_0` (ISDB-C: CATV C52 の TSMF 相対 TS 番号 0)
+  - 相対 TS 番号は 0〜14。`-c ISDBC-C52 --tsid 17488` のように TSID でも指定可能で、両方を指定した場合は TSID を優先
+- `-c J83B-C40` (J.83 Annex B: CATV C40)
+  - `ISDBC-` と `J83B-` の後には、CATV の `C13` 〜 `C63`、VHF の `1` 〜 `12`、UHF の `13` 〜 `62` を指定可能。TSMF の指定方法も共通
 
 > [!IMPORTANT]  
-> 現時点では、ISDB-T / ISDB-S 以外の放送方式 (ISDB-C / DVB-S2 など) には対応していません。
+> **ISDB-C (トランスモジュレーション方式 CATV) / J.83 Annex B の選局には、Linux のキャラクタデバイスと、ISDB-C 対応版の [tsukumijima/px4_drv](https://github.com/tsukumijima/px4_drv) が必要です。**  
+> DVBv5 デバイスでの選局は非対応です。Windows では BonDriver の空間-チャンネル (例: `3-50`) で指定してください。  
+> C-CAS でスクランブルされたチャンネルは、C-CAS カードを挿したカードリーダーを `--card` で指定すると解除できます。  
+> `C30` などの指定は、引き続き地デジのパススルー (ISDB-T) 用です。
 
 > [!NOTE]  
 > **接続/認識されているチューナーデバイスの確認やチャンネルスキャンには、recisdb をチューナーコマンドとして利用する [ISDBScanner](https://github.com/tsukumijima/ISDBScanner) が便利です。**  
@@ -144,6 +153,9 @@ recisdb tune --device /dev/dvb/adapter1/frontend0 -c T27 --no-decode /tmp/record
 
 # キャラクタデバイスをオープンし、CATV (ISDB-T) 30ch を選局し、30 秒間の録画データを recorded.m2ts に保存
 recisdb tune --device /dev/px4video3 --channel C30 --time 30 recorded.m2ts
+
+# キャラクタデバイスをオープンし、ISDB-C の CATV C52 から TSID 17488 を選局し、スクランブル解除せずに保存
+recisdb tune --device /dev/pxmlt5video0 --channel ISDBC-C52 --tsid 17488 --no-decode --time 30 recorded.m2ts
 
 # キャラクタデバイスをオープンし、BS03 の相対 TS 番号 1 を選局し、パイプ渡しで ffplay で再生
 recisdb tune --device /dev/px4video0 --channel BS3_1 - | ffplay -i -
