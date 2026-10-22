@@ -25,7 +25,12 @@ jobs:
           fetch-depth: 0
 
       - name: Validate version
+        # Branch builds may prepare the next version before its tag exists.
+        # Published releases must still match the version in their tagged source.
+        if: github.event_name == 'release'
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           crate_version="$(python - <<'PY'
           import tomllib
@@ -34,21 +39,8 @@ jobs:
           PY
           )"
 
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            expected_version="${{ github.event.release.tag_name }}"
-            source_name="release tag"
-          else
-            expected_version="$(git describe --tags --abbrev=0 2>/dev/null || true)"
-            source_name="latest tag reachable from master"
-
-            if [[ -z "$expected_version" ]]; then
-              echo "::error::No tag is reachable from the current master commit."
-              exit 1
-            fi
-          fi
-
-          if [[ "$expected_version" != "$crate_version" ]]; then
-            echo "::error::$source_name '$expected_version' does not match recisdb crate version '$crate_version'."
+          if [[ "$RELEASE_TAG" != "$crate_version" ]]; then
+            echo "::error::release tag '$RELEASE_TAG' does not match recisdb crate version '$crate_version'."
             exit 1
           fi
 
