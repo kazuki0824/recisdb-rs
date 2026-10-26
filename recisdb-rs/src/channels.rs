@@ -440,6 +440,13 @@ mod tests {
         assert_eq!(ch.ch_type, ChannelType::CS(2, AsIs));
         assert_eq!(ch.raw_string, ch_str.to_string());
 
+        // Leading-zero variant: "CS02" must parse to the same channel
+        // number as "CS2" so the canonical TSID-table lookup succeeds.
+        let ch_str = "CS02";
+        let ch = Channel::new(ch_str, None);
+        assert_eq!(ch.ch_type, ChannelType::CS(2, AsIs));
+        assert_eq!(ch.raw_string, ch_str.to_string());
+
         let ch_str = "CS03";
         let ch = Channel::new(ch_str, None);
         assert_eq!(ch.ch_type, ChannelType::Undefined);
@@ -489,5 +496,54 @@ mod tests {
         let freq: IoctlFreq = ch.ch_type.into();
         assert_eq!(freq.ch, 68);
         assert_eq!(freq.slot, 0);
+    }
+
+    #[test]
+    fn cs_asis_stream_id_is_none() {
+        // CS without --tsid produces stream_id = None, which means the
+        // tune logic must look up the transponder's TSID from the
+        // hardcoded ISDB-S table.
+        let ch = Channel::new("CS2", None);
+        let freq: DvbFreq = ch.ch_type.into();
+        assert_eq!(freq.freq_hz, 1613000);
+        assert_eq!(freq.stream_id, None);
+    }
+
+    #[test]
+    fn cs_with_explicit_tsid() {
+        let ch = Channel::new("CS2", Some(0x6020));
+        let freq: DvbFreq = ch.ch_type.into();
+        assert_eq!(freq.stream_id, Some(0x6020));
+    }
+
+    #[test]
+    fn cs_leading_zero_matches_no_zero() {
+        // "CS02" and "CS2" must produce identical DvbFreq so the tune
+        // logic constructs the same canonical table-lookup key.
+        let a = Channel::new("CS02", None);
+        let b = Channel::new("CS2", None);
+        let fa: DvbFreq = a.ch_type.clone().into();
+        let fb: DvbFreq = b.ch_type.clone().into();
+        assert_eq!(fa.freq_hz, fb.freq_hz);
+        assert_eq!(fa.stream_id, fb.stream_id);
+        assert_eq!(a.ch_type, b.ch_type);
+    }
+
+    #[test]
+    fn cs_dvbfreq_for_all_transponders() {
+        for (ch_str, expected_hz) in [
+            ("CS2", 1613000u32),
+            ("CS4", 1653000),
+            ("CS12", 1813000),
+            ("CS24", 2053000),
+        ] {
+            let ch = Channel::new(ch_str, None);
+            let freq: DvbFreq = ch.ch_type.into();
+            assert_eq!(freq.freq_hz, expected_hz, "frequency mismatch for {ch_str}");
+            assert!(
+                freq.stream_id.is_none(),
+                "stream_id should be None for {ch_str}"
+            );
+        }
     }
 }
