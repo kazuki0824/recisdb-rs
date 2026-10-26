@@ -8,7 +8,6 @@ use futures_util::{AsyncBufRead, AsyncRead};
 use log::warn;
 
 use crate::channels::output::IoctlFreq;
-use crate::channels::representation::TsFilter;
 use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 
@@ -24,8 +23,7 @@ nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
 const PTX_ISDB_C_SYSTEM: u32 = 0x40;
 const PTXT_SYMBOL_RATE_PARAM: u32 = 2;
-const PTXT_TSMF_RELATIVE_STREAM_PARAM: u32 = 3;
-const PTXT_TSMF_TSID_PARAM: u32 = 4;
+const PTXT_TSMF_STREAM_PARAM: u32 = 3;
 
 #[repr(C)]
 struct PtxtAdditionalParam {
@@ -50,9 +48,10 @@ nix::ioctl_write_ptr_bad!(
 nix::ioctl_none!(ptxt_tune, 0xe7, 0x04);
 
 fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> {
-    let (physical, filter, symbol_rate) = match channel {
-        ChannelType::ISDBC(physical, filter) => (physical, filter, 5274),
-        ChannelType::J83B(physical, filter) => (physical, filter, 5600),
+    // J.83B は TSMF を使わないため、何本目かの指定は 1 (省略と同じ) になる
+    let (freq_khz, stream, symbol_rate) = match channel {
+        ChannelType::ISDBC(physical, stream) => (physical.frequency_khz(), *stream, 5274),
+        ChannelType::J83B(freq) => (*freq, 1, 5600),
         _ => {
             unsafe { set_ch(fd, &channel.clone().into())? };
             return Ok(());
@@ -60,24 +59,19 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
     };
 
     // プロパティ配列は SET_PARAMS が完了するまで保持する
-    let mut props = vec![PtxtAdditionalParam {
-        prop: PTXT_SYMBOL_RATE_PARAM,
-        data: symbol_rate,
-    }];
-    match filter {
-        TsFilter::RelTsNum(num) => props.push(PtxtAdditionalParam {
-            prop: PTXT_TSMF_RELATIVE_STREAM_PARAM,
-            data: *num as u32,
-        }),
-        TsFilter::AbsTsId(id) => props.push(PtxtAdditionalParam {
-            prop: PTXT_TSMF_TSID_PARAM,
-            data: *id,
-        }),
-        TsFilter::AsIs => {}
-    }
+    let props = [
+        PtxtAdditionalParam {
+            prop: PTXT_SYMBOL_RATE_PARAM,
+            data: symbol_rate,
+        },
+        PtxtAdditionalParam {
+            prop: PTXT_TSMF_STREAM_PARAM,
+            data: stream as u32,
+        },
+    ];
     let params = PtxtParams {
         system: PTX_ISDB_C_SYSTEM,
-        freq: physical.frequency_khz(),
+        freq: freq_khz,
         num_prop: props.len() as u32,
         prop: props.as_ptr(),
     };
@@ -89,9 +83,14 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
                 std::io::ErrorKind::Unsupported,
                 format!("This driver does not support ISDB-C/J.83B (PTXT): {error}"),
             ),
+            // px4_drv は、ロックしない搬送波を EAGAIN、指定した何本目の TS がない搬送波を ENODATA で返す
             Errno::EAGAIN => std::io::Error::new(
-                std::io::ErrorKind::WouldBlock,
-                format!("The requested TSMF transport stream was not found: {error}"),
+                std::io::ErrorKind::TimedOut,
+                format!("No signal was locked on this channel: {error}"),
+            ),
+            Errno::ENODATA => std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("The TSMF stream number {stream} specified in the channel does not exist in this carrier: {error}"),
             ),
             _ => error.into(),
         }
