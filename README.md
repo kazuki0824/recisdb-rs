@@ -109,13 +109,17 @@ recisdb decode [OPTIONS] --input <file> <OUTPUT>
 - `-c CS24` (CS: ND24)
 - `-c ISDBC-C51` (ISDB-C: CATV C51)
 - `-c ISDBC-4` / `-c ISDBC-20` (ISDB-C: VHF 4ch / UHF 20ch)
-- `-c ISDBC-C52_0` (ISDB-C: CATV C52 の TSMF 相対 TS 番号 0)
-  - 相対 TS 番号は 0〜14。`-c ISDBC-C52 --tsid 17488` のように TSID でも指定可能で、両方を指定した場合は TSID を優先
-- `-c J83B-C40` (J.83 Annex B: CATV C40)
-  - `ISDBC-` と `J83B-` の後には、CATV の `C13` 〜 `C63`、VHF の `1` 〜 `12`、UHF の `13` 〜 `62` を指定可能。TSMF の指定方法も共通
+- `-c ISDBC-C52_2` (ISDB-C: CATV C52 の TSMF の 2 本目の TS)
+  - 末尾の `_n` は、1 つの搬送波に多重された TS (TSMF) のうち、何本目の TS を受信するかを 1〜15 で指定する。省略すると 1 本目
+  - TSMF を使わない搬送波は 1 本目だけで、2 以上を指定すると選局に失敗する
+  - `ISDBC-` の後には、CATV の `C13` 〜 `C63`、VHF の `1` 〜 `12`、UHF の `13` 〜 `62` を指定可能
+- `-c J83B-H01` / `-c J83B-159250` (J.83 Annex B: スカパー！プレミアムサービス光の H01 / 159.25MHz)
+  - `J83B-` の後には、`H01` 〜 `H77` を 2 桁で指定するか、中心周波数を kHz で指定する (H01 は 93.25MHz、以降 6.5MHz 刻み)
+  - H11〜H12 は +1MHz、H26〜H28 は +4MHz ずれた周波数で送られている地域があり、その場合は周波数で指定する
 
 > [!IMPORTANT]  
 > **ISDB-C (トランスモジュレーション方式 CATV) / J.83 Annex B の選局には、Linux のキャラクタデバイスと、ISDB-C 対応版の [tsukumijima/px4_drv](https://github.com/tsukumijima/px4_drv) が必要です。**  
+> `--tsid` は ISDB-C / J.83 Annex B では指定できません。  
 > DVBv5 デバイスでの選局は非対応です。Windows では BonDriver の空間-チャンネル (例: `3-50`) で指定してください。  
 > C-CAS でスクランブルされたチャンネルは、C-CAS カードを挿したカードリーダーを `--card` で指定すると解除できます。  
 > `C30` などの指定は、引き続き地デジのパススルー (ISDB-T) 用です。
@@ -154,8 +158,8 @@ recisdb tune --device /dev/dvb/adapter1/frontend0 -c T27 --no-decode /tmp/record
 # キャラクタデバイスをオープンし、CATV (ISDB-T) 30ch を選局し、30 秒間の録画データを recorded.m2ts に保存
 recisdb tune --device /dev/px4video3 --channel C30 --time 30 recorded.m2ts
 
-# キャラクタデバイスをオープンし、ISDB-C の CATV C52 から TSID 17488 を選局し、スクランブル解除せずに保存
-recisdb tune --device /dev/pxmlt5video0 --channel ISDBC-C52 --tsid 17488 --no-decode --time 30 recorded.m2ts
+# キャラクタデバイスをオープンし、ISDB-C の CATV C52 の TSMF の 2 本目の TS を選局し、スクランブル解除せずに保存
+recisdb tune --device /dev/pxmlt5video0 --channel ISDBC-C52_2 --no-decode --time 30 recorded.m2ts
 
 # キャラクタデバイスをオープンし、BS03 の相対 TS 番号 1 を選局し、パイプ渡しで ffplay で再生
 recisdb tune --device /dev/px4video0 --channel BS3_1 - | ffplay -i -
