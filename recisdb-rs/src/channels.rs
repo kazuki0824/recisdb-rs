@@ -145,7 +145,7 @@ pub mod representation {
         }
     }
 
-    /// J.83 Annex B (スカパー！プレミアムサービス光) の H01〜H77 の中心周波数 (kHz)
+    /// J.83 Annex B (スカパー！プレミアムサービス光) の H01〜H105 の中心周波数 (kHz)
     /// 地域によってはこの 6.5MHz 刻みからずれた周波数で送られるため、周波数での指定も受け付ける
     pub fn j83b_frequency_khz(ch: u32) -> u32 {
         93250 + (ch - 1) * 6500
@@ -237,15 +237,17 @@ mod parser {
         .parse(input)
     }
 
-    /// `H01`〜`H77` (2桁固定) か、中心周波数 (kHz) を受け付け、中心周波数 (kHz) を返す
+    /// `H01`〜`H99` (2桁固定) と `H100`〜`H105` か、中心周波数 (kHz) を受け付け、中心周波数 (kHz) を返す
     pub(crate) fn parse_j83b(input: &str) -> IResult<&str, u32> {
         all_consuming(alt((
             preceded(
                 tag("H"),
                 map_res(
-                    take_while_m_n(2, 2, |c: char| c.is_ascii_digit()),
-                    |digits: &str| match digits.parse::<u32>() {
-                        Ok(ch @ 1..=77) => Ok(j83b_frequency_khz(ch)),
+                    take_while_m_n(2, 3, |c: char| c.is_ascii_digit()),
+                    |digits: &str| match (digits.len(), digits.parse::<u32>()) {
+                        (2, Ok(ch @ 1..=99)) | (3, Ok(ch @ 100..=105)) => {
+                            Ok(j83b_frequency_khz(ch))
+                        }
                         _ => Err(()),
                     },
                 ),
@@ -373,7 +375,7 @@ impl Channel {
                 let valid = (90000..=770000).contains(freq);
                 if !valid {
                     error!(
-                        "J.83B requires H01-H77 or a center frequency from 90000 to 770000 kHz."
+                        "J.83B requires H01-H105 or a center frequency from 90000 to 770000 kHz."
                     );
                 }
                 valid
@@ -492,6 +494,11 @@ mod tests {
             ("J83B-H02", 99750),
             ("J83B-H40", 346750),
             ("J83B-H77", 587250),
+            ("J83B-H78", 593750),
+            ("J83B-H99", 730250),
+            ("J83B-H100", 736750),
+            ("J83B-H105", 769250),
+            ("J83B-374950", 374950),
             ("J83B-159250", 159250),
             ("J83B-90000", 90000),
             ("J83B-770000", 770000),
@@ -503,9 +510,10 @@ mod tests {
         for invalid in [
             "J83B-H1",
             "J83B-H00",
-            "J83B-H78",
-            "J83B-H99",
             "J83B-H001",
+            "J83B-H099",
+            "J83B-H106",
+            "J83B-H0100",
             "J83B-H01_1",
             "J83B-H01_",
             "J83B-H01extra",
