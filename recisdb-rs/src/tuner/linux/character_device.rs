@@ -22,8 +22,8 @@ nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
 const PTX_ISDB_C_SYSTEM: u32 = 0x40;
-const PTXT_SYMBOL_RATE_PARAM: u32 = 2;
-const PTXT_TSMF_STREAM_PARAM: u32 = 3;
+const PTX_J83B_SYSTEM: u32 = 0x80;
+const PTXT_TSMF_STREAM_PARAM: u32 = 2;
 
 #[repr(C)]
 struct PtxtAdditionalParam {
@@ -31,27 +31,27 @@ struct PtxtAdditionalParam {
     data: u32,
 }
 
+// px4_drv の struct ptxt_params と同じく、32 ビットと 64 ビットのプロセスで配置が変わらないよう、
+// 追加パラメーターの配列のアドレスは u64 で渡す
 #[repr(C)]
 struct PtxtParams {
     system: u32,
     freq: u32,
     num_prop: u32,
-    prop: *const PtxtAdditionalParam,
+    reserved: u32,
+    prop: u64,
 }
 
-// PTXT_SET_PARAMS は構造体ポインタのサイズで ioctl 番号を定義する
-nix::ioctl_write_ptr_bad!(
-    ptxt_set_params,
-    nix::request_code_write!(0xe7, 0x02, std::mem::size_of::<*const PtxtParams>()),
-    PtxtParams
-);
+nix::ioctl_write_ptr!(ptxt_set_params, 0xe7, 0x02, PtxtParams);
 nix::ioctl_none!(ptxt_tune, 0xe7, 0x04);
 
 fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> {
-    // J.83B は TSMF を使わないため、何本目かの指定は 1 (省略と同じ) になる
-    let (freq_khz, stream, symbol_rate) = match channel {
-        ChannelType::ISDBC(physical, stream) => (physical.frequency_khz(), *stream, 5274),
-        ChannelType::J83B(freq) => (*freq, 1, 5600),
+    // J.83 Annex B は ISDB-C とは別の放送方式で、TSMF を使わないため何本目の指定を送らない
+    let (system, freq_khz, stream) = match channel {
+        ChannelType::ISDBC(physical, stream) => {
+            (PTX_ISDB_C_SYSTEM, physical.frequency_khz(), Some(*stream))
+        }
+        ChannelType::J83B(freq) => (PTX_J83B_SYSTEM, *freq, None),
         _ => {
             unsafe { set_ch(fd, &channel.clone().into())? };
             return Ok(());
@@ -59,21 +59,19 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
     };
 
     // プロパティ配列は SET_PARAMS が完了するまで保持する
-    let props = [
-        PtxtAdditionalParam {
-            prop: PTXT_SYMBOL_RATE_PARAM,
-            data: symbol_rate,
-        },
-        PtxtAdditionalParam {
+    let props: Vec<PtxtAdditionalParam> = stream
+        .map(|stream| PtxtAdditionalParam {
             prop: PTXT_TSMF_STREAM_PARAM,
             data: stream as u32,
-        },
-    ];
+        })
+        .into_iter()
+        .collect();
     let params = PtxtParams {
-        system: PTX_ISDB_C_SYSTEM,
+        system,
         freq: freq_khz,
         num_prop: props.len() as u32,
-        prop: props.as_ptr(),
+        reserved: 0,
+        prop: props.as_ptr() as u64,
     };
     let result = unsafe { ptxt_set_params(fd, &params).and_then(|_| ptxt_tune(fd)) };
     result.map(|_| ()).map_err(|error| {
@@ -90,7 +88,10 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
             ),
             Errno::ENODATA => std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                format!("The TSMF stream number {stream} specified in the channel does not exist in this carrier: {error}"),
+                format!(
+                    "The TSMF stream number {} specified in the channel does not exist in this carrier: {error}",
+                    stream.unwrap_or(1)
+                ),
             ),
             _ => error.into(),
         }
@@ -190,8 +191,15 @@ impl Tuner {
                     + (0.5491 * p)
                     + 3.0965
             }
-            // ISDB-C には PT 互換の値がないため、px4_drv は dB の 1000 倍の値を返す
-            ChannelType::ISDBC(..) | ChannelType::J83B(..) => raw as f64 / 1000.0,
+            // px4_drv は ISDB-C と J.83B でも復調器の C/N 推定用の生値 (IREG_SNR_ESTIMATE) を返すため、
+            // Sony の sony_demod_isdbc_monitor_SNR() と同じ式で dB へ換算する (生値が 0 のときは信号なし)
+            ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
+                if raw == 0 {
+                    0.0
+                } else {
+                    -9.5 * (raw.max(126) as f64).ln() + 95.941
+                }
+            }
             _ => {
                 const AF_LEVEL_TABLE: [f64; 14] = [
                     24.07, // 00    00    0        24.07dB
