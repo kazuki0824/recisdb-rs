@@ -145,7 +145,7 @@ pub mod representation {
         }
     }
 
-    /// J.83 Annex B (スカパー！プレミアムサービス光) の H01〜H105 の中心周波数 (kHz)
+    /// J.83 Annex B (スカパー！プレミアムサービス光) の H001〜H105 の中心周波数 (kHz)
     /// 地域によってはこの 6.5MHz 刻みからずれた周波数で送られるため、周波数での指定も受け付ける
     pub fn j83b_frequency_khz(ch: u32) -> u32 {
         93250 + (ch - 1) * 6500
@@ -172,7 +172,7 @@ pub mod representation {
         Catv(u8, TsFilter),
         BS(u8, TsFilter),
         CS(u8, TsFilter),
-        /// 物理チャンネルと、TSMF のヘッダーに載っている有効な TS の何本目か (1〜15)
+        /// 物理チャンネルと、TSMF のヘッダーに載っている有効な TS のうち、BS の `_0` と同じく 0 から数えた番号 (0〜14)
         ISDBC(CableChannel, u8),
         /// 中心周波数 (kHz)
         J83B(u32),
@@ -225,29 +225,27 @@ mod parser {
         .parse(input)
     }
 
-    /// `C52`・`4`・`20`・`C52_2` のような ISDB-C の物理チャンネルと、省略できる `_<TSMF の何本目>`
+    /// `C52`・`4`・`20`・`C52_1` のような ISDB-C の物理チャンネルと、省略できる `_<TSMF の TS 番号>`
     pub(crate) fn parse_isdbc(input: &str) -> IResult<&str, (CableChannel, u8)> {
         all_consuming(pair(
             alt((
                 preceded(tag("C"), u8).map(CableChannel::Catv),
                 u8.map(CableChannel::VhfUhf),
             )),
-            opt(preceded(tag("_"), u8)).map(|stream| stream.unwrap_or(1)),
+            opt(preceded(tag("_"), u8)).map(|stream| stream.unwrap_or(0)),
         ))
         .parse(input)
     }
 
-    /// `H01`〜`H99` (2桁固定) と `H100`〜`H105` か、中心周波数 (kHz) を受け付け、中心周波数 (kHz) を返す
+    /// `H001`〜`H105` (3桁固定) か、中心周波数 (kHz) を受け付け、中心周波数 (kHz) を返す
     pub(crate) fn parse_j83b(input: &str) -> IResult<&str, u32> {
         all_consuming(alt((
             preceded(
                 tag("H"),
                 map_res(
-                    take_while_m_n(2, 3, |c: char| c.is_ascii_digit()),
-                    |digits: &str| match (digits.len(), digits.parse::<u32>()) {
-                        (2, Ok(ch @ 1..=99)) | (3, Ok(ch @ 100..=105)) => {
-                            Ok(j83b_frequency_khz(ch))
-                        }
+                    take_while_m_n(3, 3, |c: char| c.is_ascii_digit()),
+                    |digits: &str| match digits.parse::<u32>() {
+                        Ok(ch @ 1..=105) => Ok(j83b_frequency_khz(ch)),
                         _ => Err(()),
                     },
                 ),
@@ -283,7 +281,7 @@ impl Channel {
             match parser::get_result(&raw_string) {
                 Ok((bottom, system @ ("ISDBC-" | "J83B-"))) => {
                     if override_stream_id.is_some() {
-                        error!("--tsid cannot be used with ISDB-C/J.83B. Use _<n> (e.g. ISDBC-C52_2) to select a TSMF stream.");
+                        error!("--tsid cannot be used with ISDB-C/J.83B. Use _<n> (e.g. ISDBC-C52_1) to select a TSMF stream.");
                         ChannelType::Undefined
                     } else if system == "ISDBC-" {
                         match parser::parse_isdbc(bottom) {
@@ -364,9 +362,9 @@ impl Channel {
                 if !physical_valid {
                     error!("ISDB-C requires CATV C13-C63 or VHF/UHF 1-62.");
                 }
-                let stream_valid = (1..=15).contains(stream);
+                let stream_valid = (0..=14).contains(stream);
                 if !stream_valid {
-                    error!("The TSMF stream number must be from 1 to 15.");
+                    error!("The TSMF stream number must be from 0 to 14.");
                 }
                 physical_valid && stream_valid
             }
@@ -375,7 +373,7 @@ impl Channel {
                 let valid = (90000..=770000).contains(freq);
                 if !valid {
                     error!(
-                        "J.83B requires H01-H105 or a center frequency from 90000 to 770000 kHz."
+                        "J.83B requires H001-H105 or a center frequency from 90000 to 770000 kHz."
                     );
                 }
                 valid
@@ -432,21 +430,21 @@ mod tests {
     #[test]
     fn test_isdbc_parser() {
         for (input, expected) in [
-            ("ISDBC-C13", ChannelType::ISDBC(CableChannel::Catv(13), 1)),
-            ("ISDBC-C63", ChannelType::ISDBC(CableChannel::Catv(63), 1)),
-            ("ISDBC-1", ChannelType::ISDBC(CableChannel::VhfUhf(1), 1)),
-            ("ISDBC-12", ChannelType::ISDBC(CableChannel::VhfUhf(12), 1)),
-            ("ISDBC-13", ChannelType::ISDBC(CableChannel::VhfUhf(13), 1)),
-            ("ISDBC-62", ChannelType::ISDBC(CableChannel::VhfUhf(62), 1)),
+            ("ISDBC-C13", ChannelType::ISDBC(CableChannel::Catv(13), 0)),
+            ("ISDBC-C63", ChannelType::ISDBC(CableChannel::Catv(63), 0)),
+            ("ISDBC-1", ChannelType::ISDBC(CableChannel::VhfUhf(1), 0)),
+            ("ISDBC-12", ChannelType::ISDBC(CableChannel::VhfUhf(12), 0)),
+            ("ISDBC-13", ChannelType::ISDBC(CableChannel::VhfUhf(13), 0)),
+            ("ISDBC-62", ChannelType::ISDBC(CableChannel::VhfUhf(62), 0)),
+            ("ISDBC-C52_0", ChannelType::ISDBC(CableChannel::Catv(52), 0)),
             ("ISDBC-C52_1", ChannelType::ISDBC(CableChannel::Catv(52), 1)),
-            ("ISDBC-C52_2", ChannelType::ISDBC(CableChannel::Catv(52), 2)),
             (
-                "ISDBC-C52_15",
-                ChannelType::ISDBC(CableChannel::Catv(52), 15),
+                "ISDBC-C52_14",
+                ChannelType::ISDBC(CableChannel::Catv(52), 14),
             ),
             (
-                "ISDBC-20_3",
-                ChannelType::ISDBC(CableChannel::VhfUhf(20), 3),
+                "ISDBC-20_2",
+                ChannelType::ISDBC(CableChannel::VhfUhf(20), 2),
             ),
         ] {
             let ch = Channel::new(input, None);
@@ -460,8 +458,7 @@ mod tests {
             "ISDBC-63",
             "ISDBC-256",
             "ISDBC-C269",
-            "ISDBC-C52_0",
-            "ISDBC-C52_16",
+            "ISDBC-C52_15",
             "ISDBC-C52_256",
             "ISDBC-C52_-1",
             "ISDBC-C52_",
@@ -472,7 +469,7 @@ mod tests {
             "ISDBC-",
             "ISDBC-C",
             "ISDBC-_2",
-            "ISDBC-H01",
+            "ISDBC-H001",
         ] {
             assert_eq!(
                 Channel::new(invalid, None).ch_type,
@@ -490,12 +487,12 @@ mod tests {
     #[test]
     fn test_j83b_parser() {
         for (input, expected) in [
-            ("J83B-H01", 93250),
-            ("J83B-H02", 99750),
-            ("J83B-H40", 346750),
-            ("J83B-H77", 587250),
-            ("J83B-H78", 593750),
-            ("J83B-H99", 730250),
+            ("J83B-H001", 93250),
+            ("J83B-H002", 99750),
+            ("J83B-H040", 346750),
+            ("J83B-H077", 587250),
+            ("J83B-H078", 593750),
+            ("J83B-H099", 730250),
             ("J83B-H100", 736750),
             ("J83B-H105", 769250),
             ("J83B-374950", 374950),
@@ -509,14 +506,14 @@ mod tests {
         }
         for invalid in [
             "J83B-H1",
-            "J83B-H00",
-            "J83B-H001",
-            "J83B-H099",
+            "J83B-H01",
+            "J83B-H99",
+            "J83B-H000",
             "J83B-H106",
             "J83B-H0100",
-            "J83B-H01_1",
-            "J83B-H01_",
-            "J83B-H01extra",
+            "J83B-H001_1",
+            "J83B-H001_",
+            "J83B-H001extra",
             "J83B-H+1",
             "J83B-H-1",
             "J83B-C40",
@@ -524,7 +521,7 @@ mod tests {
             "J83B-89999",
             "J83B-770001",
             "J83B-159250_1",
-            "J83B-h01",
+            "J83B-h001",
             "J83B-H",
             "J83B-",
         ] {
@@ -538,7 +535,7 @@ mod tests {
 
     #[test]
     fn test_cable_tsid_is_rejected() {
-        for input in ["ISDBC-C52", "ISDBC-C52_2", "J83B-H01"] {
+        for input in ["ISDBC-C52", "ISDBC-C52_1", "J83B-H001"] {
             assert_eq!(
                 Channel::new(input, Some(17488)).ch_type,
                 ChannelType::Undefined,

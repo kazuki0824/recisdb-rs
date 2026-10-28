@@ -46,7 +46,7 @@ nix::ioctl_write_ptr!(ptxt_set_params, 0xe7, 0x02, PtxtParams);
 nix::ioctl_none!(ptxt_tune, 0xe7, 0x04);
 
 fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> {
-    // J.83 Annex B は ISDB-C とは別の放送方式で、TSMF を使わないため何本目の指定を送らない
+    // J.83 Annex B は ISDB-C とは別の放送方式で、TSMF を使わないため TS 番号の指定を送らない
     let (system, freq_khz, stream) = match channel {
         ChannelType::ISDBC(physical, stream) => {
             (PTX_ISDB_C_SYSTEM, physical.frequency_khz(), Some(*stream))
@@ -81,7 +81,7 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
                 std::io::ErrorKind::Unsupported,
                 format!("This driver does not support ISDB-C/J.83B (PTXT): {error}"),
             ),
-            // px4_drv は、ロックしない搬送波を EAGAIN、指定した何本目の TS がない搬送波を ENODATA で返す
+            // px4_drv は、ロックしない搬送波を EAGAIN、指定した番号の TS がない搬送波を ENODATA で返す
             Errno::EAGAIN => std::io::Error::new(
                 std::io::ErrorKind::TimedOut,
                 format!("No signal was locked on this channel: {error}"),
@@ -90,7 +90,7 @@ fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> 
                 std::io::ErrorKind::NotFound,
                 format!(
                     "The TSMF stream number {} specified in the channel does not exist in this carrier: {error}",
-                    stream.unwrap_or(1)
+                    stream.unwrap_or(0)
                 ),
             ),
             _ => error.into(),
