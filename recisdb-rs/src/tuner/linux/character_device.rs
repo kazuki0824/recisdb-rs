@@ -184,21 +184,13 @@ impl Tuner {
         };
 
         match self.channel.ch_type {
-            ChannelType::Terrestrial(..) => {
+            // px4_drv は ISDB-C と J.83B でも、地デジと同じ PT1/PT3 互換の値を返す
+            ChannelType::Terrestrial(..) | ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
                 (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
                     + (0.5491 * p)
                     + 3.0965
-            }
-            // px4_drv は ISDB-C と J.83B でも復調器の C/N 推定用の生値 (IREG_SNR_ESTIMATE) を返すため、
-            // Sony の sony_demod_isdbc_monitor_SNR() と同じ式で dB へ換算する (生値が 0 のときは信号なし)
-            ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
-                if raw == 0 {
-                    0.0
-                } else {
-                    -9.5 * (raw.max(126) as f64).ln() + 95.941
-                }
             }
             _ => {
                 const AF_LEVEL_TABLE: [f64; 14] = [
