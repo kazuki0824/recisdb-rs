@@ -31,8 +31,7 @@ struct PtxtAdditionalParam {
     data: u32,
 }
 
-// px4_drv の struct ptxt_params と同じく、32 ビットと 64 ビットのプロセスで配置が変わらないよう、
-// 追加パラメーターの配列のアドレスは u64 で渡す
+// px4_drv の struct ptxt_params に合わせて、追加パラメーターの配列のアドレスは u64 で渡す
 #[repr(C)]
 struct PtxtParams {
     system: u32,
