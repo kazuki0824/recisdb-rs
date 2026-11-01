@@ -107,9 +107,23 @@ recisdb decode [OPTIONS] --input <file> <OUTPUT>
 - `-c CS02` (CS: ND02)
   - CS2 と CS02 の両方のフォーマットに対応
 - `-c CS24` (CS: ND24)
+- `-c ISDBC-C51` (ISDB-C: CATV C51)
+- `-c ISDBC-4` / `-c ISDBC-20` (ISDB-C: VHF 4ch / UHF 20ch)
+- `-c ISDBC-C52_1` (ISDB-C: CATV C52/TS1)
+  - 末尾の `_n` は、1 つの搬送波に多重された TS (TSMF) のうち、どの TS を受信するかを BS と同じく 0 から数えた番号 (0〜14) で指定する。省略すると TS0
+  - TSMF を使わない搬送波は TS0 だけで、1 以上を指定すると選局に失敗する
+  - `ISDBC-` の後には、CATV の `C13` 〜 `C63`、VHF の `1` 〜 `12`、UHF の `13` 〜 `62` を指定可能
+- `-c J83B-H001` / `-c J83B-159250` (J.83 Annex B: スカパー！プレミアムサービス光の H001 / 159.25MHz)
+  - `J83B-` の後には、3 桁の `H001` 〜 `H105` を指定するか、中心周波数を kHz で指定する (H001 は 93.25MHz、以降 6.5MHz 刻みで H105 は 769.25MHz)
+  - 地域によって 6.5MHz 刻みからずれた周波数 (272.75MHz や 374.95MHz など) で送られている搬送波は、`J83B-374950` のように中心周波数で指定する
+  - H011〜H012 は +1MHz、H026〜H028 は +4MHz ずれた周波数で送られている地域があり、その場合は周波数で指定する
 
 > [!IMPORTANT]  
-> 現時点では、ISDB-T / ISDB-S 以外の放送方式 (ISDB-C / DVB-S2 など) には対応していません。
+> **ISDB-C (トランスモジュレーション方式 CATV) / J.83 Annex B の選局には、Linux のキャラクタデバイスと、ISDB-C 対応版の [tsukumijima/px4_drv](https://github.com/tsukumijima/px4_drv) が必要です。**  
+> `--tsid` は ISDB-C / J.83 Annex B では指定できません。  
+> DVBv5 デバイスでの選局は非対応です。Windows では BonDriver の空間-チャンネル (例: `3-50`) で指定してください。  
+> C-CAS でスクランブルされたチャンネルは、C-CAS カードを挿したカードリーダーを `--card` で指定すると解除できます。  
+> `C30` などの指定は、引き続き地デジのパススルー (ISDB-T) 用です。
 
 > [!NOTE]  
 > **接続/認識されているチューナーデバイスの確認やチャンネルスキャンには、recisdb をチューナーコマンドとして利用する [ISDBScanner](https://github.com/tsukumijima/ISDBScanner) が便利です。**  
@@ -144,6 +158,9 @@ recisdb tune --device /dev/dvb/adapter1/frontend0 -c T27 --no-decode /tmp/record
 
 # キャラクタデバイスをオープンし、CATV (ISDB-T) 30ch を選局し、30 秒間の録画データを recorded.m2ts に保存
 recisdb tune --device /dev/px4video3 --channel C30 --time 30 recorded.m2ts
+
+# キャラクタデバイスをオープンし、ISDB-C の CATV C52 の TSMF の TS1 を選局し、スクランブル解除せずに保存
+recisdb tune --device /dev/pxmlt5video0 --channel ISDBC-C52_1 --no-decode --time 30 recorded.m2ts
 
 # キャラクタデバイスをオープンし、BS03 の相対 TS 番号 1 を選局し、パイプ渡しで ffplay で再生
 recisdb tune --device /dev/px4video0 --channel BS3_1 - | ffplay -i -

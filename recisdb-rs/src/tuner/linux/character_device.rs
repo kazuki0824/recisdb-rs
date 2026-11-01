@@ -21,6 +21,82 @@ nix::ioctl_write_int!(ptx_enable_lnb, 0x8d, 0x05);
 nix::ioctl_none!(ptx_disable_lnb, 0x8d, 0x06);
 nix::ioctl_write_int!(ptx_set_sys_mode, 0x8d, 0x0b);
 
+const PTX_ISDB_C_SYSTEM: u32 = 0x40;
+const PTX_J83B_SYSTEM: u32 = 0x80;
+const PTXT_TSMF_STREAM_PARAM: u32 = 2;
+
+#[repr(C)]
+struct PtxtAdditionalParam {
+    prop: u32,
+    data: u32,
+}
+
+// px4_drv の struct ptxt_params に合わせて、追加パラメーターの配列のアドレスは u64 で渡す
+#[repr(C)]
+struct PtxtParams {
+    system: u32,
+    freq: u32,
+    num_prop: u32,
+    reserved: u32,
+    prop: u64,
+}
+
+nix::ioctl_write_ptr!(ptxt_set_params, 0xe7, 0x02, PtxtParams);
+nix::ioctl_none!(ptxt_tune, 0xe7, 0x04);
+
+fn tune_channel(fd: RawFd, channel: &ChannelType) -> Result<(), std::io::Error> {
+    // J.83 Annex B は ISDB-C とは別の放送方式で、TSMF を使わないため TS 番号の指定を送らない
+    let (system, freq_khz, stream) = match channel {
+        ChannelType::ISDBC(physical, stream) => {
+            (PTX_ISDB_C_SYSTEM, physical.frequency_khz(), Some(*stream))
+        }
+        ChannelType::J83B(freq) => (PTX_J83B_SYSTEM, *freq, None),
+        _ => {
+            unsafe { set_ch(fd, &channel.clone().into())? };
+            return Ok(());
+        }
+    };
+
+    // プロパティ配列は SET_PARAMS が完了するまで保持する
+    let props: Vec<PtxtAdditionalParam> = stream
+        .map(|stream| PtxtAdditionalParam {
+            prop: PTXT_TSMF_STREAM_PARAM,
+            data: stream as u32,
+        })
+        .into_iter()
+        .collect();
+    let params = PtxtParams {
+        system,
+        freq: freq_khz,
+        num_prop: props.len() as u32,
+        reserved: 0,
+        prop: props.as_ptr() as u64,
+    };
+    let result = unsafe { ptxt_set_params(fd, &params).and_then(|_| ptxt_tune(fd)) };
+    result.map(|_| ()).map_err(|error| {
+        use nix::errno::Errno;
+        match error {
+            Errno::ENOSYS | Errno::ENOTTY => std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                format!("This driver does not support ISDB-C/J.83B (PTXT): {error}"),
+            ),
+            // px4_drv は、ロックしない搬送波を EAGAIN、指定した番号の TS がない搬送波を ENODATA で返す
+            Errno::EAGAIN => std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                format!("No signal was locked on this channel: {error}"),
+            ),
+            Errno::ENODATA => std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!(
+                    "The TSMF stream number {} specified in the channel does not exist in this carrier: {error}",
+                    stream.unwrap_or(0)
+                ),
+            ),
+            _ => error.into(),
+        }
+    })
+}
+
 pub struct UnTunedTuner {
     file: File,
     buf_sz: usize,
@@ -46,7 +122,7 @@ impl UnTunedTuner {
             _ => unsafe { ptx_disable_lnb(ioctl_file.as_raw_fd())? },
         };
 
-        let _errno = unsafe { set_ch(ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
+        tune_channel(ioctl_file.as_raw_fd(), &ch.ch_type)?;
 
         let _errno = unsafe { start_rec(ioctl_file.as_raw_fd())? };
 
@@ -107,7 +183,8 @@ impl Tuner {
         };
 
         match self.channel.ch_type {
-            ChannelType::Terrestrial(..) => {
+            // px4_drv は ISDB-C と J.83B でも、地デジと同じ PT1/PT3 互換の値を返す
+            ChannelType::Terrestrial(..) | ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
                 let p = (5505024.0 / (raw as f64)).log10() * 10.0;
                 (0.000024 * p * p * p * p) - (0.0016 * p * p * p)
                     + (0.0398 * p * p)
@@ -148,7 +225,7 @@ impl Tuner {
         }
     }
     fn tune(mut self, ch: Channel, lnb: Option<Voltage>) -> Result<Tuner, std::io::Error> {
-        let _errno = unsafe { set_ch(self.ioctl_file.as_raw_fd(), &ch.ch_type.clone().into())? };
+        tune_channel(self.ioctl_file.as_raw_fd(), &ch.ch_type)?;
 
         let _errno = match lnb {
             Some(Voltage::_11v) => unsafe { ptx_enable_lnb(self.ioctl_file.as_raw_fd(), 1)? },

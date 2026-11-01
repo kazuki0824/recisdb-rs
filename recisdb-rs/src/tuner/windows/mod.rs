@@ -135,6 +135,12 @@ impl Tunable for UnTunedTuner {
                 .get_ref()
                 .interface
                 .SetChannelBySpace(space.space, space.ch)?,
+            ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
+                return Err(io::Error::new(
+                    ErrorKind::Unsupported,
+                    "ISDB-C/J.83B channel names are not supported on Windows. Specify the BonDriver space-channel numbers defined in the ChSet file (e.g. 3-50).",
+                ))
+            }
             other => {
                 return Err(io::Error::new(
                     ErrorKind::Other,
@@ -171,6 +177,12 @@ impl Tunable for Tuner {
                 .get_ref()
                 .interface
                 .SetChannelBySpace(space.space, space.ch)?,
+            ChannelType::ISDBC(..) | ChannelType::J83B(..) => {
+                return Err(io::Error::new(
+                    ErrorKind::Unsupported,
+                    "ISDB-C/J.83B channel names are not supported on Windows. Specify the BonDriver space-channel numbers defined in the ChSet file (e.g. 3-50).",
+                ))
+            }
             _ => {}
         }
 
