@@ -5,12 +5,11 @@ use crate::channels::{Channel, ChannelType};
 use crate::tuner::Voltage;
 use dvbv5::{DmxFd, FrontendId, FrontendParametersPtr};
 use dvbv5_sys::fe_delivery_system::{SYS_ISDBS, SYS_ISDBT};
-use dvbv5_sys::fe_sec_voltage::{SEC_VOLTAGE_13, SEC_VOLTAGE_18};
 use dvbv5_sys::fe_status::{self, FE_HAS_LOCK};
 use dvbv5_sys::{
     dmx_output, dmx_ts_pes, dvb_set_compat_delivery_system, DTV_BANDWIDTH_HZ, DTV_FREQUENCY,
     DTV_ISDBT_LAYER_ENABLED, DTV_ISDBT_PARTIAL_RECEPTION, DTV_ISDBT_SOUND_BROADCASTING, DTV_STATUS,
-    DTV_STAT_CNR, DTV_STREAM_ID, DTV_VOLTAGE, NO_STREAM_ID_FILTER,
+    DTV_STAT_CNR, DTV_STREAM_ID, NO_STREAM_ID_FILTER,
 };
 use futures_util::io::{AllowStdIo, BufReader};
 use futures_util::{AsyncBufRead, AsyncRead};
@@ -142,15 +141,22 @@ impl UnTunedTuner {
                         _ => NO_STREAM_ID_FILTER as u32,
                     };
                     dvbv5_sys::dvb_fe_store_parm(p, DTV_STREAM_ID as c_uint, id);
-                    match lnb {
-                        Some(Voltage::_11v) => {
-                            dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_13 as u32)
-                        }
-                        Some(Voltage::_15v) => {
-                            dvbv5_sys::dvb_fe_store_parm(p, DTV_VOLTAGE, SEC_VOLTAGE_18 as u32)
-                        }
-                        _ => 0,
+                    // DTV_VOLTAGE is not one of libdvbv5's ISDB-S properties, so
+                    // dvb_fe_store_parm() drops it and the LNB is never powered.
+                    // Issue FE_SET_VOLTAGE directly instead.
+                    let lnb_rc = match lnb {
+                        Some(Voltage::_11v) => Some(dvbv5_sys::dvb_fe_sec_voltage(p, 1, 0)),
+                        Some(Voltage::_15v) => Some(dvbv5_sys::dvb_fe_sec_voltage(p, 1, 1)),
+                        _ => None,
                     };
+                    match lnb_rc {
+                        Some(0) => info!("LNB power enabled."),
+                        Some(rc) => warn!(
+                            "Failed to enable LNB power: {}",
+                            Error::from_raw_os_error(-rc)
+                        ),
+                        None => {}
+                    }
 
                     dvbv5_sys::dvb_fe_set_parms(p)
                 }
