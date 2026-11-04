@@ -131,13 +131,17 @@ unsafe extern "C" fn proc_ecm(
         }
     };
 
-    if let Ok(result) = ks {
-        std::ptr::copy_nonoverlapping(
-            result.as_ptr(),
-            (*dst).scramble_key.as_mut_ptr(),
-            result.len(),
-        );
-    }
+    let Ok(result) = ks else {
+        (*dst).scramble_key = [0; 16];
+        (*dst).return_code = 0xa103;
+        return 0;
+    };
+
+    std::ptr::copy_nonoverlapping(
+        result.as_ptr(),
+        (*dst).scramble_key.as_mut_ptr(),
+        result.len(),
+    );
     (*dst).return_code = 0x0800;
     0
 }
