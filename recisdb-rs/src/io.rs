@@ -139,7 +139,6 @@ impl Future for AsyncInOutTriple {
                 }
 
                 // Finalize
-                let _ = this.progress_tx.send(u64::MAX);
                 info!("Flushing the buffer…");
 
                 // A(sink)
