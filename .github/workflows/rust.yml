@@ -92,7 +92,7 @@ jobs:
         run: cargo test --workspace --verbose -F dvb --target aarch64-unknown-linux-gnu
 
   build-macos-decode:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Install dependencies
         run: brew install cmake
