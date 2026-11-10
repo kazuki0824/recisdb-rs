@@ -30,8 +30,10 @@ impl UnTunedTuner {
             return Ok(UnTunedTuner::DvbV5(dvbv5::UnTunedTuner::new(
                 first, second, buf_sz,
             )?));
-        } else if path.starts_with("/dev/dvb/adapter") {
-            let trimmed = &path[16..];
+        } else if let Some(trimmed) = std::fs::canonicalize(&path)?
+            .to_str()
+            .and_then(|path| path.strip_prefix("/dev/dvb/adapter"))
+        {
             let split: Vec<&str> = trimmed.split("/frontend").collect();
             if split.len() == 2 {
                 let (a, f) = (split[0].parse::<u8>(), split[1].parse::<u8>());
