@@ -10,6 +10,7 @@ use std::io::Write;
 
 pub(crate) enum StreamExitType {
     Success(u64),
+    Interrupted(u64),
     Timeout,
     Error(std::io::Error),
     UnexpectedEofInTuner,
