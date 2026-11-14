@@ -14,6 +14,12 @@ use pin_project_lite::pin_project;
 
 use b25_sys::{DecoderOptions, StreamDecoder};
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum StreamCompletion {
+    Finished(u64),
+    Interrupted(u64),
+}
+
 pin_project! {
     pub(crate) struct AsyncInOutTriple {
         #[pin]
@@ -23,6 +29,7 @@ pin_project! {
         amt: u64,
         abandon_decoder: Option<bool>,
         abort: Arc<AtomicBool>,
+        input_eof: bool,
         progress_tx: std::sync::mpsc::Sender<u64>,
     }
 }
@@ -77,6 +84,7 @@ impl AsyncInOutTriple {
                 dec,
                 amt: 0,
                 abort,
+                input_eof: false,
                 progress_tx,
                 abandon_decoder: if continue_on_error { Some(false) } else { None },
             },
@@ -86,7 +94,7 @@ impl AsyncInOutTriple {
 }
 
 impl Future for AsyncInOutTriple {
-    type Output = io::Result<u64>;
+    type Output = io::Result<StreamCompletion>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut this = self.project();
@@ -97,12 +105,12 @@ impl Future for AsyncInOutTriple {
             Some(ref mut dec) if !this.abandon_decoder.unwrap_or(false) => {
                 //    A.         B.
                 // In -> Decoder -> Out
-                if !this.abort.load(Ordering::Relaxed) {
+                if !*this.input_eof && !this.abort.load(Ordering::Relaxed) {
                     // A(source)
                     let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
                     if buffer.is_empty() {
                         // go to finalization
-                        this.abort.store(true, Ordering::Relaxed);
+                        *this.input_eof = true;
                         cx.waker().wake_by_ref();
                         return Poll::Pending;
                     } else {
@@ -139,7 +147,6 @@ impl Future for AsyncInOutTriple {
                 }
 
                 // Finalize
-                let _ = this.progress_tx.send(u64::MAX);
                 info!("Flushing the buffer…");
 
                 // A(sink)
@@ -149,7 +156,11 @@ impl Future for AsyncInOutTriple {
                     match Pin::new(&mut *dec).poll_fill_buf(cx) {
                         Poll::Ready(Ok(buffer)) if buffer.is_empty() => {
                             ready!(Pin::new(&mut this.o).poll_flush(cx))?;
-                            return Poll::Ready(Ok(*this.amt));
+                            return Poll::Ready(Ok(if this.abort.load(Ordering::Relaxed) {
+                                StreamCompletion::Interrupted(*this.amt)
+                            } else {
+                                StreamCompletion::Finished(*this.amt)
+                            }));
                         }
                         Poll::Ready(Ok(buffer)) => {
                             // B(sink)
@@ -166,10 +177,19 @@ impl Future for AsyncInOutTriple {
             }
             _ => {
                 // pass through
-                let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
-                if buffer.is_empty() || this.abort.load(Ordering::Relaxed) {
+                if this.abort.load(Ordering::Relaxed) {
                     ready!(Pin::new(&mut this.o).poll_flush(cx))?;
-                    return Poll::Ready(Ok(*this.amt));
+                    return Poll::Ready(Ok(StreamCompletion::Interrupted(*this.amt)));
+                }
+
+                let buffer = ready!(this.i.as_mut().poll_fill_buf(cx))?;
+                if buffer.is_empty() {
+                    ready!(Pin::new(&mut this.o).poll_flush(cx))?;
+                    return Poll::Ready(Ok(if this.abort.load(Ordering::Relaxed) {
+                        StreamCompletion::Interrupted(*this.amt)
+                    } else {
+                        StreamCompletion::Finished(*this.amt)
+                    }));
                 }
 
                 let i = ready!(Pin::new(&mut this.o).poll_write(cx, buffer))?;
