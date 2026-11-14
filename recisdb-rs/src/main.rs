@@ -1,3 +1,4 @@
+use crate::io::StreamCompletion;
 use crate::utils::StreamExitType;
 use clap::Parser;
 use futures_executor::block_on;
@@ -36,11 +37,16 @@ fn main() {
     // Handling the future based on the presence of a timeout
     let result = match timeout_option {
         Some(dur) => match block_on(fut.timeout(dur)) {
-            Ok(Ok(_)) => StreamExitType::UnexpectedEofInTuner,
+            Ok(Ok(StreamCompletion::Finished(_))) => StreamExitType::UnexpectedEofInTuner,
+            Ok(Ok(StreamCompletion::Interrupted(bytes))) => StreamExitType::Interrupted(bytes),
             Ok(Err(e)) => StreamExitType::Error(e),
-            _ => StreamExitType::Timeout,
+            Err(_) => StreamExitType::Timeout,
         },
-        None => block_on(fut).map_or_else(StreamExitType::Error, StreamExitType::Success),
+        None => match block_on(fut) {
+            Ok(StreamCompletion::Finished(bytes)) => StreamExitType::Success(bytes),
+            Ok(StreamCompletion::Interrupted(bytes)) => StreamExitType::Interrupted(bytes),
+            Err(e) => StreamExitType::Error(e),
+        },
     };
 
     // The future's sender has been dropped. Drain pending progress updates
@@ -52,12 +58,17 @@ fn main() {
                 utils::progress(&pb, *bytes);
                 pb.finish();
             }
+            StreamExitType::Interrupted(bytes) => {
+                utils::progress(&pb, *bytes);
+                pb.abandon();
+            }
             _ => pb.abandon(),
         }
     }
 
     match result {
         StreamExitType::Success(_) => {}
+        StreamExitType::Interrupted(_) => {}
         StreamExitType::Timeout => {}
         StreamExitType::Error(_) => {}
         StreamExitType::UnexpectedEofInTuner => {}
