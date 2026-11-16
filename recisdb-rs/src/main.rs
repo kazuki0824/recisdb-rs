@@ -3,8 +3,8 @@ use crate::utils::StreamExitType;
 use clap::Parser;
 use futures_executor::block_on;
 use futures_time::future::FutureExt;
-use log::info;
 use indicatif::ProgressBar;
+use log::info;
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 mod channels;

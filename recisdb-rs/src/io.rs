@@ -215,9 +215,7 @@ mod tests {
     fn pass_through(input: &[u8], interrupted: bool) -> AsyncInOutTriple {
         let (progress_tx, _) = std::sync::mpsc::channel();
         AsyncInOutTriple {
-            i: Box::new(BufReader::new(AllowStdIo::new(Cursor::new(
-                input.to_vec(),
-            )))),
+            i: Box::new(BufReader::new(AllowStdIo::new(Cursor::new(input.to_vec())))),
             o: AllowStdIo::new(Box::new(Vec::<u8>::new()) as Box<dyn Write>),
             dec: RefCell::new(None),
             amt: 0,
