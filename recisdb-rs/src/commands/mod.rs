@@ -19,7 +19,7 @@ use crate::channels::representation::TsFilter;
 use crate::channels::{Channel, ChannelType};
 use crate::commands::utils::parse_keys;
 use crate::context::{Cli, Commands};
-use crate::io::AsyncInOutTriple;
+use crate::io::{AsyncInOutTriple, StreamCompletion};
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::tuner::{Tunable, UnTunedTuner};
 
@@ -30,7 +30,7 @@ pub(crate) mod utils;
 pub(crate) fn process_command(
     args: Cli,
 ) -> (
-    impl Future<Output = std::io::Result<u64>>,
+    impl Future<Output = std::io::Result<StreamCompletion>>,
     Option<Duration>,
     Option<(u64, std::sync::mpsc::Receiver<u64>)>,
 ) {
