@@ -110,7 +110,7 @@ name = "b25-sys"
 version = "2.1.0"
 dependencies = [
  "cbc-mac",
- "cipher 0.4.4",
+ "cipher 0.5.2",
  "cmake",
  "cryptography-00",
  "cryptography-40",
